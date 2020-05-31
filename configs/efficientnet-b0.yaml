@@ -1,0 +1,17 @@
+model:
+  type: "classification"
+  backbone: "efficientnet-b0"
+training:
+  optimizer: 
+    type: "SGD"
+    lr: 1e-2
+    momentum: 0.9
+    weight_decay: 1e-5
+  lr_scheduler:
+    start_lr: 1e-3
+    max_lr: 1e-2
+    end_lr: 1e-8
+    warmup_fraction: 0.03
+  epochs: 15
+  batch_size: 85
+  

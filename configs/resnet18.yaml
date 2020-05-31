@@ -1,0 +1,15 @@
+model:
+  type: "classifier"
+  backbone: "resnet18"
+training:
+  optimizer: 
+    type: "RMSProp"
+    lr: 1e-4
+    momentum: 0.9
+    weight_decay: 1e-5
+  epochs: 60
+  gpu: true
+  batch_size: 256
+  save_best: true
+  
+  
