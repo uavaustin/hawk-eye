@@ -6,8 +6,7 @@ import argparse
 from typing import Tuple
 import datetime
 import pathlib
-import itertools
-import random
+import tarfile
 import yaml
 import shutil
 
@@ -75,7 +74,7 @@ def train(model_cfg: dict, train_cfg: dict, save_dir: pathlib.Path):
         model.train()
 
         if eval_accuracy > highest_score:
-            model_saver.save_model(model.model, save_dir / "feature_extractor.pt")
+            utils.save_model(model.model, save_dir / "feature_extractor.pt")
             highest_score = eval_accuracy
 
         print(

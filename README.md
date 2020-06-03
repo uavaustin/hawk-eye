@@ -75,6 +75,8 @@ Updating submodules: `git submodule update --remote --merge`
 
 # TODO
 
+- [ ] Finish target typer model. 
+
 - [ ] Devise a way to be able to create detection, classification, and feature data in 
 separate independently. 
 

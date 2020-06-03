@@ -11,7 +11,6 @@ import albumentations
 import cv2
 import numpy as np
 import torch
-from sklearn import metrics
 
 from core import classifier, detector
 from inference import types
@@ -78,15 +77,19 @@ def find_targets(
     save_jsons: bool = False,
     visualization_dir: pathlib.Path = None,
 ) -> None:
-    retval = []
     for image_path in images:
+        retval = []
         image = cv2.imread(str(image_path))
         assert image is not None, f"Could not read {image_path}."
         start = time.perf_counter()
         image_tensor, coords = tile_image(image, config.CROP_SIZE, config.CROP_OVERLAP)
 
+        # Keep track of the tiles that were classified as having targets for
+        # visualization.
+        target_tiles = []
+
         # Get the image slices.
-        for tiles_batch, coords in create_batches(image_tensor, coords, 30):
+        for tiles_batch, coords in create_batches(image_tensor, coords, 120):
 
             if torch.cuda.is_available():
                 tiles_batch = tiles_batch.cuda().half()
@@ -94,11 +97,15 @@ def find_targets(
             # Resize the slices for classification.
             tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
 
-            # Call the pre-clf to find the target tiles.
-            preds = clf_model.classify(tiles_batch)
+            with torch.no_grad():
+                # Call the pre-clf to find the target tiles.
+                preds = clf_model.classify(tiles)
 
             # Get the ids of tiles that contain targets
             target_ids = preds == torch.ones_like(preds)
+            target_tiles.extend(
+                [offset for offset, target in zip(coords, target_ids) if target]
+            )
 
             if target_ids.sum().item():
                 for det_tiles, det_coords in create_batches(
@@ -108,16 +115,20 @@ def find_targets(
                     det_tiles = torch.nn.functional.interpolate(
                         det_tiles, config.DETECTOR_SIZE
                     )
-                    boxes = det_model(det_tiles)
-                    retval.extend(zip(det_coords, boxes))
+                    with torch.no_grad():
+                        boxes = det_model(det_tiles)
+
+                    retval.extend(zip(target_tiles, boxes))
             else:
                 retval.extend(zip(coords, []))
 
-        targets = globalize_boxes(retval, config.PRECLF_SIZE[0])
+        targets = globalize_boxes(retval, config.CROP_SIZE[0])
         print(time.perf_counter() - start)
 
         if visualization_dir is not None:
-            visualize_image(image_path.name, image, visualization_dir, targets)
+            visualize_image(
+                image_path.name, image, visualization_dir, targets, target_tiles
+            )
 
 
 def globalize_boxes(
@@ -126,16 +137,17 @@ def globalize_boxes(
     final_targets = []
     for coords, bboxes in results:
         for box in bboxes:
-            relative_coords = box.box
-            relative_coords += torch.Tensor(list(2 * coords)).int()
-            relative_coords = (relative_coords * torch.Tensor([img_size])).tolist()
+            relative_coords = box.box * torch.Tensor([img_size] * 4)
+            relative_coords += torch.Tensor(2 * list(coords)).int()
             final_targets.append(
                 types.Target(
                     x=int(relative_coords[0]),
                     y=int(relative_coords[1]),
                     width=int(relative_coords[2] - relative_coords[0]),
                     height=int(relative_coords[3] - relative_coords[1]),
-                    shape=types.Shape[config.OD_CLASSES[box.class_id].upper()],
+                    shape=types.Shape[
+                        config.OD_CLASSES[box.class_id].upper().replace("-", "_")
+                    ],
                 )
             )
 
@@ -147,6 +159,7 @@ def visualize_image(
     image: np.ndarray,
     visualization_dir: pathlib.Path,
     targets: List[types.Target],
+    clf_tiles: List[Tuple[int, int]],
 ) -> None:
     """ Function used to draw boxes and information onto image for
     visualizing the output of inference. """
@@ -159,12 +172,21 @@ def visualize_image(
             target.shape.name.lower(),
             (target.x, target.y - 3),  # Shift text tinsy bit
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.37,
+            1,
             (0, 255, 0),
             1,
         )
 
+    for group in clf_tiles:
+        x, y = group
+        w, h = config.CROP_SIZE
+        tile = np.zeros((w, h, 3), dtype=np.uint8)
+        cv2.addWeighted(
+            tile, 0.3, image[y : y + h, x : x + w], 0.7, 0, image[y : y + h, x : x + w]
+        )
+
     cv2.imwrite(str(visualization_dir / image_name), image)
+
 
 # TODO(alex) use this
 def save_target_meta(filename_meta, filename_image, target):
@@ -242,7 +264,7 @@ if __name__ == "__main__":
     det_model = detector.Detector(
         version=args.det_version,
         num_classes=len(config.OD_CLASSES),
-        confidence=0.8,
+        confidence=0.3,
         use_cuda=torch.cuda.is_available(),
         half_precision=torch.cuda.is_available(),
     )

@@ -8,7 +8,6 @@ import random
 import albumentations
 import cv2
 import torch
-import numpy as np
 
 
 def classification_augmentations(height: int, width: int) -> albumentations.Compose:
@@ -156,10 +155,10 @@ class TargetDataset(torch.utils.data.Dataset):
         image1 = cv2.imread(image_path1)
         image1 = torch.Tensor(self.transform(image=image1)["image"]).permute(2, 0, 1)
 
-        image2 = np.asarray(Image.open(image_path1).convert("RGB"))
+        image2 = cv2.imread(image_path1)
         image2 = torch.Tensor(self.transform(image=image2)["image"]).permute(2, 0, 1)
 
-        image3 = np.asarray(Image.open(image_path2).convert("RGB"))
+        image3 = cv2.imread(image_path2)
         image3 = torch.Tensor(self.transform(image=image3)["image"]).permute(2, 0, 1)
 
         return image1, image2, image3

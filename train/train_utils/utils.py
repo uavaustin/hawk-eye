@@ -1,7 +1,6 @@
 import pathlib
 
 import torch
-import pycocotools
 
 
 def save_model(model: torch.nn.Module, save_path: pathlib.Path) -> None:

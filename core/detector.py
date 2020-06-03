@@ -7,7 +7,6 @@ from typing import List
 import yaml
 
 import torch
-import torchvision
 
 from core import pull_assets
 from third_party.efficientdet import bifpn, efficientnet

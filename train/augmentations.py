@@ -16,10 +16,8 @@ def clf_train_augs(height: int, width: int) -> albumentations.Compose:
         ]
     )
 
+
 def clf_eval_augs(height: int, width: int) -> albumentations.Compose:
     return albumentations.Compose(
-        [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Normalize(),
-        ]
+        [albumentations.Resize(height=height, width=width), albumentations.Normalize()]
     )

@@ -16,7 +16,7 @@ import torch
 import numpy as np
 
 from train import datasets
-from train.train_utils import utils, swa
+from train.train_utils import utils
 from data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
@@ -28,7 +28,7 @@ _SAVE_DIR = pathlib.Path("~/runs/uav-det").expanduser()
 
 
 def detections_to_dict(bboxes: list, image_ids: torch.Tensor) -> List[dict]:
-    """ Used to turn raw bounding box detections into a dictionary which can be 
+    """ Used to turn raw bounding box detections into a dictionary which can be
     serialized for the pycocotools package. """
     detections: List[dict] = []
     for image_boxes, image_id in zip(bboxes, image_ids):
@@ -67,7 +67,6 @@ def train(model_cfg: dict, train_cfg: dict, save_dir: pathlib.Path = None) -> No
     )
 
     use_cuda = train_cfg.get("gpu", False)
-    save_best = train_cfg.get("save_best", False)
     eval_results = None
 
     # Load the model and remove the classification head of the backbone.
@@ -160,7 +159,7 @@ def eval(
     use_cuda: bool = False,
     save_dir: pathlib.Path = None,
 ) -> float:
-    """ Evalulate the model against the evaulation set. Save the best 
+    """ Evalulate the model against the evaulation set. Save the best
     weights if specified. Use the pycocotools package for metrics. """
     start = time.perf_counter()
     total_num = 0
@@ -264,17 +263,13 @@ if __name__ == "__main__":
     model_cfg = config["model"]
     train_cfg = config["training"]
 
-    save_best = train_cfg.get("save_best", False)
-    save_dir = None
-    if save_best:
-        save_dir = _SAVE_DIR / (datetime.datetime.now().isoformat().split(".")[0])
-        save_dir.mkdir(exist_ok=True, parents=True)
-        shutil.copy(config_path, save_dir / "config.yaml")
+    save_dir = _SAVE_DIR / (datetime.datetime.now().isoformat().split(".")[0])
+    save_dir.mkdir(exist_ok=True, parents=True)
+    shutil.copy(config_path, save_dir / "config.yaml")
 
     train(model_cfg, train_cfg, save_dir)
 
-    # Create tar archive if best weights are saved.
-    if save_best:
-        with tarfile.open(save_dir / "detector.tar.gz", mode="w:gz") as tar:
-            for model_file in save_dir.glob("*"):
-                tar.add(model_file, arcname=model_file.name)
+    # Create tar archive.
+    with tarfile.open(save_dir / "detector.tar.gz", mode="w:gz") as tar:
+        for model_file in save_dir.glob("*"):
+            tar.add(model_file, arcname=model_file.name)

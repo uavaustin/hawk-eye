@@ -11,15 +11,7 @@ import pathlib
 
 from tqdm import tqdm
 import PIL
-from PIL import (
-    Image,
-    ImageDraw,
-    ImageFilter,
-    ImageFont,
-    ImageOps,
-    ImageFile,
-    ImageEnhance,
-)
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from data_generation import generate_config as config
 from core import pull_assets

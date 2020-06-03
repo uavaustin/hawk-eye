@@ -16,15 +16,15 @@ class SWA(torch.optim.Optimizer):
     ) -> None:
         """ Implementation of Stochastic Weight Averaging (SWA) based on the paper
         `Averaging Weights Leads to Wider Optima and Better Generalization`_ by Pavel
-        Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov and Andrew Gordon 
-        Wilson (UAI 2018). 
-        
+        Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov and Andrew Gordon
+        Wilson (UAI 2018).
+
         This optimizer works by ...
-        
+
         Args:
             optimizer: The optimizer that will update the weights of the non-swa model.
             swa_start: Number of optimizer steps after to start updating the SWA weights.
-            swa_frequency: After how many optimizer steps to update the weights after 
+            swa_frequency: After how many optimizer steps to update the weights after
                 :swa_start: is reached.
         """
         self.start_swa = start_swa
@@ -55,7 +55,7 @@ class SWA(torch.optim.Optimizer):
             param_group["lr"] = lr
 
     def _update_swa_model(self) -> None:
-        """ Loop over all the layers from the non-swa model and update their SWA 
+        """ Loop over all the layers from the non-swa model and update their SWA
         counterparts. """
         with torch.no_grad():
             for swa_weights, base_weights in zip(
@@ -68,9 +68,9 @@ class SWA(torch.optim.Optimizer):
         self.n_avg += 1
 
     def update_bn(self, loader: torch.utils.data.DataLoader) -> None:
-        """ Update the batch norm momumentum for the SWA model since the SWA model's BN params
-        are not accoutned for in the weighted average calculation. This function should be called
-        before saving the swa model or before swa evaluation. """
+        """ Update the batch norm momumentum for the SWA model since the SWA model's BN
+        params are not accoutned for in the weighted average calculation. This function
+        should be called before saving the swa model or before swa evaluation. """
         self.swa_model.train()
         if torch.cuda.is_available():
             self.swa_model.cuda()

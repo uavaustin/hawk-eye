@@ -6,22 +6,11 @@ plus COCO metadata jsons. """
 from typing import List, Tuple
 import multiprocessing
 import random
-import json
-import pathlib
 import itertools
 
 from tqdm import tqdm
 import PIL
-from PIL import (
-    Image,
-    ImageDraw,
-    ImageFilter,
-    ImageFont,
-    ImageOps,
-    ImageFile,
-    ImageEnhance,
-)
-
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from data_generation import generate_config as config
 from core import pull_assets
 
@@ -81,14 +70,10 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
         combination = list(combination)
         font_files = random_list(config.ALPHA_FONTS, num_targets)
 
-        target_colors = [combination[1]] * num_targets
-
         # Make sure shape and alpha are different colors
         if combination[1] == combination[3]:
             while combination[3] == combination[1]:
                 combination[3] = random.choice(ALPHA_COLORS)
-
-        alpha_colors = [combination[3]] * num_targets
 
         target_rgbs = [random.choice(COLORS[color]) for color in [combination[1]]]
         alpha_rgbs = [random.choice(COLORS[color]) for color in [combination[3]]]
@@ -151,7 +136,6 @@ def add_shapes(
     background: PIL.Image.Image, shape_img: PIL.Image.Image, shape_params,
 ) -> Tuple[List[Tuple[int, int, int, int, int]], PIL.Image.Image]:
     """Paste shapes onto background and return bboxes"""
-    shape_bboxes: List[Tuple[int, int, int, int, int]] = []
 
     for i, shape_param in enumerate(shape_params):
 

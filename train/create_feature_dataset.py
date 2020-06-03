@@ -3,7 +3,6 @@
 for all possible shape combinations. This is needed for inference. """
 
 import argparse
-import time
 import pathlib
 import yaml
 

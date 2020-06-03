@@ -12,7 +12,7 @@ import yaml
 import torch
 
 from train import datasets
-from train.train_utils import utils, swa
+from train.train_utils import utils
 from core import classifier
 from data_generation import generate_config
 
@@ -24,7 +24,9 @@ def train(model_cfg: dict, train_cfg: dict, save_dir: pathlib.Path = None) -> No
 
     # TODO(alex) these paths should be in the generate config
     batch_size = train_cfg.get("batch_size", 64)
-    train_loader = create_data_loader(batch_size, generate_config.DATA_DIR / "clf_train")
+    train_loader = create_data_loader(
+        batch_size, generate_config.DATA_DIR / "clf_train"
+    )
     eval_loader = create_data_loader(batch_size, generate_config.DATA_DIR / "clf_val")
 
     use_cuda = torch.cuda.is_available()
@@ -84,7 +86,8 @@ def train(model_cfg: dict, train_cfg: dict, save_dir: pathlib.Path = None) -> No
             if idx % _LOG_INTERVAL == 0:
                 lr = optimizer.param_groups[0]["lr"]
                 print(
-                    f"Epoch: {epoch} step {idx}, loss {sum(all_losses) / len(all_losses):.5}. lr: {lr:.4}"
+                    f"Epoch: {epoch} step {idx}, loss "
+                    f"{sum(all_losses) / len(all_losses):.5}. lr: {lr:.4}"
                 )
 
         # Call evaluation function
@@ -107,7 +110,7 @@ def eval(
     previous_best: dict = None,
     save_dir: pathlib.Path = None,
 ) -> float:
-    """ Evalulate the model against the evaulation set. Save the best 
+    """ Evalulate the model against the evaulation set. Save the best
     weights if specified. """
     num_correct, total_num = 0, 0
 
