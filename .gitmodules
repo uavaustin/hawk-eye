@@ -1,6 +1,8 @@
 [submodule "third_party/vovnet"]
 	path = third_party/vovnet
 	url = https://github.com/alexwitt2399/vovnet
+	branch = master
 [submodule "third_party/efficientdet"]
 	path = third_party/efficientdet
 	url = https://github.com/alexwitt2399/efficientdet
+	branch = master
