@@ -89,7 +89,7 @@ def find_targets(
         target_tiles = []
 
         # Get the image slices.
-        for tiles_batch, coords in create_batches(image_tensor, coords, 120):
+        for tiles_batch, coords in create_batches(image_tensor, coords, 200):
 
             if torch.cuda.is_available():
                 tiles_batch = tiles_batch.cuda().half()

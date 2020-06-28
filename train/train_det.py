@@ -178,7 +178,7 @@ def eval(
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
             results = coco_eval.get_metrics(
-                generate_config.DATA_DIR / "detector_val/val_coco.json", tmp_json
+                "/home/alex/datasets/wheat/val.json", tmp_json
             )
 
     previous_best = results if previous_best is None else previous_best
