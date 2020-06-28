@@ -9,6 +9,7 @@ CUDA and CUDNN. Next, run:
 ```
 pip install -U Cython==0.29.15 numpy==1.17.4
 pip install -r requirements.txt
+pre-commit && pre-commit install
 ```
 Then install either `requirements-cpu.txt` or `requirements-gpu.txt` depending 
 on your device.
