@@ -19,7 +19,6 @@ class Classifier(torch.nn.Module):
         num_classes: int = 2,
         version: str = None,
         backbone: str = None,
-        use_cuda: bool = False,
         half_precision: bool = False,
     ) -> None:
         """
@@ -35,7 +34,7 @@ class Classifier(torch.nn.Module):
         """
         super().__init__()
         self.num_classes = num_classes
-        self.use_cuda = use_cuda
+        self.use_cuda = torch.cuda.is_available()
         self.half_precision = half_precision
         if backbone is None and version is None:
             raise ValueError("Must supply either model version or backbone to load")

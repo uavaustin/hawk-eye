@@ -21,3 +21,34 @@ def clf_eval_augs(height: int, width: int) -> albumentations.Compose:
     return albumentations.Compose(
         [albumentations.Resize(height=height, width=width), albumentations.Normalize()]
     )
+
+
+# TODO(alex): Add some more augumentations here.
+def det_train_augs(height: int, width: int) -> albumentations.Compose:
+    return albumentations.Compose(
+        [
+            albumentations.Resize(height=height, width=width),
+            albumentations.Normalize(),
+        ],
+    )
+
+
+def det_eval_augs(height: int, width: int) -> albumentations.Compose:
+    return albumentations.Compose(
+        [
+            albumentations.Resize(height=height, width=width),
+            albumentations.Normalize(),
+        ],
+    )
+
+
+def feature_extraction_augmentations(height: int, width: int) -> albumentations.Compose:
+    return albumentations.Compose(
+        [
+            albumentations.Resize(height=height, width=width),
+            albumentations.Rotate(5),
+            albumentations.RandomBrightnessContrast(0.05, 0.05),
+            albumentations.GaussianBlur(blur_limit=4),
+            albumentations.Normalize(),
+        ]
+    )

@@ -10,45 +10,10 @@ import cv2
 import torch
 
 
-def classification_augmentations(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
-        [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Flip(),
-            albumentations.Blur(blur_limit=3),
-            albumentations.GaussNoise(),
-            albumentations.HueSaturationValue(),
-            albumentations.RandomBrightnessContrast(),
-            albumentations.Normalize(),
-        ]
-    )
-
-
-def detection_augmentations(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
-        [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Normalize(),
-        ],
-    )
-
-
-def feature_extraction_augmentations(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
-        [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Rotate(5),
-            albumentations.RandomBrightnessContrast(0.05, 0.05),
-            albumentations.GaussianBlur(blur_limit=4),
-            albumentations.Normalize(),
-        ]
-    )
-
-
 class ClfDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir: pathlib.Path, img_ext: str = ".png"):
         super().__init__()
-        self.images = sorted(list(data_dir.glob(f"*{img_ext}")))
+        self.images = list(data_dir.glob(f"*{img_ext}"))
         assert self.images, f"No images found in {data_dir}."
 
         self.len = len(self.images)
@@ -101,6 +66,8 @@ class DetDataset(torch.utils.data.Dataset):
 
         category_ids = [label["class_id"] for label in labels["bboxes"]]
 
+        # TODO(alex): Implement a collation function to use during data loading.
+        # Right now this works because we have the same number of boxes on each sample.
         augmented = self.transform(
             image=image,
             bboxes=boxes,

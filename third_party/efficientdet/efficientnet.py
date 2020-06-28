@@ -6,99 +6,69 @@ depth (more layers), width (more filters per layer), resolution
 
 import collections
 import math
+import dataclasses
 from typing import Tuple, List
 
 import torch
 import numpy as np
 
+
+@dataclasses.dataclass
+class ModelScales:
+    width_coefficient: int
+    depth_coefficient: int 
+    resolution: int 
+    dropout_rate: int 
+
+
+# Seen here:
+# https://github.com/tensorflow/tpu/blob/master/models/official/efficientnet/efficientnet_builder.py#L35
 _MODEL_SCALES = {
     # (width_coefficient, depth_coefficient, resolution, dropout_rate)
-    "efficientnet-lite0": (1.0, 1.0, 224, 0.2),
-    "efficientnet-lite1": (1.0, 1.1, 240, 0.2),
-    "efficientnet-lite2": (1.1, 1.2, 260, 0.3),
-    "efficientnet-lite3": (1.2, 1.4, 280, 0.3),
-    "efficientnet-lite4": (1.4, 1.8, 300, 0.3),
-    "efficientnet-b0": (1.0, 1.0, 224, 0.2),
-    "efficientnet-b1": (1.0, 1.1, 240, 0.2),
-    "efficientnet-b2": (1.1, 1.2, 260, 0.3),
-    "efficientnet-b3": (1.2, 1.4, 300, 0.3),
-    "efficientnet-b4": (1.4, 1.8, 380, 0.4),
-    "efficientnet-b5": (1.6, 2.2, 456, 0.4),
-    "efficientnet-b6": (1.8, 2.6, 528, 0.5),
-    "efficientnet-b7": (2.0, 3.1, 600, 0.5),
-    "efficientnet-b8": (2.2, 3.6, 672, 0.5),
-    "efficientnet-l2": (4.3, 5.3, 800, 0.5),
+    "efficientnet-lite0": ModelScales(1.0, 1.0, 224, 0.2),
+    "efficientnet-lite1": ModelScales(1.0, 1.1, 240, 0.2),
+    "efficientnet-lite2": ModelScales(1.1, 1.2, 260, 0.3),
+    "efficientnet-lite3": ModelScales(1.2, 1.4, 280, 0.3),
+    "efficientnet-lite4": ModelScales(1.4, 1.8, 300, 0.3),
+    "efficientnet-b0": ModelScales(1.0, 1.0, 224, 0.2),
+    "efficientnet-b1": ModelScales(1.0, 1.1, 240, 0.2),
+    "efficientnet-b2": ModelScales(1.1, 1.2, 260, 0.3),
+    "efficientnet-b3": ModelScales(1.2, 1.4, 300, 0.3),
+    "efficientnet-b4": ModelScales(1.4, 1.8, 380, 0.4),
+    "efficientnet-b5": ModelScales(1.6, 2.2, 456, 0.4),
+    "efficientnet-b6": ModelScales(1.8, 2.6, 528, 0.5),
+    "efficientnet-b7": ModelScales(2.0, 3.1, 600, 0.5),
+    "efficientnet-b8": ModelScales(2.2, 3.6, 672, 0.5),
+    "efficientnet-l2": ModelScales(4.3, 5.3, 800, 0.5),
 }
 
+
 # These are the default parameters for the model's mobile inverted residual bottleneck
-# layers
-_DEFAULT_MB_BLOCKS_ARGS = [
-    {
-        "kernel_size": 3,
-        "repeats": 1,
-        "filters_in": 32,
-        "filters_out": 16,
-        "expand_ratio": 1,
-        "strides": 1,
-        "se_ratio": 0.25,
-    },
-    {
-        "kernel_size": 3,
-        "repeats": 2,
-        "filters_in": 16,
-        "filters_out": 24,
-        "expand_ratio": 6,
-        "strides": 2,
-        "se_ratio": 0.25,
-    },
-    {
-        "kernel_size": 5,
-        "repeats": 2,
-        "filters_in": 24,
-        "filters_out": 40,
-        "expand_ratio": 6,
-        "strides": 2,
-        "se_ratio": 0.25,
-    },
-    {
-        "kernel_size": 3,
-        "repeats": 3,
-        "filters_in": 40,
-        "filters_out": 80,
-        "expand_ratio": 6,
-        "strides": 2,
-        "se_ratio": 0.25,
-    },
-    {
-        "kernel_size": 5,
-        "repeats": 3,
-        "filters_in": 80,
-        "filters_out": 112,
-        "expand_ratio": 6,
-        "strides": 1,
-        "se_ratio": 0.25,
-    },
-    {
-        "kernel_size": 5,
-        "repeats": 4,
-        "filters_in": 112,
-        "filters_out": 192,
-        "expand_ratio": 6,
-        "strides": 2,
-        "se_ratio": 0.25,
-    },
-    {
-        "kernel_size": 3,
-        "repeats": 1,
-        "filters_in": 192,
-        "filters_out": 320,
-        "expand_ratio": 6,
-        "strides": 1,
-        "se_ratio": 0.25,
-    },
+# layers.
+@dataclasses.dataclass
+class MBConvBlockArgs:
+    kernel_size: int
+    repeats: int 
+    filters_in: int 
+    filters_out: int 
+    expand_ratio: float 
+    strides: int 
+    se_ratio: float 
+
+# TODO(alex): Create a classification specific set of block args with smaller channels depths
+# Taken from official implementation:
+# https://github.com/tensorflow/tpu/blob/master/models/official/efficientnet/efficientnet_builder.py#L170
+_DEFAULT_BLOCKS_ARGS = [
+    MBConvBlockArgs(3, 1, 32, 16, 1, 1, 0.25),
+    MBConvBlockArgs(3, 2, 16, 24, 6, 2, 0.25),
+    MBConvBlockArgs(5, 2, 24, 40, 6, 2, 0.25),
+    MBConvBlockArgs(3, 3, 40, 80, 6, 1, 0.25),
+    MBConvBlockArgs(5, 3, 80, 112, 6, 1, 0.25),
+    MBConvBlockArgs(5, 4, 112, 192, 6, 2, 0.25),
+    MBConvBlockArgs(3, 1, 192, 320, 6, 1, 0.25)
 ]
 
-# https://github.com/tensorflow/tpu/blob/4528ca48dc02ffdde564cfa55e8118d89d43a1be/models/official/efficientnet/efficientnet_builder.py#L185
+# https://github.com/tensorflow/tpu/blob/master/models/official/efficientnet/efficientnet_builder.py#L185
 _BATCH_NORM_MOMENTUM = 1e-2
 _BATCH_NORM_EPS = 1e-3
 
@@ -164,7 +134,7 @@ def depthwise(channels: int, kernel_size: int, stride: int) -> List[torch.nn.Mod
         ),
     ]
 
-
+# TODO(alex): Look to add the more efficient ECA attention layer here.
 class SqueezeExcitation(torch.nn.Module):
     """  See here for one of the original implementations:
     https://arxiv.org/pdf/1709.01507.pdf. The layer 'adaptively recalibrates
@@ -277,9 +247,8 @@ class MBConvBlock(torch.nn.Module):
         self.layers = torch.nn.Sequential(*self.layers)
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        # TODO(alex): look to add drop connect here.
         out = self.layers(x)
-        if self.skip:
-            out += x
         return out
 
 

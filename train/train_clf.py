@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train a classifier to classify images as backgroud or targets."""
+""" Train a classifier to classify images as backgroud or targets. """
 
 import argparse
 import datetime
