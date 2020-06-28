@@ -41,6 +41,9 @@ _STAGE_SPECS = {
     ),
 }
 
+_BN_MOMENTUM = 1e-1
+_BN_EPS = 1e-5
+
 
 def dw_conv(
     in_channels: int, out_channels: int, stride: int = 1
@@ -57,7 +60,7 @@ def dw_conv(
             bias=False,
         ),
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-        torch.nn.BatchNorm2d(out_channels),
+        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
         torch.nn.ReLU(inplace=True),
     ]
 
@@ -70,7 +73,7 @@ def conv(
     kernel_size: int = 3,
     padding: int = 1,
 ) -> List[torch.nn.Module]:
-    """3x3 convolution with padding."""
+    """ 3x3 convolution with padding."""
     return [
         torch.nn.Conv2d(
             in_channels,
@@ -81,34 +84,38 @@ def conv(
             groups=groups,
             bias=False,
         ),
-        torch.nn.BatchNorm2d(out_channels),
+        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
         torch.nn.ReLU(inplace=True),
     ]
 
 
 def pointwise(in_channels: int, out_channels: int) -> List[torch.nn.Module]:
-    """Pointwise convolution."""
+    """ Pointwise convolution."""
     return [
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-        torch.nn.BatchNorm2d(out_channels),
+        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
         torch.nn.ReLU(inplace=True),
     ]
 
 
-class eSE(torch.nn.Module):
-    """This is adapted from the efficientnet Squeeze Excitation. The idea is to not
-    squeeze the number of channels to keep more information."""
-
-    def __init__(self, channel: int) -> None:
+# As seen here: https://arxiv.org/pdf/1910.03151v4.pdf. Can outperform ESE with far fewer
+# paramters.
+class ESA(torch.nn.Module):
+    def __init__(self, channels: int) -> None:
         super().__init__()
-        self.avg_pool = torch.nn.AdaptiveAvgPool2d(1)
-        self.fc = torch.nn.Conv2d(channel, channel, kernel_size=1)  # (Linear)
+        self.pool = torch.nn.AdaptiveAvgPool2d(1)
+        self.conv = torch.nn.Conv2d(1, 1, kernel_size=3, padding=1, bias=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = self.avg_pool(x)
-        out = self.fc(out)
-        out = torch.nn.functional.relu6(out + 3.0, inplace=True) / 6.0
-        return out * x
+        y = self.pool(x)
+        # BCHW -> BHCW
+        y = y.permute(0, 2, 1, 3)
+        y = self.conv(y)
+
+        # Change the dimensions back to BCHW
+        y = y.permute(0, 2, 1, 3)
+        y = torch.sigmoid_(y)
+        return x * y.expand_as(x)
 
 
 class _OSA(torch.nn.Module):
@@ -120,7 +127,7 @@ class _OSA(torch.nn.Module):
         layer_per_block: int,
         use_depthwise: bool = False,
     ) -> None:
-        """Implementation of an OSA layer which takes the output of its conv layers and 
+        """ Implementation of an OSA layer which takes the output of its conv layers and 
         concatenates them into one large tensor which is passed to the next layer. The
         goal with this concatenation is to preserve information flow through the model
         layers. This also ends up helping with small object detection. 
@@ -165,7 +172,7 @@ class _OSA(torch.nn.Module):
         # feature aggregation
         aggregated += layer_per_block * stage_channels
         self.concat = torch.nn.Sequential(*pointwise(aggregated, concat_channels))
-        self.ese = eSE(concat_channels)
+        self.esa = ESA(concat_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
@@ -183,11 +190,10 @@ class _OSA(torch.nn.Module):
 
         x = torch.cat(output, dim=1)
         xt = self.concat(x)
-
-        xt = self.ese(xt)
+        xt = self.esa(xt)
 
         if self.identity:
-            xt = xt + identity_feat
+            xt += identity_feat
 
         return xt
 
@@ -337,22 +343,15 @@ class VoVNet(torch.nn.Sequential):
         self.model.add_module(
             "classifier",
             torch.nn.Sequential(
-                torch.nn.BatchNorm2d(self._out_feature_channels[-1]),
+                torch.nn.BatchNorm2d(
+                    self._out_feature_channels[-1], _BN_MOMENTUM, _BN_EPS
+                ),
                 torch.nn.AdaptiveAvgPool2d(1),
                 torch.nn.Flatten(),
                 torch.nn.Dropout(0.2),
                 torch.nn.Linear(self._out_feature_channels[-1], num_classes, bias=True),
             ),
         )
-
-        # Initialize weights.
-        self._initialize_weights()
-        self.model.eval()
-
-    def _initialize_weights(self):
-        for module in self.model.modules():
-            if isinstance(module, torch.nn.Conv2d):
-                torch.nn.init.kaiming_normal_(module.weight)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
@@ -382,9 +381,9 @@ class VoVNet(torch.nn.Sequential):
         return levels
 
     def delete_classification_head(self) -> None:
-        """Call this before using model as an object detection backbone."""
+        """ Call this before using model as an object detection backbone. """
         del self.model.classifier
 
     def get_pyramid_channels(self) -> None:
-        """Return the number of channels for each pyramid level."""
+        """ Return the number of channels for each pyramid level. """
         return self._out_feature_channels

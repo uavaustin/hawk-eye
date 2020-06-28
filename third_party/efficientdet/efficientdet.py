@@ -1,11 +1,12 @@
+""" Main detector module which can be used for training and inferencing. """
+
 from typing import List
 import collections
 
 import torch
 
-import efficientnet, bifpn
+import efficientnet, bifpn, retinanet_head
 from third_party import (
-    retinanet_head,
     postprocess,
     regression,
     anchors,
@@ -31,21 +32,29 @@ class EfficientDet(torch.nn.Module):
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "efficientdet-b0",
+        backbone: str,
         levels: List[int] = [3, 4, 5, 6, 7],
         num_levels_extracted: int = 3,
-        num_detections_per_image: int = 3,
+        num_detections_per_image: int = 100,
         score_threshold: float = 0.05,
     ) -> None:
         """ 
         Args:
             params: (bifpn channels, num bifpns, num retina net convs)
         Usage:
-        >>> net = EfficientDet(10).train()
+        >>> net = EfficientDet(10, "efficientdet-b0", score_threshold=0)
         >>> with torch.no_grad():
         ...     out = net(torch.randn(1, 3, 512, 512))
         >>> len(out)
         2
+        >>> len(out[0])
+        5
+        >>> len(out[1])
+        5
+        >>> with torch.no_grad():
+        ...     out = net.predict(torch.randn(1, 3, 512, 512))
+        >>> type(out[0][0])
+        <class 'third_party.postprocess.BoundingBox'>
         """
         super().__init__()
         self.levels = levels
@@ -111,7 +120,8 @@ class EfficientDet(torch.nn.Module):
         levels = self.fpn(levels)
         classifications, regressions = self.retinanet_head(levels)
 
-        if self.training:
-            return classifications, regressions
-        else:
-            return self.postprocess(classifications, regressions)
+        return classifications, regressions
+
+    def predict(self, x: torch.Tensor) -> List[postprocess.BoundingBox]:
+        """ Member function to perform inference on an input image tensor. """
+        return self.postprocess(*self(x))
