@@ -2,7 +2,7 @@ model:
   type: "detection"
   backbone: "vovnet-19-slim-dw"
   fpn: 
-    type: "bifpn-b0"
+    type: "retinanet"
     num_channels: 128
     use_dw: false
     levels: [3, 4, 5, 6, 7]
@@ -13,7 +13,7 @@ model:
   anchors:
     aspect_ratios: [0.5, 1, 2]  # H / W
     sizes: [16, 32, 64, 128, 256]
-    scales: [1.0, 1.2599, 1.5874]
+    scales: [1.0, 1.25, 1.5]
 training:
   optimizer: 
     type: "SGD"
@@ -22,7 +22,7 @@ training:
     weight_decay: 1e-5
   epochs: 100
   gpu: True
-  train_batch_size: 25
-  eval_batch_size: 25
+  train_batch_size: 30
+  eval_batch_size: 30
   save_best: True
   

@@ -87,7 +87,6 @@ class RetinaNetHead(torch.nn.Module):
         prior_prob = 0.01
         bias_value = -(math.log((1 - prior_prob) / prior_prob))
         torch.nn.init.constant_(self.classification_subnet[-1].bias, bias_value)
-        torch.nn.init.constant_(self.regression_subnet[-1].bias, bias_value)
 
     def __call__(
         self, feature_maps: collections.OrderedDict

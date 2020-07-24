@@ -9,6 +9,8 @@ import albumentations
 import cv2
 import torch
 
+from train import augmentations as augs
+
 
 class ClfDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir: pathlib.Path, img_ext: str = ".png"):
@@ -49,7 +51,7 @@ class DetDataset(torch.utils.data.Dataset):
         self.img_height = img_height
         self.img_width = img_width
         self.len = len(self.images)
-        self.transform = detection_augmentations(img_height, img_width)
+        self.transform = augs.det_train_augs(img_height, img_width)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))

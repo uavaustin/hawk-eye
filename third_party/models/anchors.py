@@ -6,7 +6,7 @@ import torch
 import numpy as np
 
 
-class AnchorGenerator(torch.nn.Module):
+class AnchorGenerator:
     def __init__(
         self,
         img_height: int,
@@ -40,7 +40,6 @@ class AnchorGenerator(torch.nn.Module):
         >>> set([cell.shape for cell in anchor_gen.anchors_per_cell])
         {torch.Size([9, 4])}
         """
-        super().__init__()
         self.pyramid_levels = pyramid_levels
         self.img_height = img_height
         self.img_width = img_width

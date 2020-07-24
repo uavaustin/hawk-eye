@@ -16,9 +16,9 @@ import numpy as np
 @dataclasses.dataclass
 class ModelScales:
     width_coefficient: int
-    depth_coefficient: int 
-    resolution: int 
-    dropout_rate: int 
+    depth_coefficient: int
+    resolution: int
+    dropout_rate: int
 
 
 # Seen here:
@@ -48,12 +48,13 @@ _MODEL_SCALES = {
 @dataclasses.dataclass
 class MBConvBlockArgs:
     kernel_size: int
-    repeats: int 
-    filters_in: int 
-    filters_out: int 
-    expand_ratio: float 
-    strides: int 
-    se_ratio: float 
+    repeats: int
+    filters_in: int
+    filters_out: int
+    expand_ratio: float
+    strides: int
+    se_ratio: float
+
 
 # TODO(alex): Create a classification specific set of block args with smaller channels depths
 # Taken from official implementation:
@@ -65,7 +66,7 @@ _DEFAULT_BLOCKS_ARGS = [
     MBConvBlockArgs(3, 3, 40, 80, 6, 1, 0.25),
     MBConvBlockArgs(5, 3, 80, 112, 6, 1, 0.25),
     MBConvBlockArgs(5, 4, 112, 192, 6, 2, 0.25),
-    MBConvBlockArgs(3, 1, 192, 320, 6, 1, 0.25)
+    MBConvBlockArgs(3, 1, 192, 320, 6, 1, 0.25),
 ]
 
 # https://github.com/tensorflow/tpu/blob/master/models/official/efficientnet/efficientnet_builder.py#L185
@@ -133,6 +134,7 @@ def depthwise(channels: int, kernel_size: int, stride: int) -> List[torch.nn.Mod
             num_features=channels, momentum=_BATCH_NORM_MOMENTUM, eps=_BATCH_NORM_EPS
         ),
     ]
+
 
 # TODO(alex): Look to add the more efficient ECA attention layer here.
 class SqueezeExcitation(torch.nn.Module):
