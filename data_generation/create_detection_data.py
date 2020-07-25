@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""" This script generates training data for the object
-detector model. The output will be directories of images
-plus COCO metadata jsons. """
+""" This script generates training data for the object detector model. The output will be
+images and the corresponding COCO metadata jsons. """
 
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 import multiprocessing
 import random
 import json
@@ -443,11 +443,11 @@ if __name__ == "__main__":
     generate_all_images("detector_train", config.NUM_IMAGES, config.NUM_OFFSET)
     generate_all_images("detector_val", config.NUM_VAL_IMAGES, config.NUM_VAL_OFFSET)
 
+    # Loop back over the generated data and create the COCO datasets.
     create_coco_metadata(
         pathlib.Path(config.DATA_DIR / "detector_train/images"),
         pathlib.Path(config.DATA_DIR / "detector_train/train_coco.json"),
     )
-
     create_coco_metadata(
         pathlib.Path(config.DATA_DIR / "detector_val/images"),
         pathlib.Path(config.DATA_DIR / "detector_val/val_coco.json"),

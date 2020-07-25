@@ -92,6 +92,7 @@ class PostProcessor:
     def __init__(
         self,
         num_classes: int,
+        image_size: int,
         anchors_per_level: List[torch.Tensor],
         regressor: regression.Regressor,
         score_threshold: float = 0.1,
@@ -115,6 +116,7 @@ class PostProcessor:
 
         """
         self.num_classes = num_classes
+        self.image_size = torch.Tensor([image_size]).float()
         self.regressor = regressor
         self.anchors_per_level = anchors_per_level
         self.score_threshold = score_threshold
@@ -209,7 +211,7 @@ class PostProcessor:
 
         # TODO unhardcode
         return [
-            BoundingBox(box.int().cpu() / torch.Tensor([512]), float(conf), int(cls_id))
+            BoundingBox(box.int().cpu() / self.image_size, float(conf), int(cls_id))
             for box, conf, cls_id in zip(
                 boxes_all[keep], scores_all[keep], class_idxs_all[keep]
             )

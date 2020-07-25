@@ -2,6 +2,7 @@
 
 import pathlib
 from typing import List
+import sys
 
 from pycocotools import coco, cocoeval
 import numpy as np
@@ -36,6 +37,7 @@ def get_metrics(
 ) -> dict:
     iou_thresholds = np.array(metrics) / 100
 
+    sys.stdout = open(os.devnull, "w")
     coco_gt = coco.COCO(labels_path)
     coco_predicted = coco_gt.loadRes(str(predictions_path))
     cocoEval = cocoeval.COCOeval(coco_gt, coco_predicted, "bbox")
@@ -44,6 +46,7 @@ def get_metrics(
     cocoEval.params.maxDets = [100]
     cocoEval.evaluate()
     cocoEval.accumulate()
+    sys.stdout = sys.__stdout__
 
     results = {}
     for eval_type in ["ap", "ar"]:

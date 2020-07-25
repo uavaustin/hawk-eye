@@ -74,6 +74,8 @@ class Detector(torch.nn.Module):
             self._load_params(model_params)
 
         self.backbone = self._load_backbone(self.backbone)
+        self.backbone.delete_classification_head()
+
         self.fpn = self._load_fpn(self.fpn_type, self.backbone.get_pyramid_channels())
 
         self.anchors = anchors.AnchorGenerator(
@@ -101,8 +103,11 @@ class Detector(torch.nn.Module):
             ]
             self.cuda()
 
+        # TODO(Alex): Force square images.
+        self.image_size = model_params["image_size"]
         self.postprocess = postprocess.PostProcessor(
             num_classes=num_classes,
+            image_size=self.image_size,
             anchors_per_level=self.anchors.anchors_over_all_feature_maps,
             regressor=regression.Regressor(),
             max_detections_per_image=num_detections_per_image,
@@ -164,7 +169,11 @@ class Detector(torch.nn.Module):
 
     def _load_fpn(self, fpn_name: str, features: List[int]) -> torch.nn.Module:
         if "retinanet" in fpn_name:
-            fpn_ = fpn.FPN(in_channels=features[-3:], out_channels=self.fpn_channels)
+            fpn_ = fpn.FPN(
+                in_channels=features[-3:],
+                out_channels=self.fpn_channels,
+                num_levels=len(self.fpn_levels),
+            )
         elif "bifpn" in fpn_name:
             fpn_ = bifpn.BiFPN(
                 in_channels=features,

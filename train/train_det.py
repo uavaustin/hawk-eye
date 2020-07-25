@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-""" Generalized object detection script. This script will use as many gpus
-as torch can find. If Nvidia's Apex is available, that will be used for
-mixed precision training. """
+""" Generalized object detection script. This script will use as many gpus as PyTorch
+can find. If Nvidia's Apex is available, that will be used for mixed precision
+training to speed the process up. """
 
 import argparse
 import pathlib
@@ -38,21 +38,24 @@ _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
 _SAVE_DIR = pathlib.Path("~/runs/uav-det").expanduser()
 
 
-def detections_to_dict(bboxes: list, image_ids: torch.Tensor) -> List[dict]:
+def detections_to_dict(
+    bboxes: list, image_ids: torch.Tensor, image_size: torch.Tensor
+) -> List[dict]:
     """ Used to turn raw bounding box detections into a dictionary which can be
     serialized for the pycocotools package. """
     detections: List[dict] = []
     for image_boxes, image_id in zip(bboxes, image_ids):
 
         for bbox in image_boxes:
-            box = bbox.box.int()
+            box = bbox.box
             # XYXY -> XYWH
             box[2:] -= box[:2]
+            box *= image_size
             detections.append(
                 {
                     "image_id": image_id.item(),
                     "category_id": bbox.class_id,
-                    "bbox": box.tolist(),
+                    "bbox": box.int().tolist(),
                     "score": bbox.confidence,
                 }
             )
@@ -66,6 +69,15 @@ def train(
     train_cfg: dict,
     save_dir: pathlib.Path = None,
 ) -> None:
+    """ Main training loop that will also call out to separate evaluation function.
+
+    Args:
+        local_rank: The process's rank. 0 if there is no distributed training.
+        world_size: How many devices are participating in training.
+        model_cfg: The model's training params.
+        train_cfg: The config of training parameters.
+        save_dir: Where to save the model archive.
+    """
 
     # Do some general setup. When using distributed training and Apex, the device needs
     # to be set before loading the model.
@@ -91,7 +103,8 @@ def train(
         generate_config.DATA_DIR / "detector_train/train_coco.json",
         train_batch_size,
         world_size,
-        shuffle=True
+        shuffle=True,
+        image_size=model_cfg.get("image_size", 512)
     )
     eval_batch_size = train_cfg.get("eval_batch_size", 8)
     eval_loader, _ = create_data_loader(
@@ -100,7 +113,8 @@ def train(
         generate_config.DATA_DIR / "detector_val/val_coco.json",
         eval_batch_size,
         world_size,
-        shuffle=False
+        shuffle=False,
+        image_size=model_cfg.get("image_size", 512)
     )
 
     # Load the model and remove the classification head of the backbone.
@@ -108,7 +122,7 @@ def train(
     model = detector.Detector(
         num_classes=len(generate_config.OD_CLASSES),
         model_params=model_cfg,
-        confidence=0.05,
+        confidence=0.05,  # TODO(alex): Make configurable?
     )
     model.to(device)
     model.train()
@@ -135,19 +149,22 @@ def train(
 
     eval_results = None
 
+    lr_config = train_cfg.get("lr_schedule", {})
+    warm_up_percent = lr_config.get("warmup_fraction", 0) * epochs / 100
+    start_lr = float(lr_config.get("start_lr"))
+    max_lr = float(lr_config.get("max_lr"))
+    end_lr = float(lr_config.get("end_lr"))
     lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
-        max_lr=1e-2,
+        max_lr=max_lr,
         total_steps=len(train_loader) * epochs,
-        final_div_factor=1e9,
-        div_factor=2,
-        pct_start=2 * len(train_loader) / (len(train_loader) * epochs),
+        final_div_factor=start_lr / end_lr,
+        div_factor=max_lr / start_lr,
+        pct_start=warm_up_percent,
     )
     for epoch in range(epochs):
 
-        all_losses = []
-        clf_losses = []
-        reg_losses = []
+        all_losses, clf_losses, reg_losses = [], [], []
 
         # Set the train loader's epoch so data will be re-shuffled.
         train_sampler.set_epoch(epoch)
@@ -199,43 +216,56 @@ def train(
                 )
 
         # Call evaluation function
+        if is_main:
+            print("Starting evaluation")
         model.eval()
-        eval_results = eval(model, eval_loader, eval_results, use_cuda, save_dir)
+        start = time.perf_counter()
+        eval_results = eval(model, eval_loader, eval_results, save_dir)
         model.train()
 
-        print(
-            f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5} \n"
-            f"{eval_results}"
-        )
+        if is_main:
+            print(
+                f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5} \n"
+                f"{eval_results}"
+            )
+            print(f"Evaluation took {time.perf_counter() - start:.3} seconds.")
 
 
+@torch.no_grad()
 def eval(
     model: torch.nn.Module,
     eval_loader: torch.utils.data.DataLoader,
     previous_best: dict,
-    use_cuda: bool = False,
     save_dir: pathlib.Path = None,
-) -> float:
-    """ Evalulate the model against the evaulation set. Save the best
-    weights if specified. Use the pycocotools package for metrics. """
-    start = time.perf_counter()
-    total_num = 0
-    with torch.no_grad():
-        detections_dict: List[dict] = []
-        for images, _, _, image_ids in eval_loader:
-            if torch.cuda.is_available():
-                images = images.cuda()
-            total_num += images.shape[0]
-            detections = model(images)
-            detections_dict.extend(detections_to_dict(detections, image_ids))
+) -> dict:
+    """ Evalulate the model against the evaulation set. Save the best weights if
+    specified. Use the pycocotools package for metrics.
 
-    print(f"Evaluated {total_num} images in {time.perf_counter() - start:.3} seconds.")
+    Args:
+        model: The model to evaluate.
+        eval_loader: The eval dataset loader.
+        previous_best: The current best eval metrics.
+        save_dir: Where to save the model weights.
+
+    Returns:
+        The updated best metrics.
+    """
+    detections_dict: List[dict] = []
+    for images, _, _, image_ids in eval_loader:
+        if torch.cuda.is_available():
+            images = images.cuda()
+        detections = model(images)
+        detections_dict.extend(
+            detections_to_dict(detections, image_ids, model.module.image_size)
+        )
+
     if detections_dict:
         with tempfile.TemporaryDirectory() as d:
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
             results = coco_eval.get_metrics(
-                "/home/alex/Desktop/projects/uav/hawk-eye/data_generation/data/detector_val/val_coco.json", tmp_json
+                generate_config.DATA_DIR / "detector_val/val_coco.json",
+                tmp_json,
             )
 
     previous_best = results if previous_best is None else previous_best
@@ -254,8 +284,24 @@ def create_data_loader(
     metadata_path: pathlib.Path,
     batch_size: int,
     world_size: int,
-    shuffle: bool
+    shuffle: bool,
+    image_size: int
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
+    """ Simple function to create the dataloaders for training and evaluation.
+
+    Args:
+        training_cfg: The parameters related to the training regime.
+        data_dir: The directory where the images are located.
+        metadata_path: The path to the COCO metadata json.
+        batch_size: The loader's batch size.
+        world_size: World size is needed to determine if a distributed sampler is needed.
+        shuffle: To shuffle the data or not when sampling. False for validation.
+        image_size: Size of input images into the model. NOTE: we force square images.
+
+    Returns:
+        The dataloader and the loader's sampler. For _training_ we have to set the
+        sampler's epoch to reshuffle.
+    """
 
     assert data_dir.is_dir(), data_dir
 
@@ -263,12 +309,12 @@ def create_data_loader(
         data_dir,
         metadata_path=metadata_path,
         img_ext=generate_config.IMAGE_EXT,
-        img_width=512,
-        img_height=512,
+        img_width=image_size,
+        img_height=image_size,
     )
 
     # If using distributed training, use a DistributedSampler to load exclusive sets
-    # of data.
+    # of data per process.
     sampler = None
     if world_size > 1:
         sampler = torch.utils.data.DistributedSampler(dataset, shuffle=shuffle)
@@ -280,25 +326,32 @@ def create_data_loader(
 
 
 def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Optimizer:
-    """ Take in optimizer config and create the optimizer for training. """
-    name = optim_cfg.get("type", None)
+    """ Take in optimizer config and create the optimizer for training.
+
+    Args:
+        optim_cfg: The parameters for the optimizer generation.
+        model: The model to create an optimizer for. We need to read this model's
+            parameters.
+
+    Returns:
+        An optimizer for the model.
+    """
+
+    name = optim_cfg.get("type", "sgd")  # Default to SGD, most reliable.
     if name.lower() == "sgd":
-        lr = float(optim_cfg["lr"])
-        momentum = float(optim_cfg["momentum"])
-        weight_decay = float(optim_cfg["weight_decay"])
         optimizer = torch.optim.SGD(
-            add_weight_decay(model, weight_decay),
-            lr=lr,
-            momentum=momentum,
+            add_weight_decay(model, float(optim_cfg["weight_decay"])),
+            lr=float(optim_cfg["lr"]),
+            momentum=float(optim_cfg["momentum"]),
             weight_decay=0,
             nesterov=True,
         )
     elif name.lower() == "rmsprop":
-        lr = float(optim_cfg["lr"])
-        momentum = float(optim_cfg["momentum"])
-        weight_decay = float(optim_cfg["weight_decay"])
         optimizer = torch.optim.RMSprop(
-            add_weight_decay(model, weight_decay), lr=lr, momentum=momentum, weight_decay=0
+            add_weight_decay(model, float(optim_cfg["weight_decay"])),
+            lr=float(optim_cfg["lr"]),
+            momentum=float(optim_cfg["momentum"]),
+            weight_decay=0,
         )
     else:
         raise ValueError(f"Improper optimizer supplied: {name}.")
@@ -309,17 +362,18 @@ def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Opt
 def add_weight_decay(
     model: torch.nn.Module, weight_decay: float = 1e-5
 ) -> List[Dict[str, Any]]:
-    """ Add weight decay to only the dense layer weights, not their biases 
-    or not the norm layers.
+    """ Add weight decay to only the convolutional kernels. Do not add weight decay
+    to biases and BN. TensorFlow does this automatically, but for some reason this is
+    the PyTorch default.
 
     Args:
         model: The model where the weight decay is applied.
         weight_decay: How much decay to apply.
+
     Returns:
         A list of dictionaries encapsulating which params need weight decay.
     """
-    decay = []
-    no_decay = []
+    decay, no_decay = [], []
     for name, param in model.named_parameters():
         if not param.requires_grad:
             continue
