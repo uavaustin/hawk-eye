@@ -133,3 +133,5 @@ TARGET_COMBINATIONS = [
     ALPHA_COLORS,
     [angle for angle in range(0, 360, 45)],
 ]
+
+EMPTY_TILE_PROB = generate_config.get("empty_slice_probability", 0.0)

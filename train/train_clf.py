@@ -155,33 +155,6 @@ def create_data_loader(
     return loader
 
 
-def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Optimizer:
-    """ Take in optimizer config and create the optimizer for training. """
-    name = optim_cfg.get("type", None)
-    if name.lower() == "sgd":
-        lr = float(optim_cfg["lr"])
-        momentum = float(optim_cfg["momentum"])
-        weight_decay = float(optim_cfg["weight_decay"])
-        optimizer = torch.optim.SGD(
-            model.parameters(),
-            lr=lr,
-            momentum=momentum,
-            weight_decay=weight_decay,
-            nesterov=True,
-        )
-    elif name.lower() == "rmsprop":
-        lr = float(optim_cfg["lr"])
-        momentum = float(optim_cfg["momentum"])
-        weight_decay = float(optim_cfg["weight_decay"])
-        optimizer = torch.optim.RMSprop(
-            model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
-        )
-    else:
-        raise ValueError(f"Improper optimizer supplied {name}.")
-
-    return optimizer
-
-
 if __name__ == "__main__":
     torch.random.manual_seed(42)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contains logic for finding targets in images."""
+""" Contains logic for finding targets in images. """
 
 import argparse
 import pathlib
@@ -70,6 +70,7 @@ def create_batches(
         yield image_tensor[idx : idx + batch_size], coords[idx : idx + batch_size]
 
 
+@torch.no_grad()
 def find_targets(
     clf_model: torch.nn.Module,
     det_model: torch.nn.Module,
@@ -97,9 +98,8 @@ def find_targets(
             # Resize the slices for classification.
             tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
 
-            with torch.no_grad():
-                # Call the pre-clf to find the target tiles.
-                preds = clf_model.classify(tiles)
+            # Call the pre-clf to find the target tiles.
+            preds = clf_model.classify(tiles)
 
             # Get the ids of tiles that contain targets
             target_ids = preds == torch.ones_like(preds)
@@ -115,8 +115,7 @@ def find_targets(
                     det_tiles = torch.nn.functional.interpolate(
                         det_tiles, config.DETECTOR_SIZE
                     )
-                    with torch.no_grad():
-                        boxes = det_model(det_tiles)
+                    boxes = det_model(det_tiles)
 
                     retval.extend(zip(target_tiles, boxes))
             else:

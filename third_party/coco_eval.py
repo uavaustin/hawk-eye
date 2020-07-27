@@ -3,6 +3,7 @@
 import pathlib
 from typing import List
 import sys
+import os
 
 from pycocotools import coco, cocoeval
 import numpy as np

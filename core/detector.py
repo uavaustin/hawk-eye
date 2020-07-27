@@ -103,7 +103,6 @@ class Detector(torch.nn.Module):
             ]
             self.cuda()
 
-        # TODO(Alex): Force square images.
         self.image_size = model_params["image_size"]
         self.postprocess = postprocess.PostProcessor(
             num_classes=num_classes,

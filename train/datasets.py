@@ -64,32 +64,17 @@ class DetDataset(torch.utils.data.Dataset):
             )
             for item in labels["bboxes"]
         ]
-        boxes = torch.stack([torch.clamp(box, 0.0, 1.0) for box in boxes])
+
+        if boxes:
+            boxes = torch.stack([torch.clamp(box, 0.0, 1.0) for box in boxes])
 
         category_ids = [label["class_id"] for label in labels["bboxes"]]
 
-        # TODO(alex): Implement a collation function to use during data loading.
-        # Right now this works because we have the same number of boxes on each sample.
-        augmented = self.transform(
+        return self.transform(
             image=image,
             bboxes=boxes,
             category_id=category_ids,
             image_id=labels["image_id"],
-        )
-
-        boxes = torch.Tensor(augmented["bboxes"])
-        image = torch.Tensor(augmented["image"]).permute(2, 0, 1)
-
-        # Image coordinates
-        boxes = boxes * torch.Tensor(
-            [self.img_height, self.img_width, self.img_height, self.img_width]
-        )
-
-        return (
-            image,
-            boxes,
-            torch.Tensor(augmented["category_id"]),
-            augmented["image_id"],
         )
 
     def __len__(self) -> int:

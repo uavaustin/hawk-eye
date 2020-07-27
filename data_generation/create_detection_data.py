@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """ This script generates training data for the object detector model. The output will be
-images and the corresponding COCO metadata jsons. """
+images and the corresponding COCO metadata jsons. For most RetinaNet related training we
+can train on images with _and without_ targets. Training on images without any targets
+is valuable so the model sees that not every image will have a target, as this is the
+real life case. """
 
 from typing import List
 from typing import Tuple
@@ -27,10 +30,17 @@ CLASSES = config.OD_CLASSES
 ALPHAS = config.ALPHAS
 
 
-def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
-    """ Generate the full sized images. """
+def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
+    """ Main function which prepares all the relevant information regardining data
+    generation. Data will be generated using a multiprocessing pool for efficiency. 
+    
+    Args:
+        gen_type: The name of the data being generated.
+        num_gen: The number of images to generate.
+        offset: TODO(alex): Are we still using this? 
+    """
+    # Make the proper folders for storing the data.
     images_dir = config.DATA_DIR / gen_type / "images"
-    config.DATA_DIR.mkdir(exist_ok=True, parents=True)
     images_dir.mkdir(exist_ok=True, parents=True)
 
     r_state = random.getstate()
@@ -47,7 +57,6 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
     backgrounds = random_list(get_backgrounds(), num_gen)
     flip_bg = random_list([False, True], num_gen)
     mirror_bg = random_list([False, True], num_gen)
-    sharpen = random_list(range(0, 3), num_gen)
     blurs = random_list(range(1, 2), num_gen)
     num_targets = random_list(range(1, MAX_SHAPES), num_gen)
 
@@ -109,7 +118,6 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
         crop_ys,
         flip_bg,
         mirror_bg,
-        sharpen,
         blurs,
         shape_params,
         [gen_type] * num_gen,
@@ -117,7 +125,7 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
 
     random.setstate(r_state)
 
-    # Generate in a pool. If specificed, use a given number of threads.
+    # Generate data in a multiprocessing pool to use all CPU resources.
     with multiprocessing.Pool(None) as pool:
         processes = pool.imap_unordered(generate_single_example, data)
         for _ in tqdm(processes, total=num_gen):
@@ -133,7 +141,6 @@ def generate_single_example(data: zip) -> None:
         crop_y,
         flip_bg,
         mirror_bg,
-        sharpen,
         blur,
         shape_params,
         gen_type,
@@ -153,15 +160,16 @@ def generate_single_example(data: zip) -> None:
     if mirror_bg:
         background = ImageOps.mirror(background)
 
-    shape_imgs = [create_shape(*shape_param) for shape_param in shape_params]
+    if random.randint(0, 100) / 100 >= config.EMPTY_TILE_PROB:
+        shape_imgs = [create_shape(*shape_param) for shape_param in shape_params]
+        shape_bboxes, background = add_shapes(
+            background, shape_imgs, shape_params, blur
+        )
+    else:
+        shape_bboxes = []
 
-    shape_bboxes, full_img = add_shapes(background, shape_imgs, shape_params, blur)
-
-    if sharpen == 1:
-        full_img = full_img.filter(ImageFilter.SHARPEN)
-
-    full_img = full_img.resize(config.DETECTOR_SIZE)
-    full_img.save(img_fn)
+    background = background.resize(config.DETECTOR_SIZE)
+    background.save(img_fn)
 
     objects = [
         {
