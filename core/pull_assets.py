@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
-""" Functions to pull in data from the cloud. """
+""" Functions to pull in data from the cloud.
+This relies on Google Cloud Storage python API. Please see the Image Recognition lead
+to recieve the proper credentials for access to the bucket. """
+
 import tarfile
 import pathlib
 import tempfile
+import os
 from typing import List, Union
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
+    pathlib.Path("~/ac84adeb9cc3.json").expanduser()
+)
+from google.cloud import storage
 import requests
 
 from data_generation import generate_config as config
+
+_BUCKET = "uav-austin-test"
+
+storage_client = storage.Client()
+bucket = storage_client.bucket("uav-austin-test")
 
 
 def pull_all() -> None:
@@ -19,7 +32,9 @@ def pull_all() -> None:
 
 def pull_backgrounds() -> None:
     """Pull the shape generation backgrounds."""
-    download_file(config.BACKGROUNDS_URL, config.ASSETS_DIR)
+    download_file(
+        [f"assets/{item}" for item in config.BACKGROUNDS_URL], config.ASSETS_DIR
+    )
 
 
 def pull_base_shapes() -> None:
@@ -39,16 +54,16 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
         filenames = [filenames]
 
     for filename in filenames:
-        folder_name = filename.split(".", 1)[0]
+        filename = pathlib.Path(filename)
+        folder_name = filename.stem.split(".", 1)[0]
         if not (destination / folder_name).is_dir():
-            url = f"{config._DOWNLOAD_BASE}{filename}"
             print(f"Fetching {filename}...", end="", flush=True)
-            res = requests.get(str(url), stream=True)
 
             with tempfile.TemporaryDirectory() as d:
                 tmp_file = pathlib.Path(d) / "file.tar.gz"
+                blob = bucket.blob(str(filename))
+                blob.download_to_filename(tmp_file)
 
-                tmp_file.write_bytes(res.raw.read())
                 untar_and_move(tmp_file, destination)
 
             print(" done.")
@@ -58,7 +73,7 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
 
     print(f"Extracting {filename.name}...", end="", flush=True)
-    with tarfile.open(filename) as tar:
+    with tarfile.open(filename, "r") as tar:
         tar.extractall(destination)
 
     # Remove hidden files that might have been left behind by

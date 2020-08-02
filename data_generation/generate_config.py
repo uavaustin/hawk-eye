@@ -10,19 +10,15 @@ generate_config = config["generate"]
 BACKGROUNDS_VERSIONS = generate_config.get("backgrounds_versions", [])
 
 BASE_SHAPES_VERSION = generate_config.get("base_shapes_version", "v1")
-_DOWNLOAD_BASE = generate_config.get(
-    "download_base_url",
-    "https://bintray.com/uavaustin/target-finder-assets/download_file?file_path=",
-)
 
 BACKGROUNDS_URL = [f"backgrounds-{v}.tar.gz" for v in BACKGROUNDS_VERSIONS]
-BASE_SHAPES_URL = f"base-shapes-{BASE_SHAPES_VERSION}.tar.gz"
-FONTS_URL = "fonts.tar.gz"
+BASE_SHAPES_URL = [f"assets/base-shapes-{v}.tar.gz" for v in BASE_SHAPES_VERSION]
+FONTS_URL = "assets/fonts.tar.gz"
 
 ASSETS_DIR = pathlib.Path(__file__).parent / "assets"
 
 BACKGROUNDS_DIRS = [ASSETS_DIR / f"backgrounds-{v}" for v in BACKGROUNDS_VERSIONS]
-BASE_SHAPES_DIR = ASSETS_DIR / f"base-shapes-{BASE_SHAPES_VERSION}"
+BASE_SHAPES_DIRS = [ASSETS_DIR / f"base-shapes-{v}" for v in BASE_SHAPES_VERSION]
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 

@@ -11,3 +11,4 @@ dataclasses==0.7
 numpy==1.18.1
 Cython==0.29.15
 pre-commit==2.5.1
+google-cloud-storage==1.30.0
