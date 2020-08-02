@@ -114,7 +114,6 @@ class ESE(torch.nn.Module):
         return out * x
 
 
-
 class _OSA(torch.nn.Module):
     def __init__(
         self,
@@ -124,11 +123,11 @@ class _OSA(torch.nn.Module):
         layer_per_block: int,
         use_depthwise: bool = False,
     ) -> None:
-        """ Implementation of an OSA layer which takes the output of its conv layers and 
+        """ Implementation of an OSA layer which takes the output of its conv layers and
         concatenates them into one large tensor which is passed to the next layer. The
         goal with this concatenation is to preserve information flow through the model
-        layers. This also ends up helping with small object detection. 
-        
+        layers. This also ends up helping with small object detection.
+
         Args:
             in_channels: Channel depth of the input to the OSA block.
             stage_channels: Channel depth to reduce the input.

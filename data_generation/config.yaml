@@ -2,13 +2,13 @@ classes:
   shapes:
     - circle
     - cross
-    - pentagon 
-    - quarter-circle 
-    - rectangle 
-    - semicircle 
-    - square 
+    - pentagon
+    - quarter-circle
+    - rectangle
+    - semicircle
+    - square
     - star
-    - trapezoid 
+    - trapezoid
     - triangle
   alphas:
     - A
@@ -56,9 +56,9 @@ inputs:
     width: 224
     height: 224
 generate:
-  backgrounds_versions: ["v1"]
+  backgrounds_versions: ["v4"]
   base_shapes_version: v1
-  download_base_url: https://bintray.com/uavaustin/target-finder-assets/download_file?file_path=
+  download_base_url: https://utexas.box.com/v/
   max_shapes_per_image: 2
   threads: 0
   delete_on_convert: false

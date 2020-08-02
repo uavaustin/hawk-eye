@@ -10,10 +10,7 @@ generate_config = config["generate"]
 BACKGROUNDS_VERSIONS = generate_config.get("backgrounds_versions", [])
 
 BASE_SHAPES_VERSION = generate_config.get("base_shapes_version", "v1")
-_DOWNLOAD_BASE = generate_config.get(
-    "download_base_url",
-    "https://bintray.com/uavaustin/target-finder-assets/download_file?file_path=",
-)
+_DOWNLOAD_BASE = generate_config.get("download_base_url", "https://utexas.box.com/v/")
 
 BACKGROUNDS_URL = [f"backgrounds-{v}.tar.gz" for v in BACKGROUNDS_VERSIONS]
 BASE_SHAPES_URL = f"base-shapes-{BASE_SHAPES_VERSION}.tar.gz"

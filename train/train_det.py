@@ -34,13 +34,13 @@ def detections_to_dict(
     bboxes: list, image_ids: torch.Tensor, image_size: torch.Tensor
 ) -> List[dict]:
     """ Used to turn raw bounding box detections into a dictionary which can be
-    serialized for the pycocotools package. 
-    
+    serialized for the pycocotools package.
+
     Args:
         bboxes: A list of bounding boxes to save.
-        image_ids: The ids of the images which the boxes correspond to. We need these 
+        image_ids: The ids of the images which the boxes correspond to. We need these
             in order to match predictions to ground truth.
-        image_size: The boxes are original normalized, so we need to project them to 
+        image_size: The boxes are original normalized, so we need to project them to
             image coordinates.
 
     Returns:
@@ -95,7 +95,7 @@ def train(
     # can communicate to each other.
     if world_size > 1:
         torch.distributed.init_process_group(
-            "nccl", init_method="env://", world_size=world_size, rank=local_rank,
+            "nccl", init_method="env://", world_size=world_size, rank=local_rank
         )
     # Load the model.
     model = detector.Detector(
@@ -142,7 +142,7 @@ def train(
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
         model = torch.nn.parallel.DistributedDataParallel(
-            model, device_ids=[local_rank], 
+            model, device_ids=[local_rank]
         )
 
     epochs = train_cfg.get("epochs", 0)
@@ -208,7 +208,6 @@ def train(
 
             all_losses.append(total_loss.item())
             # Perform the parameter updates
-            optimizer.step()
             lr_scheduler.step()
             lr = optimizer.param_groups[0]["lr"]
 
@@ -272,7 +271,7 @@ def eval(
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
             results = coco_eval.get_metrics(
-                generate_config.DATA_DIR / "detector_val/val_coco.json", tmp_json,
+                generate_config.DATA_DIR / "detector_val/val_coco.json", tmp_json
             )
 
         # If there are the first results, set the previous to the current.

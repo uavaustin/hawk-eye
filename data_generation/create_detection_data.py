@@ -32,12 +32,12 @@ ALPHAS = config.ALPHAS
 
 def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
     """ Main function which prepares all the relevant information regardining data
-    generation. Data will be generated using a multiprocessing pool for efficiency. 
-    
+    generation. Data will be generated using a multiprocessing pool for efficiency.
+
     Args:
         gen_type: The name of the data being generated.
         num_gen: The number of images to generate.
-        offset: TODO(alex): Are we still using this? 
+        offset: TODO(alex): Are we still using this?
     """
     # Make the proper folders for storing the data.
     images_dir = config.DATA_DIR / gen_type / "images"

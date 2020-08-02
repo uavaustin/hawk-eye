@@ -3,19 +3,20 @@
 however, this script relies upon detection already existing. Also, we need to ensure our
 output dataset does not have repeats of image slices between the train and validation
 sets -- this would mess up our training metrics. Since the detector data can contain
-empty tiles, we will not be copying those here. Instead we prefer to generate our own 
+empty tiles, we will not be copying those here. Instead we prefer to generate our own
 empty slices so we have precise cnotrol over which exist. """
 
 import json
+import math
+import random
 import shutil
+from typing import Tuple
 
-from tqdm import tqdm
-from PIL import Image, ImageEnhance, ImageOps, ImageFilter
-import multiprocessing
 import numpy as np
+from PIL import Image
+import tqdm
 
-import generate_config as config
-from create_detection_data import random_list, get_backgrounds
+from data_generation import generate_config as config
 
 # Get constants from config
 CLF_WIDTH, CLF_HEIGHT = config.PRECLF_SIZE
@@ -36,44 +37,57 @@ def create_clf_images(gen_type: str, num_gen: int) -> None:
     images_dir = config.DATA_DIR / data_folder / "images"
 
     idx = 0
-    for image_path in images_dir.glob(f"*{config.IMAGE_EXT}"):
+    for image_path in tqdm.tqdm(
+        list(images_dir.glob(f"*{config.IMAGE_EXT}")), total=num_gen
+    ):
         if json.loads(image_path.with_suffix(".json").read_text())["bboxes"]:
             # If there are labels, copy it to the save folder with the proper filename.
             shutil.copy2(image_path, save_dir / f"target_{idx}{image_path.suffix}")
             idx += 1
+            if idx > num_gen:
+                break
 
-    # Get random crops and augmentations for background
-    backgrounds = get_backgrounds()
-    gen_types = [gen_type] * num_gen
+    # Collect all the backgrounds.
+    backgrounds = []
+    for bkg_dir in config.BACKGROUNDS_DIRS:
+        backgrounds.extend(list(bkg_dir.glob("*")))
+    random.shuffle(backgrounds)
 
-    numbers = list(range(len(backgrounds)))
-    data = zip(get_backgrounds(), [gen_type] * num_gen, numbers)
+    # Calculate the 80/20 split.
+    val_idx = math.ceil(0.2 * len(backgrounds))
+    backgrounds = (
+        backgrounds[:val_idx] if "train" in gen_type else backgrounds[-val_idx:]
+    )
 
-    with multiprocessing.Pool(None) as pool:
-        processes = pool.imap_unordered(_single_clf_image, data)
-        for _ in tqdm(processes, total=num_gen):
-            pass
+    for idx, img in enumerate(tqdm.tqdm(backgrounds, total=num_gen)):
+        single_clf_image(img, gen_type, idx, num_gen)
 
 
-def _single_clf_image(data) -> None:
-    """Crop detection image and augment clf image and save"""
-    image, gen_type, number = data
+def single_clf_image(
+    image: Image.Image, gen_type: str, number: int, num_gen: int
+) -> None:
+    """ Slice out crops from the original background image and save to disk. NOTE: we do
+    not have any overlap between adjacent tiles because we want to avoid having any
+    leakage between images. With data leakage, we might end up with two adjacent tiles in
+    both the train and eval set. """
+    image = Image.open(image)
     tile_num = 0
-    for x in range(0, image.size[0], config.CROP_SIZE[0] - config.CROP_OVERLAP):
-        for y in range(0, image.size[1], config.CROP_SIZE[1] - config.CROP_OVERLAP):
-            crop = image.crop(
-                (x, y, x + config.CROP_SIZE[0], y + config.CROP_SIZE[1])
-            )
+    for x in range(0, image.size[0] - config.CROP_SIZE[1], config.CROP_SIZE[0]):
+        for y in range(0, image.size[1] - config.CROP_SIZE[1], config.CROP_SIZE[1]):
+            crop = image.crop((x, y, x + config.CROP_SIZE[0], y + config.CROP_SIZE[1]))
             crop = crop.resize(config.PRECLF_SIZE)
             data_path = config.DATA_DIR / gen_type
             save_path = (
-                data_path / f"background_{number}_{tile_num}{x}{y}{config.IMAGE_EXT}"
+                data_path / f"background_{number}_{tile_num}_{x}_{y}{config.IMAGE_EXT}"
             )
             crop.save(save_path)
             tile_num += 0
+            if tile_num > num_gen:
+                break
 
 
 if __name__ == "__main__":
+    random.seed(42)
 
     if config.NUM_IMAGES != 0:
         create_clf_images("clf_train", config.NUM_IMAGES)

@@ -39,14 +39,14 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
         filenames = [filenames]
 
     for filename in filenames:
-        folder_name = filename.split(".", 1)[0]
-        if not (destination / folder_name).is_dir():
-            url = f"{config._DOWNLOAD_BASE}{filename}"
+        if not (destination / filename).is_dir():
+            url = f"https://utexas.box.com/shared/static/95juw09529mf0k1shsbr3me1ysmo5e41.gz"
+            print(url)
             print(f"Fetching {filename}...", end="", flush=True)
             res = requests.get(str(url), stream=True)
 
             with tempfile.TemporaryDirectory() as d:
-                tmp_file = pathlib.Path(d) / "file.tar.gz"
+                tmp_file = pathlib.Path("/tmp/test") / f"{filename}.tar.gz"
 
                 tmp_file.write_bytes(res.raw.read())
                 untar_and_move(tmp_file, destination)
@@ -56,9 +56,9 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 
 # Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
-
+    print(filename, destination)
     print(f"Extracting {filename.name}...", end="", flush=True)
-    with tarfile.open(filename) as tar:
+    with tarfile.open(filename, "r") as tar:
         tar.extractall(destination)
 
     # Remove hidden files that might have been left behind by
@@ -67,9 +67,11 @@ def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
         filename.unlink()
 
 
-def download_model(model_type: str, version: str) -> pathlib.Path:
+def download_model(model_type: str, timestamp: str) -> pathlib.Path:
     assert model_type in ["classifier", "detector"], f"Unsupported model {model_type}."
-    filename = f"{model_type}-{version}"
+    filename = f"{model_type}-{timestamp}"
     if not (config.ASSETS_DIR / filename).is_dir():
-        download_file(f"{filename}.tar.gz", config.ASSETS_DIR / filename)
+        dest = config.ASSETS_DIR / filename
+        download_file(f"{filename}", dest)
+
     return config.ASSETS_DIR / filename
