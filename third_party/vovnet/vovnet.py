@@ -98,24 +98,21 @@ def pointwise(in_channels: int, out_channels: int) -> List[torch.nn.Module]:
     ]
 
 
-# As seen here: https://arxiv.org/pdf/1910.03151v4.pdf. Can outperform ESE with far fewer
-# paramters.
-class ESA(torch.nn.Module):
-    def __init__(self, channels: int) -> None:
+class ESE(torch.nn.Module):
+    """This is adapted from the efficientnet Squeeze Excitation. The idea is to not
+    squeeze the number of channels to keep more information."""
+
+    def __init__(self, channel: int) -> None:
         super().__init__()
-        self.pool = torch.nn.AdaptiveAvgPool2d(1)
-        self.conv = torch.nn.Conv2d(1, 1, kernel_size=3, padding=1, bias=False)
+        self.avg_pool = torch.nn.AdaptiveAvgPool2d(1)
+        self.fc = torch.nn.Conv2d(channel, channel, kernel_size=1)  # (Linear)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = self.pool(x)
-        # BCHW -> BHCW
-        y = y.permute(0, 2, 1, 3)
-        y = self.conv(y)
+        out = self.avg_pool(x)
+        out = self.fc(out)
+        out = torch.nn.functional.relu6(out + 3.0, inplace=True) / 6.0
+        return out * x
 
-        # Change the dimensions back to BCHW
-        y = y.permute(0, 2, 1, 3)
-        y = torch.sigmoid_(y)
-        return x * y.expand_as(x)
 
 
 class _OSA(torch.nn.Module):
@@ -172,7 +169,7 @@ class _OSA(torch.nn.Module):
         # feature aggregation
         aggregated += layer_per_block * stage_channels
         self.concat = torch.nn.Sequential(*pointwise(aggregated, concat_channels))
-        self.esa = ESA(concat_channels)
+        self.esa = ESE(concat_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 

@@ -1,4 +1,4 @@
-""" Datasets for loading classification or detection data. """
+""" Datasets for loading various types of data. """
 
 from typing import Tuple
 import pathlib

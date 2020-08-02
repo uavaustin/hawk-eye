@@ -135,13 +135,14 @@ def train(
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
 
     # Setup mixed precision abilities if specified.
-    scaler = torch.cuda.amp.GradScaler()
+    scaler = torch.cuda.amp.GradScaler(init_scale=1)
+    autocast = torch.cuda.amp.autocast()
 
     # Adjust the model for distributed training. If we are using apex, wrap the model
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
         model = torch.nn.parallel.DistributedDataParallel(
-            model, device_ids=[local_rank], find_unused_parameters=True
+            model, device_ids=[local_rank], 
         )
 
     epochs = train_cfg.get("epochs", 0)
@@ -184,7 +185,7 @@ def train(
                 gt_regressions = gt_regressions.to(device)
                 gt_classes = gt_classes.to(device)
 
-            with torch.cuda.amp.autocast():
+            with autocast:
                 # Forward pass through detector
                 cls_per_level, reg_per_level = model(images)
 
@@ -197,8 +198,8 @@ def train(
                     num_classes=len(generate_config.OD_CLASSES),
                 )
                 total_loss = cls_loss + reg_loss
-                clf_losses.append(cls_loss)
-                reg_losses.append(reg_loss)
+            clf_losses.append(cls_loss)
+            reg_losses.append(reg_loss)
 
             # Propogate the gradients back through the model
             scaler.scale(total_loss).backward()
