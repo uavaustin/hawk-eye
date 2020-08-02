@@ -265,8 +265,6 @@ def create_shape(
     y,
 ) -> PIL.Image.Image:
     """Create a shape given all the input parameters"""
-    target_rgb = augment_color(target_rgb)
-    alpha_rgb = augment_color(alpha_rgb)
 
     image = get_base(base, target_rgb, size)
     image = strip_image(image)
@@ -280,15 +278,6 @@ def create_shape(
     image = strip_image(image)
 
     return image
-
-
-def augment_color(color_rgb):
-    """Shift the color a bit"""
-    r, g, b = color_rgb
-    r = max(min(r + random.randint(-10, 11), 255), 1)
-    g = max(min(g + random.randint(-10, 11), 255), 1)
-    b = max(min(b + random.randint(-10, 11), 255), 1)
-    return (r, g, b)
 
 
 def get_base(base, target_rgb, size):

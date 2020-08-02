@@ -33,7 +33,8 @@ def det_train_augs(height: int, width: int) -> albumentations.Compose:
                     albumentations.RandomBrightnessContrast(),
                     albumentations.GaussNoise(),
                     albumentations.HueSaturationValue(),
-                ], p=1.0
+                ],
+                p=1.0,
             ),
             albumentations.Flip(),
             albumentations.RandomRotate90(),

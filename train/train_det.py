@@ -18,14 +18,6 @@ import os
 import torch
 import numpy as np
 
-try:
-    import apex
-
-    USE_APEX = True
-except ImportError as e:
-    USE_APEX = False
-    print(f"{e} Apex not found. No mix precision used.")
-
 from train import datasets, collate
 from train.train_utils import utils
 from data_generation import generate_config
@@ -102,15 +94,10 @@ def train(
     # If we are using distributed training, initialize the backend through which process
     # can communicate to each other.
     if world_size > 1:
-        assert (
-            torch.distributed.is_nccl_available()
-        ), "NCCL must be avaliable for parallel training."
         torch.distributed.init_process_group(
             "nccl", init_method="env://", world_size=world_size, rank=local_rank,
         )
     # Load the model.
-    # TODO(alex): Maybe set the number of classes based off the dataset? Reading from the
-    # config could lead to hard-to-find bugs.
     model = detector.Detector(
         num_classes=len(generate_config.OD_CLASSES),
         model_params=model_cfg,
@@ -146,16 +133,13 @@ def train(
 
     # Construct the optimizer and wrap with Apex if available.
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
-    if USE_APEX:
-        model, optimizer = apex.amp.initialize(
-            model, optimizer, opt_level="O1", verbosity=is_main
-        )
+
+    # Setup mixed precision abilities if specified.
+    scaler = torch.cuda.amp.GradScaler()
 
     # Adjust the model for distributed training. If we are using apex, wrap the model
     # with Apex's utilies, else PyTorch.
-    if USE_APEX and world_size:
-        model = apex.parallel.DistributedDataParallel(model, delay_allreduce=True)
-    elif world_size:
+    if world_size > 1:
         model = torch.nn.parallel.DistributedDataParallel(
             model, device_ids=[local_rank], find_unused_parameters=True
         )
@@ -188,7 +172,8 @@ def train(
         all_losses, clf_losses, reg_losses = [], [], []
 
         # Set the train loader's epoch so data will be re-shuffled.
-        train_sampler.set_epoch(epoch)
+        if world_size > 1:
+            train_sampler.set_epoch(epoch)
 
         for idx, (images, gt_regressions, gt_classes) in enumerate(train_loader):
 
@@ -199,27 +184,26 @@ def train(
                 gt_regressions = gt_regressions.to(device)
                 gt_classes = gt_classes.to(device)
 
-            # Forward pass through detector
-            cls_per_level, reg_per_level = model(images)
+            with torch.cuda.amp.autocast():
+                # Forward pass through detector
+                cls_per_level, reg_per_level = model(images)
 
-            # Compute the losses
-            cls_loss, reg_loss = losses.compute_losses(
-                gt_classes=gt_classes,
-                gt_anchors_deltas=gt_regressions,
-                cls_per_level=cls_per_level,
-                reg_per_level=reg_per_level,
-                num_classes=len(generate_config.OD_CLASSES),
-            )
-            total_loss = cls_loss + reg_loss
-            clf_losses.append(cls_loss)
-            reg_losses.append(reg_loss)
+                # Compute the losses
+                cls_loss, reg_loss = losses.compute_losses(
+                    gt_classes=gt_classes,
+                    gt_anchors_deltas=gt_regressions,
+                    cls_per_level=cls_per_level,
+                    reg_per_level=reg_per_level,
+                    num_classes=len(generate_config.OD_CLASSES),
+                )
+                total_loss = cls_loss + reg_loss
+                clf_losses.append(cls_loss)
+                reg_losses.append(reg_loss)
 
             # Propogate the gradients back through the model
-            if USE_APEX:
-                with apex.amp.scale_loss(total_loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                total_loss.backward()
+            scaler.scale(total_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             all_losses.append(total_loss.item())
             # Perform the parameter updates

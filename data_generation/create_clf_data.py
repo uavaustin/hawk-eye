@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""  Script that will take detection data and copy it for cld-data. """
+"""  This script creates classification data for the pre-detection classification step;
+however, this script relies upon detection already existing. Also, we need to ensure our
+output dataset does not have repeats of image slices between the train and validation
+sets -- this would mess up our training metrics. Since the detector data can contain
+empty tiles, we will not be copying those here. Instead we prefer to generate our own 
+empty slices so we have precise cnotrol over which exist. """
 
-import multiprocessing
+import json
+import shutil
 
 from tqdm import tqdm
 from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import multiprocessing
 import numpy as np
 
 import generate_config as config
@@ -15,45 +22,32 @@ CLF_WIDTH, CLF_HEIGHT = config.PRECLF_SIZE
 CROP_WIDTH, CROP_HEIGHT = config.CROP_SIZE
 
 
-def create_clf_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
-    """Generate data for the classifier model."""
+def create_clf_images(gen_type: str, num_gen: int) -> None:
+    """ Generate data for the classifier model. """
 
-    # Make output dir
+    # Make output dir to save data.
     save_dir = config.DATA_DIR / gen_type
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get target images
-    data_folder = "detector_" + gen_type.split("_")[1]
+    # Get the already generated detection images. We specifically only care about the
+    # images _with shapes_. Check that the json associated with the image does have
+    # labels, forget it if not.
+    data_folder = f"detector_{gen_type.split('_')[1]}"
     images_dir = config.DATA_DIR / data_folder / "images"
 
-    image_names = list(images_dir.glob(f"*{config.IMAGE_EXT}"))
-    image_names = random_list(image_names, num_gen)
-
-    numbers = list(range(offset, offset + num_gen))
+    idx = 0
+    for image_path in images_dir.glob(f"*{config.IMAGE_EXT}"):
+        if json.loads(image_path.with_suffix(".json").read_text())["bboxes"]:
+            # If there are labels, copy it to the save folder with the proper filename.
+            shutil.copy2(image_path, save_dir / f"target_{idx}{image_path.suffix}")
+            idx += 1
 
     # Get random crops and augmentations for background
-    backgrounds = random_list(get_backgrounds(), num_gen)
-    flip_bg = random_list([False, True], num_gen)
-    mirror_bg = random_list([False, True], num_gen)
-    blurs = random_list(range(1, 3), num_gen)
-    enhancements = random_list(np.linspace(0.5, 2, 5), num_gen)
-    crop_xs = random_list(range(0, config.FULL_SIZE[0] - config.CROP_SIZE[0]), num_gen)
-    crop_ys = random_list(range(0, config.FULL_SIZE[1] - config.CROP_SIZE[1]), num_gen)
-
+    backgrounds = get_backgrounds()
     gen_types = [gen_type] * num_gen
 
-    data = zip(
-        numbers,
-        backgrounds,
-        crop_xs,
-        crop_ys,
-        flip_bg,
-        mirror_bg,
-        blurs,
-        enhancements,
-        image_names,
-        gen_types,
-    )
+    numbers = list(range(len(backgrounds)))
+    data = zip(get_backgrounds(), [gen_type] * num_gen, numbers)
 
     with multiprocessing.Pool(None) as pool:
         processes = pool.imap_unordered(_single_clf_image, data)
@@ -63,53 +57,26 @@ def create_clf_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
 
 def _single_clf_image(data) -> None:
     """Crop detection image and augment clf image and save"""
-    (
-        number,
-        background,
-        crop_x,
-        crop_y,
-        flip_bg,
-        mirror_bg,
-        blur,
-        enhancement,
-        shape_img,
-        gen_type,
-    ) = data
-
-    background = background.copy()
-    background = background.crop(
-        (crop_x, crop_y, crop_x + config.CROP_SIZE[0], crop_y + config.CROP_SIZE[1])
-    )
-
-    if flip_bg:
-        background = ImageOps.flip(background)
-    if mirror_bg:
-        background = ImageOps.mirror(background)
-
-    background.filter(ImageFilter.GaussianBlur(blur))
-    background = background.resize(config.PRECLF_SIZE)
-    background = enhance_image(background, enhancement)
-
-    data_path = config.DATA_DIR / gen_type
-    bkg_fn = data_path / f"background{number}{config.IMAGE_EXT}"
-    background.save(bkg_fn)
-
-    # Now consider the shape image
-    shape = Image.open(shape_img).resize(config.PRECLF_SIZE)
-    shape = enhance_image(shape, enhancement)
-    shape_fn = data_path / f"target{number}{config.IMAGE_EXT}"
-    shape.save(shape_fn)
-
-
-def enhance_image(img, enhancement):
-    converter = ImageEnhance.Color(img)
-    return converter.enhance(enhancement)
+    image, gen_type, number = data
+    tile_num = 0
+    for x in range(0, image.size[0], config.CROP_SIZE[0] - config.CROP_OVERLAP):
+        for y in range(0, image.size[1], config.CROP_SIZE[1] - config.CROP_OVERLAP):
+            crop = image.crop(
+                (x, y, x + config.CROP_SIZE[0], y + config.CROP_SIZE[1])
+            )
+            crop = crop.resize(config.PRECLF_SIZE)
+            data_path = config.DATA_DIR / gen_type
+            save_path = (
+                data_path / f"background_{number}_{tile_num}{x}{y}{config.IMAGE_EXT}"
+            )
+            crop.save(save_path)
+            tile_num += 0
 
 
 if __name__ == "__main__":
 
     if config.NUM_IMAGES != 0:
-        create_clf_images("clf_train", config.NUM_IMAGES, config.NUM_OFFSET)
+        create_clf_images("clf_train", config.NUM_IMAGES)
 
     if config.NUM_VAL_IMAGES != 0:
-        create_clf_images("clf_val", config.NUM_VAL_IMAGES, config.NUM_VAL_OFFSET)
+        create_clf_images("clf_val", config.NUM_VAL_IMAGES)
