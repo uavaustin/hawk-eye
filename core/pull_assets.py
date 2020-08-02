@@ -71,7 +71,7 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 
 # Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
-
+    print(filename, destination)
     print(f"Extracting {filename.name}...", end="", flush=True)
     with tarfile.open(filename, "r") as tar:
         tar.extractall(destination)
@@ -82,9 +82,11 @@ def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
         filename.unlink()
 
 
-def download_model(model_type: str, version: str) -> pathlib.Path:
+def download_model(model_type: str, timestamp: str) -> pathlib.Path:
     assert model_type in ["classifier", "detector"], f"Unsupported model {model_type}."
-    filename = f"{model_type}-{version}"
+    filename = f"{model_type}-{timestamp}"
     if not (config.ASSETS_DIR / filename).is_dir():
-        download_file(f"{filename}.tar.gz", config.ASSETS_DIR / filename)
+        dest = config.ASSETS_DIR / filename
+        download_file(f"{filename}", dest)
+
     return config.ASSETS_DIR / filename

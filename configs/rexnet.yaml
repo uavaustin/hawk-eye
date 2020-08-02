@@ -1,0 +1,19 @@
+model:
+  type: "classifier"
+  backbone: "rexnet"
+  image_size: 224
+training:
+  optimizer:
+    type: "SGD"
+    lr: 5e-3
+    momentum: 0.9
+    weight_decay: 1e-5
+  lr_schedule:
+    start_lr: 1.0e-6
+    max_lr: 1.0e-1
+    end_lr: 1.0e-8
+    warmup_fraction: 0.1
+  epochs: 1
+  gpu: true
+  batch_size: 80
+  save_best: true

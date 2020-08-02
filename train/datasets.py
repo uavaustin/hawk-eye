@@ -1,4 +1,4 @@
-""" Datasets for loading various types of data. """
+""" Datasets for loading data for our various training regimes. """
 
 from typing import Tuple
 import pathlib
@@ -19,13 +19,13 @@ class ClfDataset(torch.utils.data.Dataset):
         assert self.images, f"No images found in {data_dir}."
 
         self.len = len(self.images)
-        self.transform = classification_augmentations(224, 244)
+        self.transform = augs.clf_train_augs(224, 244)
         self.data_dir = data_dir
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))
+        assert image is not None, f"Trouble readining {self.images[idx]}."
         image = torch.Tensor(self.transform(image=image)["image"])
-        image = image.permute(2, 0, 1)
         class_id = 0 if "background" in self.images[idx].stem else 1
 
         return image, class_id
