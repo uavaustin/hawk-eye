@@ -69,11 +69,6 @@ Testing is performed by running `tox` at the repo root. The test in this repo co
 of python unittests and doctests.
 
 
-#### Other
-
-Updating submodules: `git submodule update --remote --merge`
-
-
 # TODO
 
 - [ ] Finish target typer model. 
