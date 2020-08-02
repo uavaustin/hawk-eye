@@ -84,4 +84,4 @@ separate independently.
 
 - [ ] Weights & Biases integration once project is granted.
 
-- [ ] GitHub Actions CI and unittests
+- [ X ] GitHub Actions CI and unittests
