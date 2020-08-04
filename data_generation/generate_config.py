@@ -1,23 +1,29 @@
-""" Contains configuration settings for generation. """
+""" Contains various configuration settings for data generation. """
 
 import pathlib
+import re
 import yaml
 
+ARCHIVE_FILENAME = re.compile("^[^.]*")
 
 config = yaml.safe_load(pathlib.Path("data_generation/config.yaml").read_text())
-
 generate_config = config["generate"]
-BACKGROUNDS_VERSIONS = generate_config.get("backgrounds_versions", [])
+
+# This is where we are going to store all the assets.
+ASSETS_DIR = pathlib.Path(__file__).parent / "assets"
+
+
+BACKGROUNDS = generate_config.get("backgrounds_archives", [])
+BACKGROUNDS_URLS = [f"assets/{bkg}" for bkg in BACKGROUNDS]
+BACKGROUNDS_DIRS = [
+    ASSETS_DIR / ARCHIVE_FILENAME.match(bkg).group() for bkg in BACKGROUNDS
+]
 
 BASE_SHAPES_VERSION = generate_config.get("base_shapes_version", "v1")
-
-BACKGROUNDS_URL = [f"backgrounds-{v}.tar.gz" for v in BACKGROUNDS_VERSIONS]
 BASE_SHAPES_URL = [f"assets/base-shapes-{v}.tar.gz" for v in BASE_SHAPES_VERSION]
 FONTS_URL = "assets/fonts.tar.gz"
 
-ASSETS_DIR = pathlib.Path(__file__).parent / "assets"
 
-BACKGROUNDS_DIRS = [ASSETS_DIR / f"backgrounds-{v}" for v in BACKGROUNDS_VERSIONS]
 BASE_SHAPES_DIRS = [ASSETS_DIR / f"base-shapes-{v}" for v in BASE_SHAPES_VERSION]
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"

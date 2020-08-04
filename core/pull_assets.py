@@ -32,9 +32,7 @@ def pull_all() -> None:
 
 def pull_backgrounds() -> None:
     """Pull the shape generation backgrounds."""
-    download_file(
-        [f"assets/{item}" for item in config.BACKGROUNDS_URL], config.ASSETS_DIR
-    )
+    download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
@@ -71,7 +69,7 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 
 # Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
-    print(filename, destination)
+
     print(f"Extracting {filename.name}...", end="", flush=True)
     with tarfile.open(filename, "r") as tar:
         tar.extractall(destination)

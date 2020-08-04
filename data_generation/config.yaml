@@ -56,7 +56,11 @@ inputs:
     width: 224
     height: 224
 generate:
-  backgrounds_versions: ["v1"]
+  backgrounds_archives: [
+    "competition-2018.tar.gz",
+    "competition-2019.tar.gz",
+    "test_flight_20190215.tar.gz"
+  ]
   base_shapes_version: ["v1"]
   max_shapes_per_image: 2
   threads: 0
@@ -65,8 +69,8 @@ generate:
   empty_slice_probability: 0.1
   train_batch:
     offset: 0
-    images: 30
+    images: 300
   eval_batch:
     offset: 0
-    images: 3
+    images: 30
   img_ext: png

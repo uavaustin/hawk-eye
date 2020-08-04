@@ -11,6 +11,7 @@ import multiprocessing
 import random
 import json
 import pathlib
+import time
 
 from tqdm import tqdm
 import PIL
@@ -54,10 +55,11 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
 
     numbers = list(range(offset, num_gen + offset))
 
+    # Create a random list of the background files.
     backgrounds = random_list(get_backgrounds(), num_gen)
     flip_bg = random_list([False, True], num_gen)
     mirror_bg = random_list([False, True], num_gen)
-    blurs = random_list(range(1, 2), num_gen)
+    blurs = random_list([1], num_gen)
     num_targets = random_list(range(1, MAX_SHAPES), num_gen)
 
     crop_xs = random_list(range(0, config.FULL_SIZE[0] - config.CROP_SIZE[0]), num_gen)
@@ -109,34 +111,41 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
             )
         )
 
-    # Put everything into one large iterable so that we can split up
-    # data across thread pools.ImageFile.LOAD_TRUNCATED_IMAGES = True
-    data = zip(
-        numbers,
-        backgrounds,
-        crop_xs,
-        crop_ys,
-        flip_bg,
-        mirror_bg,
-        blurs,
-        shape_params,
-        [gen_type] * num_gen,
-    )
-
     random.setstate(r_state)
 
-    # Generate data in a multiprocessing pool to use all CPU resources.
-    with multiprocessing.Pool(None) as pool:
-        processes = pool.imap_unordered(generate_single_example, data)
-        for _ in tqdm(processes, total=num_gen):
-            pass
+    # Generate data in a multiprocessing pool to use the specified amount of CPU
+    # resources. We have to be careful to ensure we do not access and background image
+    # at the same time. We use a manager dictionary to let us know if the image to be
+    # opened is already being read somewhere else.
+    with multiprocessing.Manager() as manager:
+        d = manager.dict({bkg: False for bkg in backgrounds})
+        with manager.Pool(None) as pool:
+
+            # Put everything into one large iterable so that we can split up
+            # data across thread pools.ImageFile.LOAD_TRUNCATED_IMAGES = True
+            data = zip(
+                [d] * len(backgrounds),
+                numbers,
+                backgrounds,
+                crop_xs,
+                crop_ys,
+                flip_bg,
+                mirror_bg,
+                blurs,
+                shape_params,
+                [gen_type] * num_gen,
+            )
+            processes = pool.imap_unordered(generate_single_example, data)
+            for _ in tqdm(processes, total=num_gen):
+                pass
 
 
 def generate_single_example(data: zip) -> None:
     """Creates a single full image"""
     (
+        d,
         number,
-        background,
+        background_path,
         crop_x,
         crop_y,
         flip_bg,
@@ -146,11 +155,17 @@ def generate_single_example(data: zip) -> None:
         gen_type,
     ) = data
 
+    while d[background_path]:
+        time.sleep(0.1)
+        pass
+    else:
+        d[background_path] = True
+
     data_path = config.DATA_DIR / gen_type / "images"
     labels_fn = data_path / f"ex_{number}.json"
     img_fn = data_path / f"ex_{number}{config.IMAGE_EXT}"
 
-    background = background.copy()
+    background = PIL.Image.open(background_path)
     background = background.crop(
         (crop_x, crop_y, crop_x + config.CROP_SIZE[0], crop_y + config.CROP_SIZE[1])
     )
@@ -183,6 +198,7 @@ def generate_single_example(data: zip) -> None:
     ]
 
     labels_fn.write_text(json.dumps({"bboxes": objects, "image_id": number}, indent=2))
+    d[background_path] = False
 
 
 def add_shapes(
@@ -228,14 +244,18 @@ def add_shapes(
     return shape_bboxes, background.convert("RGB")
 
 
-def get_backgrounds():
-    """Get the background assets"""
-    # Can be a mix of .png and .jpg
+def get_backgrounds() -> List[pathlib.Path]:
+    """ Get a list of all the background images. """
+    # Cover all the necessary extensions
+    exts, filenames = ["png", "jpg", "jpeg"], []
     for backgrounds_folder in config.BACKGROUNDS_DIRS:
-        filenames = list(backgrounds_folder.rglob("*.png"))
-        filenames += list(backgrounds_folder.rglob("*.jpg"))
+        for ext in exts:
+            filenames.extend(list(backgrounds_folder.rglob(f"*.{ext}")))
+            filenames.extend(list(backgrounds_folder.rglob(f"*.{ext.upper()}")))
 
-    return [Image.open(img).resize(config.FULL_SIZE) for img in filenames]
+    print(f"Found {len(filenames)} backgrounds.")
+
+    return filenames
 
 
 def get_base_shapes(shape):
