@@ -11,6 +11,7 @@ import shutil
 import os
 import yaml
 
+import apex
 import torch
 import numpy as np
 
@@ -31,7 +32,7 @@ def train(
     train_cfg: dict,
     save_dir: pathlib.Path = None,
 ) -> None:
-    torch.backends.cudnn.deterministic = True
+
     # Do some general setup. When using distributed training and Apex, the device needs
     # to be set before loading the model.
     use_cuda = torch.cuda.is_available()
@@ -72,17 +73,21 @@ def train(
         print("Model: \n", clf_model)
 
     optimizer = utils.create_optimizer(train_cfg["optimizer"], clf_model)
+    clf_model, optimizer = apex.amp.initialize(clf_model, optimizer, opt_level="O1")
+
     lr_params = train_cfg.get("lr_schedule", {})
 
-    # Setup mixed precision abilities if specified.
-    scaler = torch.cuda.amp.GradScaler(init_scale=1)
+    if world_size > 1:
+        clf_model = apex.parallel.DistributedDataParallel(
+            clf_model, delay_allreduce=True
+        )
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
 
     # Create the learning rate scheduler.
     lr_config = train_cfg.get("lr_schedule", {})
-    warm_up_percent = lr_config.get("warmup_fraction", 0) * epochs / 100
+    warm_up_percent = lr_config.get("warmup_fraction", 0)
     start_lr = float(lr_config.get("start_lr"))
     max_lr = float(lr_config.get("max_lr"))
     end_lr = float(lr_config.get("end_lr"))
@@ -116,19 +121,18 @@ def train(
                 labels.shape[0], 2, device=labels.device
             ).scatter_(1, labels, 1)
 
-            with torch.cuda.amp.autocast():
-                print(data.shape, labels_one_hot.shape)
-                out = clf_model(data)
-                loss = losses.sigmoid_focal_loss(
-                    out, labels_one_hot, reduction="sum"
-                ) / max(1, labels_one_hot.shape[0])
+            out = clf_model(data)
+            loss = losses.sigmoid_focal_loss(
+                out, labels_one_hot, reduction="sum"
+            ) / max(1, labels_one_hot.shape[0])
 
             all_losses.append(loss.item())
 
-            # Propagate the gradients back through the model and update the weights.
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            # Propogate the gradients back through the model.
+            with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
+                scaled_loss.backward()
+
+            optimizer.step()
             lr_scheduler.step()
 
             if idx % _LOG_INTERVAL == 0 and is_main:
