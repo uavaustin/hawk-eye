@@ -19,16 +19,13 @@ def benchmark(timestamp: str, model_type: str, batch_size: int) -> None:
 
     # Construct the model.
     if model_type == "classifier":
-        model = classifier.Classifier(
-            timestamp="2020-08-02T13-32-18", half_precision=True
-        )
-
-    if torch.cuda.is_available():
-        model.cuda()
+        model = classifier.Classifier(timestamp=timestamp, half_precision=True)
 
     batch = torch.randn((batch_size, 3, model.image_size, model.image_size))
 
     if torch.cuda.is_available():
+        model.cuda()
+        model.half()
         batch = batch.cuda().half()
 
     print("Starting inference.")

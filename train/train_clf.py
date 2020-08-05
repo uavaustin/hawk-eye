@@ -31,8 +31,7 @@ def train(
     train_cfg: dict,
     save_dir: pathlib.Path = None,
 ) -> None:
-    # Do some general s
-    # etup. When using distributed training and Apex, the device needs
+    # Do some general setup. When using distributed training and Apex, the device needs
     # to be set before loading the model.
     use_cuda = torch.cuda.is_available()
     device = torch.device(f"cuda:{local_rank}" if use_cuda else "cpu")
