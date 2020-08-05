@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-""" Train a classifier to classify images as backgroud or targets. This script will use
-distributed training if available any PyTorch AMP. """
+""" Train a model to classify images as background or targets. This script will use
+distributed training if available any PyTorch AMP to speed up training. """
 
 import argparse
 import datetime
@@ -16,11 +16,11 @@ import numpy as np
 
 from train import datasets
 from train.train_utils import utils
-from core import classifier
+from core import classifier, pull_assets
 from data_generation import generate_config
 from third_party.models import losses
 
-_LOG_INTERVAL = 50
+_LOG_INTERVAL = 1
 _SAVE_DIR = pathlib.Path("~/runs/uav-clf").expanduser()
 
 
@@ -31,27 +31,36 @@ def train(
     train_cfg: dict,
     save_dir: pathlib.Path = None,
 ) -> None:
+    torch.backends.cudnn.deterministic = True
     # Do some general setup. When using distributed training and Apex, the device needs
     # to be set before loading the model.
     use_cuda = torch.cuda.is_available()
     device = torch.device(f"cuda:{local_rank}" if use_cuda else "cpu")
     if use_cuda:
-        torch.cuda.set_device(device)
+        torch.cuda.set_device(local_rank)
     is_main = local_rank == 0
 
     # If we are using distributed training, initialize the backend through which process
     # can communicate to each other.
     if world_size > 1:
         torch.distributed.init_process_group(
-            "nccl", init_method="env://", world_size=world_size, rank=local_rank
+            "nccl", world_size=world_size, rank=local_rank
         )
 
     # TODO(alex) these paths should be in the generate config
     batch_size = train_cfg.get("batch_size", 4)
-    train_loader = create_data_loader(
-        batch_size, generate_config.DATA_DIR / "clf_train"
+    train_loader, train_sampler = create_data_loader(
+        batch_size,
+        generate_config.DATA_DIR / "clf_train",
+        world_size=world_size,
+        val=False,
     )
-    eval_loader = create_data_loader(batch_size, generate_config.DATA_DIR / "clf_val")
+    eval_loader, _ = create_data_loader(
+        batch_size,
+        generate_config.DATA_DIR / "clf_val",
+        world_size=world_size,
+        val=True,
+    )
 
     highest_score = {"base": 0, "swa": 0}
 
@@ -89,6 +98,9 @@ def train(
 
     for epoch in range(epochs):
         all_losses = []
+        # Set the train loader's epoch so data will be re-shuffled.
+        if world_size > 1:
+            train_sampler.set_epoch(epoch)
 
         for idx, (data, labels) in enumerate(train_loader):
             optimizer.zero_grad()
@@ -105,11 +117,15 @@ def train(
             ).scatter_(1, labels, 1)
 
             with torch.cuda.amp.autocast():
+                print(data.shape, labels_one_hot.shape)
                 out = clf_model(data)
-                loss = losses.sigmoid_focal_loss(out, labels_one_hot, reduction="mean")
+                loss = losses.sigmoid_focal_loss(
+                    out, labels_one_hot, reduction="sum"
+                ) / max(1, labels_one_hot.shape[0])
+
             all_losses.append(loss.item())
 
-            # Propogate the gradients back through the model and update the weights.
+            # Propagate the gradients back through the model and update the weights.
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -125,7 +141,7 @@ def train(
         # Call evaluation function
         clf_model.eval()
         highest_score = eval_acc = eval(
-            clf_model, eval_loader, device, world_size, highest_score, save_dir
+            clf_model, eval_loader, device, is_main, world_size, highest_score, save_dir
         )
         clf_model.train()
 
@@ -141,11 +157,12 @@ def eval(
     clf_model: torch.nn.Module,
     eval_loader: torch.utils.data.DataLoader,
     device: torch.device,
+    is_main: bool,
     world_size: int,
     previous_best: dict = None,
     save_dir: pathlib.Path = None,
 ) -> float:
-    """ Evalulate the model against the evaulation set. Save the best
+    """ Evaluate the model against the evaulation set. Save the best
     weights if specified.
 
     Args:
@@ -171,11 +188,11 @@ def eval(
         total_num += data.shape[0]
 
     accuracy = {"base": num_correct / total_num}
-    # Make sure processes get to this point.
     if world_size > 1:
+        # Make sure processes get to this point.
         torch.distributed.barrier()
 
-    if accuracy["base"] > previous_best["base"]:
+    if accuracy["base"] > previous_best["base"] and is_main:
         print(f"Saving model with accuracy {accuracy}.")
 
         # Delete the previous best
@@ -187,21 +204,41 @@ def eval(
 
 
 def create_data_loader(
-    batch_size: dict, data_dir: pathlib.Path
-) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+    batch_size: dict, data_dir: pathlib.Path, world_size: int, val: bool
+) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
+    """ This function acts as a DataLoader factory. Depending on the type of input
+    data, either train or val, we construct a DataLoader which will be used during
+    training. If we are using distributed training, a DistributedSampler is used to
+    equally divide up the data between processes.
 
+    Args:
+        batch_size: Number of images per batch.
+        data_dir: Where the images are located.
+        world_size: How many training processes.
+        val: Whether or not this is val or train data. This influences the sampler.
+
+    Returns:
+        The DataLoader and the sampler for the load. We need access to the sampler
+            during _training_ so the data is shuffled each epoch.
+    """
     assert data_dir.is_dir(), data_dir
 
     dataset = datasets.ClfDataset(data_dir, img_ext=generate_config.IMAGE_EXT)
+    # If using distributed training, use a DistributedSampler to load exclusive sets
+    # of data per process.
+    sampler = None
+    if world_size > 1:
+        sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+
     loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, pin_memory=True, shuffle=True
+        dataset, batch_size=batch_size, pin_memory=True, sampler=sampler
     )
-    return loader
+    return loader, sampler
 
 
 if __name__ == "__main__":
     # Training will probably always be undeterministic due to async CUDA calls,
-    # but this gets us a bit closer to repeatability.
+    # but this gets us closer to repeatability.
     torch.cuda.random.manual_seed(42)
     torch.random.manual_seed(42)
     np.random.seed(42)
@@ -229,7 +266,7 @@ if __name__ == "__main__":
     # Copy in this config file to the save dir. The config file will be used to load the
     # saved model.
     save_dir = _SAVE_DIR / (
-        datetime.datetime.now().isoformat().split(".")[0].replace(":", "-")
+        datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
     )
     save_dir.mkdir(parents=True)
     shutil.copy(config_path, save_dir / "config.yaml")
@@ -248,8 +285,11 @@ if __name__ == "__main__":
     )
 
     # Create tar archive.
-    with tarfile.open(save_dir / f"{save_dir.name}.tar.gz", mode="w:gz") as tar:
+    save_archive = save_dir / f"{save_dir.name}.tar.gz"
+    with tarfile.open(save_archive, mode="w:gz") as tar:
         for model_file in save_dir.glob("*"):
             tar.add(model_file, arcname=model_file.name)
+
+    # pull_assets.upload_model("classifier", save_archive)
 
     print(f"Saved model to {save_dir / save_dir.name}.tar.gz")

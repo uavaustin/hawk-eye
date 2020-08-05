@@ -13,7 +13,7 @@ training:
     max_lr: 1.0e-1
     end_lr: 1.0e-8
     warmup_fraction: 0.1
-  epochs: 1
+  epochs: 10
   gpu: true
   batch_size: 80
   save_best: true

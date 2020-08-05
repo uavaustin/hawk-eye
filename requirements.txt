@@ -1,7 +1,6 @@
 pillow==6.2.2
 tqdm==4.45.0
 albumentations==0.4.3
-requests==2.23.0
 pycocotools==2.0.0
 pyyaml==5.3.1
 scikit-learn==0.22.2
@@ -12,3 +11,4 @@ numpy==1.18.1
 Cython==0.29.15
 pre-commit==2.5.1
 google-cloud-storage==1.30.0
+google-auth==1.20.0

@@ -153,10 +153,12 @@ class ReXNet(torch.nn.Module):
             torch.nn.BatchNorm2d(int(1280 * params.width_ratio)),
             Swish(),
             torch.nn.AdaptiveAvgPool2d(1),
-            torch.nn.Flatten(),
+        )
+        self.out = torch.nn.Sequential(
             torch.nn.Dropout(0.2, inplace=True),
             torch.nn.Linear(int(1280 * params.width_ratio), num_classes, bias=True),
         )
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        return self.head(self.bottleneck_layers(self.stem(x)))
+        x = self.head(self.bottleneck_layers(self.stem(x)))
+        return self.out(x.view(x.shape[0], -1))

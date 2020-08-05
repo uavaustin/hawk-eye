@@ -1,4 +1,7 @@
-""" The augmentations used during training and inference for the various models. """
+""" The augmentations used during training and inference for the various models. These
+are not meant to be an all-encompassing augmentation regime for any of the models.
+Feel free to experiment with any of the available augmentations:
+https://albumentations.readthedocs.io/en/latest/index.html """
 
 import albumentations
 
@@ -8,10 +11,14 @@ def clf_train_augs(height: int, width: int) -> albumentations.Compose:
         [
             albumentations.Resize(height=height, width=width),
             albumentations.Flip(),
-            albumentations.Blur(blur_limit=3),
-            albumentations.GaussNoise(),
-            albumentations.HueSaturationValue(),
-            albumentations.RandomBrightnessContrast(),
+            albumentations.OneOf(
+                [
+                    albumentations.HueSaturationValue(),
+                    albumentations.RandomBrightnessContrast(),
+                    albumentations.Blur(blur_limit=3),
+                    albumentations.GaussNoise(),
+                ]
+            ),
             albumentations.Normalize(),
         ]
     )
@@ -39,16 +46,13 @@ def det_train_augs(height: int, width: int) -> albumentations.Compose:
             albumentations.Flip(),
             albumentations.RandomRotate90(),
             albumentations.Normalize(),
-        ],
+        ]
     )
 
 
 def det_eval_augs(height: int, width: int) -> albumentations.Compose:
     return albumentations.Compose(
-        [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Normalize(),
-        ],
+        [albumentations.Resize(height=height, width=width), albumentations.Normalize()]
     )
 
 

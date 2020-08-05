@@ -70,7 +70,7 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 # Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
 
-    print(f"Extracting {filename.name}...", end="", flush=True)
+    print(f"Extracting to {destination}...", end="", flush=True)
     with tarfile.open(filename, "r") as tar:
         tar.extractall(destination)
 
@@ -82,9 +82,15 @@ def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
 
 def download_model(model_type: str, timestamp: str) -> pathlib.Path:
     assert model_type in ["classifier", "detector"], f"Unsupported model {model_type}."
-    filename = f"{model_type}-{timestamp}"
-    if not (config.ASSETS_DIR / filename).is_dir():
-        dest = config.ASSETS_DIR / filename
-        download_file(f"{filename}", dest)
+    filename = f"{model_type}/{timestamp}.tar.gz"
+    destination = config.ASSETS_DIR / f"{model_type}/{timestamp}"
 
-    return config.ASSETS_DIR / filename
+    if not destination.is_dir():
+        download_file(filename, destination)
+
+    return destination
+
+
+def upload_model(model_type: str, path: pathlib.Path) -> None:
+    blob = bucket.blob(f"{model_type}/{path.name}")
+    blob.upload_from_filename(str(path))
