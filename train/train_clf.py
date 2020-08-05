@@ -57,10 +57,7 @@ def train(
     highest_score = {"base": 0, "swa": 0}
 
     clf_model = classifier.Classifier(
-        backbone=model_cfg.get("backbone", None),
-        img_width=generate_config.PRECLF_SIZE[0],
-        img_height=generate_config.PRECLF_SIZE[0],
-        num_classes=2,
+        backbone=model_cfg.get("backbone", None), num_classes=2
     )
     clf_model.to(device)
     if is_main:
@@ -129,7 +126,7 @@ def train(
         # Call evaluation function
         clf_model.eval()
         highest_score = eval_acc = eval(
-            clf_model, eval_loader, device, highest_score, save_dir
+            clf_model, eval_loader, device, world_size, highest_score, save_dir
         )
         clf_model.train()
 
@@ -145,6 +142,7 @@ def eval(
     clf_model: torch.nn.Module,
     eval_loader: torch.utils.data.DataLoader,
     device: torch.device,
+    world_size: int,
     previous_best: dict = None,
     save_dir: pathlib.Path = None,
 ) -> float:
@@ -175,7 +173,8 @@ def eval(
 
     accuracy = {"base": num_correct / total_num}
     # Make sure processes get to this point.
-    torch.distributed.barrier()
+    if world_size > 1:
+        torch.distributed.barrier()
 
     if accuracy["base"] > previous_best["base"]:
         print(f"Saving model with accuracy {accuracy}.")
@@ -241,6 +240,7 @@ if __name__ == "__main__":
 
     os.environ["MASTER_ADDR"] = "127.0.0.1"
     os.environ["MASTER_PORT"] = "12345"
+
     torch.multiprocessing.spawn(
         train,
         (world_size, model_cfg, train_cfg, save_dir),
