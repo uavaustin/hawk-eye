@@ -64,8 +64,8 @@ class Classifier(torch.nn.Module):
 
     def _load_backbone(self, backbone: str) -> torch.nn.Module:
         """ Load the supplied backbone. """
-        if backbone == "rexnet":
-            model = rexnet.ReXNet(num_classes=self.num_classes)
+        if "rexnet" in backbone:
+            model = rexnet.ReXNet(num_classes=self.num_classes, model_type=backbone)
         else:
             raise ValueError(f"Unsupported backbone {backbone}.")
 

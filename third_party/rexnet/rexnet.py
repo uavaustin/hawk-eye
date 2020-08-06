@@ -10,7 +10,6 @@ class ReXNetParams:
     input_depth: int
     final_depth: int
     width_ratio: float
-    depth_ratio: float
 
 
 @dataclasses.dataclass
@@ -19,7 +18,10 @@ class BlockParams:
     stride: int
 
 
-_MODELS = {"rexnet-v1": ReXNetParams(32, 16, 180, 1.0, 1.0)}
+_MODELS = {
+    "rexnet-v1": ReXNetParams(32, 16, 180, 1.0),
+    "rexnet-lite0": ReXNetParams(32, 16, 90, 0.1),
+}
 
 _BLOCKS = [
     BlockParams(1, 1),
@@ -30,6 +32,15 @@ _BLOCKS = [
     BlockParams(3, 2),
 ]
 
+_BLOCKS_LITE = [
+    BlockParams(1, 1),
+    BlockParams(1, 2),
+    BlockParams(1, 2),
+    BlockParams(2, 2),
+    BlockParams(2, 1),
+    BlockParams(2, 2),
+]
+
 
 class Swish(torch.nn.Module):
     def __init__(self) -> None:
@@ -37,6 +48,14 @@ class Swish(torch.nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x * torch.sigmoid_(x)
+
+
+def get_activation(name: str) -> torch.nn.Module:
+    """ Get the activation based on the model architecture. """
+    if "lite" in name:
+        return torch.nn.Relu(inplace=True)
+    else:
+        return Swish()
 
 
 class SE(torch.nn.Module):
@@ -113,11 +132,11 @@ class LinearBottleneck(torch.nn.Module):
 class ReXNet(torch.nn.Module):
     def __init__(self, num_classes: int, model_type: str = "rexnet-v1") -> None:
         super().__init__()
-
         params = _MODELS[model_type]
-        self.num_layers = sum(block.repeats for block in _BLOCKS)
-        stem_channels = 32 / params.width_ratio if params.width_ratio < 1.0 else 32
-
+        blocks = _BLOCKS if "lite" not in model_type else _BLOCKS_LITE
+        self.num_layers = sum(block.repeats for block in blocks)
+        stem_channels = 32 / params.width_ratio if params.width_ratio > 1.0 else 32
+        print(stem_channels)
         self.stem = torch.nn.Sequential(
             torch.nn.Conv2d(3, stem_channels, 3, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm2d(stem_channels),
@@ -127,7 +146,7 @@ class ReXNet(torch.nn.Module):
 
         layers = []
         # Now add the linear bottleneck layers.
-        for block_idx, block in enumerate(_BLOCKS):
+        for block_idx, block in enumerate(blocks):
             for idx in range(block.repeats):
                 out_channels = int(
                     round(

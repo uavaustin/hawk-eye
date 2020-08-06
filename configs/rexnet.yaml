@@ -1,6 +1,6 @@
 model:
   type: "classifier"
-  backbone: "rexnet"
+  backbone: "rexnet-lite0"
   image_size: 224
 training:
   optimizer:
