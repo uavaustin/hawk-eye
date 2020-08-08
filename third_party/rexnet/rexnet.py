@@ -136,7 +136,7 @@ class ReXNet(torch.nn.Module):
         blocks = _BLOCKS if "lite" not in model_type else _BLOCKS_LITE
         self.num_layers = sum(block.repeats for block in blocks)
         stem_channels = 32 / params.width_ratio if params.width_ratio > 1.0 else 32
-        print(stem_channels)
+
         self.stem = torch.nn.Sequential(
             torch.nn.Conv2d(3, stem_channels, 3, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm2d(stem_channels),
