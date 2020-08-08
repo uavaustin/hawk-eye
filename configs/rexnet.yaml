@@ -9,11 +9,11 @@ training:
     momentum: 0.9
     weight_decay: 1e-5
   lr_schedule:
-    start_lr: 1.0e-6
+    start_lr: 1.0e-4
     max_lr: 1.0e-1
     end_lr: 1.0e-8
     warmup_fraction: 0.33
-  epochs: 10
+  epochs: 40
   gpu: true
-  batch_size: 80
+  batch_size: 120
   save_best: true

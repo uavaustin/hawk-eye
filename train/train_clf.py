@@ -5,6 +5,7 @@ distributed training if available any PyTorch AMP to speed up training. """
 import argparse
 import datetime
 import pathlib
+import time
 from typing import Tuple
 import tarfile
 import shutil
@@ -21,7 +22,7 @@ from core import classifier, pull_assets
 from data_generation import generate_config
 from third_party.models import losses
 
-_LOG_INTERVAL = 1
+_LOG_INTERVAL = 10
 _SAVE_DIR = pathlib.Path("~/runs/uav-clf").expanduser()
 
 
@@ -81,6 +82,8 @@ def train(
         clf_model = apex.parallel.DistributedDataParallel(
             clf_model, delay_allreduce=True
         )
+
+        clf_model = apex.parallel.convert_syncbn_model(clf_model)
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
@@ -143,11 +146,14 @@ def train(
                 )
 
         # Call evaluation function
+        print("Starting eval.")
+        start_val = time.perf_counter()
         clf_model.eval()
         highest_score = eval_acc = eval(
             clf_model, eval_loader, device, is_main, world_size, highest_score, save_dir
         )
         clf_model.train()
+        print(f"Eval took {time.perf_counter() - start_val}.")
 
         if is_main:
             print(
@@ -294,6 +300,6 @@ if __name__ == "__main__":
         for model_file in save_dir.glob("*"):
             tar.add(model_file, arcname=model_file.name)
 
-    # pull_assets.upload_model("classifier", save_archive)
+    pull_assets.upload_model("classifier", save_archive)
 
     print(f"Saved model to {save_dir / save_dir.name}.tar.gz")
