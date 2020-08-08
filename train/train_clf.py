@@ -18,6 +18,7 @@ import numpy as np
 
 from train import datasets
 from train.train_utils import utils
+from train.train_utils import ema
 from core import classifier, pull_assets
 from data_generation import generate_config
 from third_party.models import losses
@@ -64,12 +65,15 @@ def train(
         val=True,
     )
 
-    highest_score = {"base": 0, "swa": 0}
+    model_highest_score = {"base": 0}
+    ema_highest_score = {"base": 0}
 
     clf_model = classifier.Classifier(
         backbone=model_cfg.get("backbone", None), num_classes=2
     )
     clf_model.to(device)
+    ema_model = ema.Ema(clf_model)
+
     if is_main:
         print("Model: \n", clf_model)
 
@@ -106,6 +110,7 @@ def train(
 
     for epoch in range(epochs):
         all_losses = []
+
         # Set the train loader's epoch so data will be re-shuffled.
         if world_size > 1:
             train_sampler.set_epoch(epoch)
@@ -126,7 +131,7 @@ def train(
 
             out = clf_model(data)
             loss = losses.sigmoid_focal_loss(
-                out, labels_one_hot, reduction="sum"
+                out, labels_one_hot, alpha=0.5, gamma=2.5, reduction="sum"
             ) / max(1, labels_one_hot.shape[0])
 
             all_losses.append(loss.item())
@@ -137,6 +142,8 @@ def train(
 
             optimizer.step()
             lr_scheduler.step()
+
+            ema_model.update(clf_model)
 
             if idx % _LOG_INTERVAL == 0 and is_main:
                 lr = optimizer.param_groups[0]["lr"]
@@ -149,16 +156,33 @@ def train(
         print("Starting eval.")
         start_val = time.perf_counter()
         clf_model.eval()
-        highest_score = eval_acc = eval(
-            clf_model, eval_loader, device, is_main, world_size, highest_score, save_dir
+        model_highest_score = eval_acc = eval(
+            clf_model,
+            eval_loader,
+            device,
+            is_main,
+            world_size,
+            model_highest_score,
+            save_dir,
         )
         clf_model.train()
         print(f"Eval took {time.perf_counter() - start_val}.")
 
+        ema_highest_score = eval_acc = eval(
+            ema_model,
+            eval_loader,
+            device,
+            is_main,
+            world_size,
+            ema_highest_score,
+            save_dir,
+        )
+
         if is_main:
             print(
                 f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5} \n"
-                f"Base accuracy: {eval_acc['base']:.4} \n"
+                f"Model accuracy: {model_highest_score} \n",
+                f"EMA accuracy: {ema_highest_score} \n",
             )
 
 
@@ -203,9 +227,11 @@ def eval(
         torch.distributed.barrier()
 
     if accuracy["base"] > previous_best["base"] and is_main:
-        print(f"Saving model with accuracy {accuracy}.")
 
         # Delete the previous best
+        if isinstance(clf_model, ema.Ema):
+            clf_model = clf_model.ema_model
+
         utils.save_model(clf_model, save_dir / "classifier.pt")
 
         return accuracy
@@ -241,7 +267,7 @@ def create_data_loader(
         sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
 
     loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, pin_memory=True, sampler=sampler
+        dataset, batch_size=batch_size, pin_memory=True, sampler=sampler, drop_last=True
     )
     return loader, sampler
 
