@@ -249,6 +249,8 @@ def eval(
         if isinstance(clf_model, ema.Ema):
             clf_model = clf_model.ema_model
             name = "ema-classifier.pt"
+        else:
+            clf_model = clf_model.module
 
         utils.save_model(clf_model, save_dir / name)
 
