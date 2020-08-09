@@ -13,18 +13,24 @@ from train import augmentations as augs
 
 
 class ClfDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir: pathlib.Path, img_ext: str = ".png"):
+    def __init__(
+        self,
+        data_dir: pathlib.Path,
+        img_ext: str = ".png",
+        augs: albumentations.Compose = None,
+    ):
         super().__init__()
         self.images = list(data_dir.glob(f"*{img_ext}"))
         assert self.images, f"No images found in {data_dir}."
 
         self.len = len(self.images)
-        self.transform = augs.clf_train_augs(224, 244)
+        self.transform = augs
         self.data_dir = data_dir
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))
         assert image is not None, f"Trouble readining {self.images[idx]}."
+
         image = torch.Tensor(self.transform(image=image)["image"])
         class_id = 0 if "background" in self.images[idx].stem else 1
 

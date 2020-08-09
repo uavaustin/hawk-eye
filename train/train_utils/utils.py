@@ -36,6 +36,12 @@ def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Opt
             momentum=float(optim_cfg["momentum"]),
             weight_decay=0,
         )
+    elif name.lower() == "adamw":
+        optimizer = torch.optim.AdamW(
+            add_weight_decay(model, float(optim_cfg["weight_decay"])),
+            lr=float(optim_cfg["lr"]),
+            weight_decay=0,
+        )
     else:
         raise ValueError(f"Improper optimizer supplied: {name}.")
 
@@ -69,3 +75,8 @@ def add_weight_decay(
         {"params": no_decay, "weight_decay": 0.0},
         {"params": decay, "weight_decay": weight_decay},
     ]
+
+
+# TODO(alex): Unwrap DDP models.
+def unwrap_model() -> torch.nn.Module:
+    ...

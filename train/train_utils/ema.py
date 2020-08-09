@@ -3,6 +3,7 @@ implementation here:
 https://www.tensorflow.org/api_docs/python/tf/train/ExponentialMovingAverage """
 
 import copy
+from typing import Union
 
 import torch
 
@@ -10,8 +11,6 @@ import torch
 class Ema:
     def __init__(self, model: torch.nn.Module, decay: float = 0.995):
         self.decay = decay
-        if isinstance(model, torch.nn.DataParallel):
-            model = model.module
         self.ema_model = copy.deepcopy(model)
         self.ema_model.eval()
 
@@ -19,6 +18,7 @@ class Ema:
     def update(self, model: torch.nn.Module) -> None:
         """ Pass in the base model in order to update the ema model's parameters. """
 
+        model = model.module
         # Loop over the state dictionary of the incoming model and update the ema model.
         model_state_dict = model.state_dict()
         for key, shadow_val in self.ema_model.state_dict().items():

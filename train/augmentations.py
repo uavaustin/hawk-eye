@@ -11,14 +11,16 @@ def clf_train_augs(height: int, width: int) -> albumentations.Compose:
         [
             albumentations.Resize(height=height, width=width),
             albumentations.Flip(),
+            albumentations.RandomRotate90(),
             albumentations.OneOf(
                 [
                     albumentations.HueSaturationValue(),
                     albumentations.RandomBrightnessContrast(),
-                    albumentations.Blur(blur_limit=3),
+                    albumentations.Blur(blur_limit=2),
                     albumentations.GaussNoise(),
                 ]
             ),
+            albumentations.RandomGamma(),
             albumentations.Normalize(),
         ]
     )

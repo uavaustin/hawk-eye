@@ -16,6 +16,8 @@ class ReXNetParams:
 class BlockParams:
     repeats: int
     stride: int
+    expansion: int
+    use_se: False
 
 
 _MODELS = {
@@ -24,21 +26,21 @@ _MODELS = {
 }
 
 _BLOCKS = [
-    BlockParams(1, 1),
-    BlockParams(2, 2),
-    BlockParams(2, 2),
-    BlockParams(2, 2),
-    BlockParams(2, 1),
-    BlockParams(3, 2),
+    BlockParams(1, 1, 6, True),
+    BlockParams(2, 2, 6, True),
+    BlockParams(2, 2, 6, True),
+    BlockParams(2, 2, 6, True),
+    BlockParams(2, 1, 6, True),
+    BlockParams(3, 2, 6, True),
 ]
 
 _BLOCKS_LITE = [
-    BlockParams(1, 1),
-    BlockParams(1, 2),
-    BlockParams(1, 2),
-    BlockParams(2, 2),
-    BlockParams(2, 1),
-    BlockParams(2, 2),
+    BlockParams(1, 1, 4, False),
+    BlockParams(2, 2, 4, False),
+    BlockParams(2, 2, 5, False),
+    BlockParams(2, 2, 5, False),
+    BlockParams(3, 1, 6, False),
+    BlockParams(3, 2, 6, False),
 ]
 
 
@@ -92,6 +94,7 @@ class LinearBottleneck(torch.nn.Module):
         mid_channels = in_channels
         if expansion != 1:
             mid_channels = in_channels * expansion
+
             self.layers.extend(
                 [
                     torch.nn.Conv2d(in_channels, mid_channels, kernel_size=1),
@@ -109,6 +112,7 @@ class LinearBottleneck(torch.nn.Module):
                     padding=2,
                     groups=mid_channels,
                 ),
+                torch.nn.Conv2d(mid_channels, mid_channels, kernel_size=1),
                 torch.nn.BatchNorm2d(mid_channels),
             ]
         )
@@ -158,9 +162,9 @@ class ReXNet(torch.nn.Module):
                     LinearBottleneck(
                         in_channels=in_channels,
                         out_channels=out_channels,
-                        expansion=6 if block_idx else 1,
+                        expansion=block.expansion if block_idx else 1,
                         stride=1 if idx else block.stride,
-                        use_se=True if len(layers) > 2 else False,
+                        use_se=True if len(layers) > 2 and block.use_se else False,
                         se_ratio=12,
                     )
                 )

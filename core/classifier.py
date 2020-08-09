@@ -7,6 +7,7 @@ import torch
 
 from core import pull_assets
 from third_party.rexnet import rexnet
+from third_party.vovnet import vovnet
 
 
 class Classifier(torch.nn.Module):
@@ -66,6 +67,8 @@ class Classifier(torch.nn.Module):
         """ Load the supplied backbone. """
         if "rexnet" in backbone:
             model = rexnet.ReXNet(num_classes=self.num_classes, model_type=backbone)
+        elif "vovnet" in backbone:
+            model = vovnet.VoVNet(model_name=backbone, num_classes=self.num_classes)
         else:
             raise ValueError(f"Unsupported backbone {backbone}.")
 

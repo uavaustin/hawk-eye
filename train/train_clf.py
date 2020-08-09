@@ -12,11 +12,19 @@ import shutil
 import os
 import yaml
 
-import apex
+try:
+    import apex
+
+    USE_APEX = True
+except ImportError as e:
+    USE_APEX = False
+    print(f"{e}. Apex will not be used.")
+
 import torch
 import numpy as np
 
 from train import datasets
+from train import augmentations
 from train.train_utils import utils
 from train.train_utils import ema
 from core import classifier, pull_assets
@@ -72,14 +80,15 @@ def train(
         backbone=model_cfg.get("backbone", None), num_classes=2
     )
     clf_model.to(device)
-    ema_model = ema.Ema(clf_model)
 
     if is_main:
         print("Model: \n", clf_model)
 
     optimizer = utils.create_optimizer(train_cfg["optimizer"], clf_model)
-    clf_model, optimizer = apex.amp.initialize(clf_model, optimizer, opt_level="O1")
+    if USE_APEX:
+        clf_model, optimizer = apex.amp.initialize(clf_model, optimizer, opt_level="O1")
 
+    ema_model = ema.Ema(clf_model)
     lr_params = train_cfg.get("lr_schedule", {})
 
     if world_size > 1:
@@ -130,18 +139,22 @@ def train(
             ).scatter_(1, labels, 1)
 
             out = clf_model(data)
+            # TODO(alex): more tweaking of alpha/gamma. See retinanet paper for more info
             loss = losses.sigmoid_focal_loss(
-                out, labels_one_hot, alpha=0.5, gamma=2.5, reduction="sum"
+                out, labels_one_hot, gamma=3.0, reduction="sum"
             ) / max(1, labels_one_hot.shape[0])
 
             all_losses.append(loss.item())
 
-            # Propogate the gradients back through the model.
-            with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
-                scaled_loss.backward()
+            if USE_APEX:
+                # Propogate the gradients back through the model.
+                with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
 
             optimizer.step()
-            lr_scheduler.step()
+            # lr_scheduler.step()
 
             ema_model.update(clf_model)
 
@@ -153,7 +166,8 @@ def train(
                 )
 
         # Call evaluation function
-        print("Starting eval.")
+        if is_main:
+            print("Starting eval.")
         start_val = time.perf_counter()
         clf_model.eval()
         model_highest_score = eval_acc = eval(
@@ -166,7 +180,6 @@ def train(
             save_dir,
         )
         clf_model.train()
-        print(f"Eval took {time.perf_counter() - start_val}.")
 
         ema_highest_score = eval_acc = eval(
             ema_model,
@@ -179,10 +192,11 @@ def train(
         )
 
         if is_main:
+            print(f"Eval took {time.perf_counter() - start_val}.")
             print(
-                f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5} \n"
-                f"Model accuracy: {model_highest_score} \n",
-                f"EMA accuracy: {ema_highest_score} \n",
+                f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5}\n"
+                f"Best model accuracy: {model_highest_score}\n",
+                f"Best EMA accuracy: {ema_highest_score} \n",
             )
 
 
@@ -222,6 +236,8 @@ def eval(
         total_num += data.shape[0]
 
     accuracy = {"base": num_correct / total_num}
+    if is_main:
+        print(accuracy)
     if world_size > 1:
         # Make sure processes get to this point.
         torch.distributed.barrier()
@@ -229,10 +245,12 @@ def eval(
     if accuracy["base"] > previous_best["base"] and is_main:
 
         # Delete the previous best
+        name = "classifier.pt"
         if isinstance(clf_model, ema.Ema):
             clf_model = clf_model.ema_model
+            name = "ema-classifier.pt"
 
-        utils.save_model(clf_model, save_dir / "classifier.pt")
+        utils.save_model(clf_model, save_dir / name)
 
         return accuracy
     else:
@@ -259,12 +277,24 @@ def create_data_loader(
     """
     assert data_dir.is_dir(), data_dir
 
-    dataset = datasets.ClfDataset(data_dir, img_ext=generate_config.IMAGE_EXT)
+    augmentations.clf_eval_augs(224, 224) if val else augmentations.clf_train_augs(
+        224, 224
+    )
+    dataset = datasets.ClfDataset(
+        data_dir,
+        img_ext=generate_config.IMAGE_EXT,
+        augs=augmentations.clf_eval_augs(224, 224)
+        if val
+        else augmentations.clf_train_augs(224, 224),
+    )
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.
     sampler = None
     if world_size > 1:
-        sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+        if not val:
+            sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+        else:
+            sampler = torch.utils.data.SequentialSampler(dataset)
 
     loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, pin_memory=True, sampler=sampler, drop_last=True

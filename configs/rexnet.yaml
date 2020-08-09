@@ -4,16 +4,16 @@ model:
   image_size: 224
 training:
   optimizer:
-    type: "SGD"
-    lr: 5e-3
+    type: "AdamW"
+    lr: 5e-1
     momentum: 0.9
-    weight_decay: 1e-5
+    weight_decay: 1.0e-5
   lr_schedule:
     start_lr: 1.0e-4
     max_lr: 1.0e-1
     end_lr: 1.0e-8
-    warmup_fraction: 0.33
-  epochs: 40
+    warmup_fraction: 0.05
+  epochs: 20
   gpu: true
-  batch_size: 120
+  batch_size: 100
   save_best: true

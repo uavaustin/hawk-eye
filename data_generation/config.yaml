@@ -69,8 +69,8 @@ generate:
   empty_slice_probability: 0.1
   train_batch:
     offset: 0
-    images: 5000
+    images: 10000000000
   eval_batch:
     offset: 0
-    images: 500
+    images: 1000
   img_ext: png
