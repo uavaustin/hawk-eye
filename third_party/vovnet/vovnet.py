@@ -168,7 +168,7 @@ class _OSA(torch.nn.Module):
         # feature aggregation
         aggregated += layer_per_block * stage_channels
         self.concat = torch.nn.Sequential(*pointwise(aggregated, concat_channels))
-        self.esa = ESE(concat_channels)
+        self.ese = ESE(concat_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
@@ -186,7 +186,7 @@ class _OSA(torch.nn.Module):
 
         x = torch.cat(output, dim=1)
         xt = self.concat(x)
-        xt = self.esa(xt)
+        xt = self.ese(xt)
 
         if self.identity:
             xt += identity_feat

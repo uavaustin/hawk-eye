@@ -72,7 +72,7 @@ class DetDataset(torch.utils.data.Dataset):
         ]
 
         if boxes:
-            boxes = torch.stack([torch.clamp(box, 0.0, 1.0) for box in boxes])
+            boxes = torch.stack(boxes).clamp(0.0, 1.0)
 
         category_ids = [label["class_id"] for label in labels["bboxes"]]
 

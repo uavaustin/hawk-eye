@@ -231,18 +231,18 @@ if __name__ == "__main__":
         help="Needed when an image directory is supplied.",
     )
     parser.add_argument(
-        "--clf_version",
+        "--clf_timestamp",
         required=False,
         type=str,
         default="dev",
-        help="Version of the classifier model to use.",
+        help="Timestamp of the classifier model to use.",
     )
     parser.add_argument(
-        "--det_version",
+        "--det_timestamp",
         required=False,
         type=str,
         default="dev",
-        help="Version of the detector model to use.",
+        help="Timestamp of the detector model to use.",
     )
     parser.add_argument(
         "--visualization_dir",
@@ -253,11 +253,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     clf_model = classifier.Classifier(
-        version=args.clf_version,
-        img_width=config.PRECLF_SIZE[0],
-        img_height=config.PRECLF_SIZE[1],
-        use_cuda=torch.cuda.is_available(),
-        half_precision=torch.cuda.is_available(),
+        timestamp=args.clf_timestamp, half_precision=torch.cuda.is_available()
     )
     clf_model.eval()
     det_model = detector.Detector(

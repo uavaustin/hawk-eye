@@ -26,7 +26,7 @@ def depthwise(in_channels: int, out_channels: int):
 def conv3x3(in_channels: int, out_channels: int):
     """ Simple Conv2d layer. """
     return [
-        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True),
+        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True)
     ]
 
 

@@ -11,15 +11,20 @@ import torch
 import yaml
 
 from core import classifier
+from core import detector
 from core import pull_assets
 
 
 @torch.no_grad()
-def benchmark(timestamp: str, model_type: str, batch_size: int) -> None:
+def benchmark(
+    timestamp: str, model_type: str, batch_size: int, rum_time: float = 30.0
+) -> None:
 
     # Construct the model.
     if model_type == "classifier":
         model = classifier.Classifier(timestamp=timestamp, half_precision=True)
+    elif model_type == "detector":
+        model = detector.Detector(timestamp=timestamp, half_precision=True)
 
     batch = torch.randn((batch_size, 3, model.image_size, model.image_size))
 

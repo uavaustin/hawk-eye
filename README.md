@@ -7,12 +7,12 @@
 Make sure to have Python3 installed. If you would like to use a gpu, install
 CUDA and CUDNN. Next, run:
 ```
-pip install -U Cython==0.29.15 numpy==1.17.4
-pip install -r requirements.txt
+python3 -m pip install -U Cython==0.29.21 numpy==1.19.1
+python3 -m pip install -r requirements.txt
 pre-commit && pre-commit install
 ```
 Then install either `requirements-cpu.txt` or `requirements-gpu.txt` depending
-on your device.
+on your target device.
 
 Finally, run:
 ```

@@ -5,8 +5,10 @@ training to speed the process up. """
 
 import argparse
 import pathlib
-from typing import Tuple, List, Dict, Any
-import yaml
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 import tarfile
 import tempfile
 import datetime
@@ -14,20 +16,32 @@ import json
 import time
 import shutil
 import os
+import yaml
+
+try:
+    import apex
+
+    _USE_APEX = True
+except ImportError as e:
+    _USE_APEX = False
+    print(f"{e}. Apex will not be used.")
 
 import torch
 import numpy as np
 
-from train import datasets, collate
+from train import datasets
+from train import collate
 from train.train_utils import utils
+from train.train_utils import ema
 from data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
 from core import detector
+from core import pull_assets
 
 _LOG_INTERVAL = 10
 _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
-_SAVE_DIR = pathlib.Path("~/runs/uav-det").expanduser()
+_SAVE_DIR = pathlib.Path("~/runs/uav-detector").expanduser()
 
 
 def detections_to_dict(
@@ -72,6 +86,7 @@ def train(
     model_cfg: dict,
     train_cfg: dict,
     save_dir: pathlib.Path = None,
+    initial_timestamp: pathlib.Path = None,
 ) -> None:
     """ Main training loop that will also call out to separate evaluation function.
 
@@ -81,6 +96,7 @@ def train(
         model_cfg: The model's training params.
         train_cfg: The config of training parameters.
         save_dir: Where to save the model archive.
+        initial_timestamp: The saved model to start training from.
     """
 
     # Do some general setup. When using distributed training and Apex, the device needs
@@ -95,17 +111,23 @@ def train(
     # can communicate to each other.
     if world_size > 1:
         torch.distributed.init_process_group(
-            "nccl", init_method="env://", world_size=world_size, rank=local_rank
+            "nccl", world_size=world_size, rank=local_rank
         )
     # Load the model.
     model = detector.Detector(
         num_classes=len(generate_config.OD_CLASSES),
         model_params=model_cfg,
-        confidence=0.05,  # TODO(alex): Make configurable?
+        confidence=0.0,  # TODO(alex): Make configurable?
     )
+    if initial_timestamp is not None:
+        model.load_state_dict(
+            torch.load(initial_timestamp / "detector-ap30.pt", map_location="cpu")
+        )
+    ema_model = ema.Ema(model)
     model.to(device)
     model.train()
-    print(f"Model architecture: \n {model}")
+    if is_main:
+        print(f"Model architecture: \n {model}")
 
     # TODO(alex) these paths should be in the generate config
     train_batch_size = train_cfg.get("train_batch_size")
@@ -134,22 +156,21 @@ def train(
     # Construct the optimizer and wrap with Apex if available.
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
 
-    # Setup mixed precision abilities if specified.
-    scaler = torch.cuda.amp.GradScaler(init_scale=1)
-    autocast = torch.cuda.amp.autocast()
+    if _USE_APEX:
+        model, optimizer = apex.amp.initialize(
+            model, optimizer, opt_level="O1", verbosity=is_main
+        )
 
     # Adjust the model for distributed training. If we are using apex, wrap the model
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
-        model = torch.nn.parallel.DistributedDataParallel(
-            model, device_ids=[local_rank]
-        )
+        model = apex.parallel.DistributedDataParallel(model, delay_allreduce=True)
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
 
     eval_start_epoch = train_cfg.get("eval_start_epoch", 10)
-    eval_results = {}
+    eval_results, ema_eval_results = {}, {}
 
     # Create the learning rate scheduler.
     lr_config = train_cfg.get("lr_schedule", {})
@@ -157,6 +178,7 @@ def train(
     start_lr = float(lr_config.get("start_lr"))
     max_lr = float(lr_config.get("max_lr"))
     end_lr = float(lr_config.get("end_lr"))
+    """
     lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=max_lr,
@@ -165,7 +187,7 @@ def train(
         div_factor=max_lr / start_lr,
         pct_start=warm_up_percent,
     )
-
+    """
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
     for epoch in range(epochs):
@@ -180,38 +202,44 @@ def train(
 
             optimizer.zero_grad()
 
-            if use_cuda:
-                images = images.to(device)
-                gt_regressions = gt_regressions.to(device)
-                gt_classes = gt_classes.to(device)
+            images = images.to(device, non_blocking=True)
+            gt_regressions = gt_regressions.to(device, non_blocking=True)
+            gt_classes = gt_classes.to(device, non_blocking=True)
 
-            with autocast:
-                # Forward pass through detector
-                cls_per_level, reg_per_level = model(images)
+            # Forward pass through detector
+            cls_per_level, reg_per_level = model(images)
 
-                # Compute the losses
-                cls_loss, reg_loss = losses.compute_losses(
-                    gt_classes=gt_classes,
-                    gt_anchors_deltas=gt_regressions,
-                    cls_per_level=cls_per_level,
-                    reg_per_level=reg_per_level,
-                    num_classes=len(generate_config.OD_CLASSES),
-                )
-                total_loss = cls_loss + reg_loss
+            # Compute the losses
+            cls_loss, reg_loss = losses.compute_losses(
+                gt_classes=gt_classes,
+                gt_anchors_deltas=gt_regressions,
+                cls_per_level=cls_per_level,
+                reg_per_level=reg_per_level,
+                num_classes=len(generate_config.OD_CLASSES),
+            )
+            reg_loss *= 2
+            total_loss = cls_loss + reg_loss
             clf_losses.append(cls_loss)
             reg_losses.append(reg_loss)
 
-            # Propogate the gradients back through the model
-            scaler.scale(total_loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            if _USE_APEX:
+                # Propogate the gradients back through the model.
+                with apex.amp.scale_loss(total_loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                total_loss.backward()
 
             all_losses.append(total_loss.item())
+
             # Perform the parameter updates
-            lr_scheduler.step()
+            optimizer.step()
+
+            ema_model.update(model)
+
+            # lr_scheduler.step()
             lr = optimizer.param_groups[0]["lr"]
 
-            if idx % _LOG_INTERVAL == is_main == 0:
+            if idx % _LOG_INTERVAL == 0 and is_main:
                 print(
                     f"Epoch: {epoch} step {idx}, "
                     f"clf loss {sum(clf_losses) / len(clf_losses):.5}, "
@@ -220,21 +248,32 @@ def train(
                 )
 
         # Call evaluation function if past eval delay.
-        if is_main and epoch >= eval_start_epoch:
-            print("Starting evaluation")
+        if epoch >= eval_start_epoch:
+
+            if is_main:
+                print("Starting evaluation")
+
             model.eval()
             start = time.perf_counter()
             eval_results, improved_metics = eval(
                 model, eval_loader, eval_results, save_dir
             )
             model.train()
-            print(f"Evaluation took {time.perf_counter() - start:.3} seconds.")
-            print(f"Improved metrics: {improved_metics}")
+
+            # Call for EMA model.
+            ema_eval_results, ema_improved_metrics = eval(
+                ema_model.ema_model, eval_loader, ema_eval_results, save_dir
+            )
+            if is_main:
+                print(f"Evaluation took {time.perf_counter() - start:.3f} seconds.")
+                print(f"Improved metrics: {improved_metics}")
+                print(f"Improved ema metrics: {improved_metics}")
 
         if is_main:
             print(
                 f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5} \n"
-                f"{eval_results}"
+                f"{eval_results} \n"
+                f"ema results: {ema_eval_results}"
             )
 
 
@@ -262,8 +301,12 @@ def eval(
         if torch.cuda.is_available():
             images = images.cuda()
         detections = model(images)
+
+        if isinstance(model, apex.parallel.distributed.DistributedDataParallel):
+            model = model.module
+
         detections_dict.extend(
-            detections_to_dict(detections, image_ids, model.module.image_size)
+            detections_to_dict(detections, image_ids, model.image_size)
         )
     results = {}
     if detections_dict:
@@ -336,7 +379,7 @@ def create_data_loader(
         collate_fn = collate.Collate(
             num_classes=len(generate_config.OD_CLASSES),
             original_anchors=anchors,
-            image_size=512,
+            image_size=generate_config.DETECTOR_SIZE[0],
         )
 
     loader = torch.utils.data.DataLoader(
@@ -350,7 +393,7 @@ def create_data_loader(
 
 
 if __name__ == "__main__":
-    # Training will probably always be undeterministic due to async CUDA calls,
+    # Training will always be undeterministic due to async CUDA calls,
     # but this gets us a bit closer to repeatability.
     torch.cuda.random.manual_seed(42)
     torch.random.manual_seed(42)
@@ -365,7 +408,20 @@ if __name__ == "__main__":
         type=pathlib.Path,
         help="Path to yaml model definition.",
     )
+    parser.add_argument(
+        "--initial_timestamp",
+        default=None,
+        type=str,
+        help="Model timestamp to load as a starting point.",
+    )
     args = parser.parse_args()
+
+    # Download initial timestamp.
+    initial_timestamp = None
+    if args.initial_timestamp is not None:
+        initial_timestamp = pull_assets.download_model(
+            "detector", args.initial_timestamp
+        )
 
     config_path = args.config.expanduser()
     assert config_path.is_file(), f"Can't find {config_path}."
@@ -375,7 +431,9 @@ if __name__ == "__main__":
     model_cfg = config["model"]
     train_cfg = config["training"]
 
-    save_dir = _SAVE_DIR / (datetime.datetime.now().isoformat().split(".")[0])
+    save_dir = _SAVE_DIR / (
+        datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
+    )
     save_dir.mkdir(exist_ok=True, parents=True)
     shutil.copy(config_path, save_dir / "config.yaml")
 
@@ -386,7 +444,7 @@ if __name__ == "__main__":
     os.environ["MASTER_PORT"] = "12345"
     torch.multiprocessing.spawn(
         train,
-        (world_size, model_cfg, train_cfg, save_dir),
+        (world_size, model_cfg, train_cfg, save_dir, initial_timestamp),
         nprocs=world_size,
         join=True,
     )

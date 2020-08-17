@@ -83,7 +83,7 @@ def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
 def download_model(model_type: str, timestamp: str) -> pathlib.Path:
     assert model_type in ["classifier", "detector"], f"Unsupported model {model_type}."
     filename = f"{model_type}/{timestamp}.tar.gz"
-    destination = config.ASSETS_DIR / timestamp
+    destination = pathlib.Path(f"~/runs/uav-{model_type}").expanduser() / timestamp
 
     if not destination.is_dir():
         download_file(filename, destination)

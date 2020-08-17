@@ -66,11 +66,11 @@ generate:
   threads: 0
   delete_on_convert: false
   # The detectors we use can train on images with no targets.
-  empty_slice_probability: 0.1
+  empty_slice_probability: 0.0
   train_batch:
     offset: 0
-    images: 10000000000
+    images: 6000
   eval_batch:
     offset: 0
-    images: 1000
+    images: 600
   img_ext: png

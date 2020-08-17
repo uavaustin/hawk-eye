@@ -27,7 +27,7 @@ def depthwise(in_channels: int, out_channels: int):
 def conv3x3(in_channels: int, out_channels: int):
     """ Simple Conv2d layer. """
     return [
-        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True),
+        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True)
     ]
 
 
@@ -56,7 +56,6 @@ class RetinaNetHead(torch.nn.Module):
         for idx in range(num_convolutions):
             classification_subnet += [
                 *conv(in_channels, in_channels),
-                torch.nn.BatchNorm2d(in_channels),
                 torch.nn.ReLU(inplace=True),
             ]
         # NOTE same basic architecture between box regression and classification
@@ -94,11 +93,10 @@ class RetinaNetHead(torch.nn.Module):
         """ Applies the regression and classification subnets to each of the
         incoming feature maps. """
 
-        bbox_regressions = [
-            self.regression_subnet(level) for level in feature_maps.values()
-        ]
-        classifications = [
-            self.classification_subnet(level) for level in feature_maps.values()
-        ]
+        bbox_regressions, classifications = [], []
+
+        for level in feature_maps.values():
+            bbox_regressions.append(self.regression_subnet(level))
+            classifications.append(self.classification_subnet(level))
 
         return classifications, bbox_regressions

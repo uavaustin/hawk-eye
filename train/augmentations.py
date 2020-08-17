@@ -3,68 +3,57 @@ are not meant to be an all-encompassing augmentation regime for any of the model
 Feel free to experiment with any of the available augmentations:
 https://albumentations.readthedocs.io/en/latest/index.html """
 
-import albumentations
+import albumentations as albu
 
 
-def clf_train_augs(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
+def clf_train_augs(height: int, width: int) -> albu.Compose:
+    return albu.Compose(
         [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Flip(),
-            albumentations.RandomRotate90(),
-            albumentations.OneOf(
+            albu.Resize(height=height, width=width),
+            albu.Flip(),
+            albu.RandomRotate90(),
+            albu.OneOf(
                 [
-                    albumentations.HueSaturationValue(),
-                    albumentations.RandomBrightnessContrast(),
-                    albumentations.Blur(blur_limit=2),
-                    albumentations.GaussNoise(),
+                    albu.HueSaturationValue(),
+                    albu.RandomBrightnessContrast(),
+                    albu.Blur(blur_limit=2),
+                    albu.GaussNoise(),
+                    albu.RandomGamma(),
                 ]
             ),
-            albumentations.RandomGamma(),
-            albumentations.Normalize(),
+            albu.Normalize(),
         ]
     )
 
 
-def clf_eval_augs(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
-        [albumentations.Resize(height=height, width=width), albumentations.Normalize()]
-    )
+def clf_eval_augs(height: int, width: int) -> albu.Compose:
+    return albu.Compose([albu.Resize(height=height, width=width), albu.Normalize()])
 
 
 # TODO(alex): Add some more augumentations here.
-def det_train_augs(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
+def det_train_augs(height: int, width: int) -> albu.Compose:
+    return albu.Compose(
         [
-            albumentations.Resize(height=height, width=width),
-            albumentations.OneOf(
-                [
-                    albumentations.RandomBrightnessContrast(),
-                    albumentations.GaussNoise(),
-                    albumentations.HueSaturationValue(),
-                ],
-                p=1.0,
-            ),
-            albumentations.Flip(),
-            albumentations.RandomRotate90(),
-            albumentations.Normalize(),
+            albu.Resize(height=height, width=width),
+            albu.RandomGamma(),
+            albu.Flip(),
+            albu.RandomRotate90(),
+            albu.Normalize(),
         ]
     )
 
 
-def det_eval_augs(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
-        [albumentations.Resize(height=height, width=width), albumentations.Normalize()]
-    )
+def det_eval_augs(height: int, width: int) -> albu.Compose:
+    return albu.Compose([albu.Resize(height=height, width=width), albu.Normalize()])
 
 
-def feature_extraction_augmentations(height: int, width: int) -> albumentations.Compose:
-    return albumentations.Compose(
+def feature_extraction_aug(height: int, width: int) -> albu.Compose:
+    return albu.Compose(
         [
-            albumentations.Resize(height=height, width=width),
-            albumentations.Rotate(5),
-            albumentations.RandomBrightnessContrast(0.05, 0.05),
-            albumentations.GaussianBlur(blur_limit=4),
-            albumentations.Normalize(),
+            albu.Resize(height=height, width=width),
+            albu.Rotate(5),
+            albu.RandomBrightnessContrast(0.05, 0.05),
+            albu.GaussianBlur(blur_limit=4),
+            albu.Normalize(),
         ]
     )

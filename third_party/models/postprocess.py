@@ -2,7 +2,7 @@ from typing import List, Tuple
 import dataclasses
 
 import torch
-from torchvision.ops import boxes as box_ops
+from torchvision import ops
 
 from third_party.models import regression
 
@@ -59,25 +59,6 @@ def permute_to_N_HWA_K_and_concat(
     return box_cls, box_delta
 
 
-# https://github.com/facebookresearch/detectron2/blob/master/detectron2/layers/nms.py
-def batched_nms(boxes, scores, idxs, iou_threshold):
-    """ Same as torchvision.ops.boxes.batched_nms, but safer. """
-    assert boxes.shape[-1] == 4
-    # TODO may need better strategy.
-    # Investigate after having a fully-cuda NMS op.
-    if len(boxes) < 40000:
-        return box_ops.batched_nms(boxes, scores, idxs, iou_threshold)
-
-    result_mask = scores.new_zeros(scores.size(), dtype=torch.bool)
-    for id in torch.unique(idxs).cpu().tolist():
-        mask = (idxs == id).nonzero().view(-1)
-        keep = box_ops.batched_nms(boxes[mask], scores[mask], iou_threshold)
-        result_mask[mask[keep]] = True
-    keep = result_mask.nonzero().view(-1)
-    keep = keep[scores[keep].argsort(descending=True)]
-    return keep
-
-
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/layers/wrappers.py
 def cat(tensors, dim=0):
     """ Efficient version of torch.cat that avoids a copy if there
@@ -94,6 +75,7 @@ class PostProcessor:
         num_classes: int,
         image_size: int,
         anchors_per_level: List[torch.Tensor],
+        all_anchors: torch.Tensor,
         regressor: regression.Regressor,
         score_threshold: float = 0.1,
         max_detections_per_image: int = 100,
@@ -119,6 +101,7 @@ class PostProcessor:
         self.image_size = torch.Tensor([image_size]).float()
         self.regressor = regressor
         self.anchors_per_level = anchors_per_level
+        self.all_anchors = all_anchors
         self.score_threshold = score_threshold
         self.topk_candidates = topk_candidates
         self.nms_threshold = nms_threshold
@@ -136,25 +119,14 @@ class PostProcessor:
         box_regressions = [
             permute_to_N_HWA_K(box_reg, 4) for box_reg in box_regressions
         ]
-        results = []
-        # Loop over the images in the batch
-        for img_idx in range(box_classifications[0].shape[0]):
-            # Extract out the classification and regression tensors
-            box_cls_per_image = [
-                box_cls_per_level[img_idx] for box_cls_per_level in box_classifications
-            ]
-            box_reg_per_image = [
-                box_reg_per_level[img_idx] for box_reg_per_level in box_regressions
-            ]
-            results_per_image = self.inference_single_image(
-                box_cls_per_image, box_reg_per_image
-            )
-            results.append(results_per_image)
-        return results
+        box_classifications = torch.cat(box_classifications, dim=1)
+        box_regressions = torch.cat(box_regressions, dim=1)
 
-    def inference_single_image(
-        self, box_cls: List[torch.Tensor], box_delta: List[torch.Tensor]
-    ) -> List[BoundingBox]:
+        return self.inference_batch(box_classifications, box_regressions)
+
+    def inference_batch(
+        self, box_cls: torch.Tensor, box_delta: torch.Tensor
+    ) -> List[List[BoundingBox]]:
         """ Single-image inference. Return bounding-box detection results by
         thresholding on scores and applying non-maximum suppression (NMS).
         Arguments:
@@ -164,55 +136,61 @@ class PostProcessor:
         Returns:
             A list of the bounding boxes predicted on one image.
         """
-        boxes_all = []
-        scores_all = []
-        class_idxs_all = []
 
-        # Iterate over each feature level
-        for box_cls_i, box_reg_i, anchors_i in zip(
-            box_cls, box_delta, self.anchors_per_level
-        ):
+        # (B, HxWxAxK)
+        box_cls = box_cls.view(box_cls.shape[0], -1).sigmoid_()
 
-            # (HxWxAxK,)
-            box_cls_i = box_cls_i.flatten().sigmoid_()
+        # Keep top k top scoring indices only.
+        num_topk = min(self.topk_candidates, box_delta.size(1))
 
-            # Keep top k top scoring indices only.
-            num_topk = min(self.topk_candidates, box_reg_i.size(0))
-            # torch.sort is actually faster than .topk (at least on GPUs)
-            predicted_prob, topk_idxs = box_cls_i.sort(descending=True)
-            predicted_prob = predicted_prob[:num_topk]
-            topk_idxs = topk_idxs[:num_topk]
+        # torch.sort is actually faster than .topk (at least on GPUs)
+        predicted_prob, topk_idxs = box_cls.sort(descending=True, dim=1)
 
-            # filter out the proposals with low confidence score
-            keep_idxs = predicted_prob > self.score_threshold
-            predicted_prob = predicted_prob[keep_idxs]
-            topk_idxs = topk_idxs[keep_idxs]
+        predicted_prob = predicted_prob[:, :num_topk]
+        topk_idxs = topk_idxs[:, :num_topk]
 
-            anchor_idxs = topk_idxs // self.num_classes
-            classes_idxs = topk_idxs % self.num_classes
+        # filter out the proposals with low confidence score
+        keep_idxs = predicted_prob > self.score_threshold
+        predicted_prob.masked_scatter_(keep_idxs, predicted_prob)
+        topk_idxs.masked_scatter_(keep_idxs, topk_idxs)
 
-            box_reg_i = box_reg_i[anchor_idxs]
-            anchors_i = anchors_i[anchor_idxs]
-
-            # predict boxes
-            predicted_boxes = self.regressor.apply_deltas(box_reg_i, anchors_i)
-
-            boxes_all.append(predicted_boxes)
-            scores_all.append(predicted_prob)
-            class_idxs_all.append(classes_idxs)
-
-        boxes_all, scores_all, class_idxs_all = [
-            cat(x) for x in [boxes_all, scores_all, class_idxs_all]
-        ]
-        keep = batched_nms(
-            boxes_all.float(), scores_all.float(), class_idxs_all, self.nms_threshold,
+        anchor_idxs = (topk_idxs // self.num_classes).unsqueeze(-1)
+        classes_idxs = topk_idxs % self.num_classes
+        box_delta = box_delta.gather(dim=1, index=anchor_idxs.expand(-1, -1, 4))
+        anchors = self.all_anchors.index_select(0, anchor_idxs.flatten()).view_as(
+            box_delta
         )
-        keep = keep[: self.max_detections_per_image]
 
-        # TODO unhardcode
-        return [
-            BoundingBox(box.int().cpu() / self.image_size, float(conf), int(cls_id))
-            for box, conf, cls_id in zip(
-                boxes_all[keep], scores_all[keep], class_idxs_all[keep]
-            )
+        # Apply the predicted deltas to the original boxes and perform NMS over all
+        # the images in the batch.
+        predicted_boxes = self.regressor.apply_deltas(box_delta, anchors)
+
+        keep = [
+            ops.nms(b.float(), p, self.nms_threshold)
+            for b, p in zip(predicted_boxes, predicted_prob)
         ]
+        keep = [k[: self.max_detections_per_image] for k in keep]
+        # print(self.max_detections_per_image)
+        keep_boxes = [
+            boxes.gather(0, idxs.unsqueeze(-1).expand(-1, 4))
+            for boxes, idxs in zip(predicted_boxes, keep)
+        ]
+        # print(keep_boxes)
+        keep_prob = [p.gather(0, idxs) for p, idxs in zip(predicted_prob, keep)]
+        keep_classes = [c.gather(0, idxs) for c, idxs in zip(classes_idxs, keep)]
+
+        boxes_batch = []
+        for boxes, confs, cls_ids in zip(keep_boxes, keep_prob, keep_classes):
+
+            boxes_final = []
+            for idx, box in enumerate(boxes):
+                boxes_final.append(
+                    BoundingBox(
+                        box.int().cpu() / self.image_size,
+                        float(confs[idx]),
+                        int(cls_ids[idx]),
+                    )
+                )
+            boxes_batch.append(boxes_final)
+
+        return boxes_batch

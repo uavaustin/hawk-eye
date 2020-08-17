@@ -125,7 +125,7 @@ PRECLF_SIZE = (
 # Whether to delete full image data when they are converted
 DELETE_ON_CONVERT = generate_config.get("delete_on_convert", False)
 IMAGE_EXT = generate_config.get("img_ext", ".png")
-IMAGE_EXT = f".{IMAGE_EXT.replace('', '')}"
+IMAGE_EXT = f".{IMAGE_EXT.replace('.', '')}"
 
 
 TARGET_COMBINATIONS = [

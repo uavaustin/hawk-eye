@@ -48,7 +48,7 @@ class AnchorGenerator:
         self.strides = [2 ** level for level in pyramid_levels]
 
         # Generate all anchors based on the sizes, aspect ratios, and scales. We
-        # generate anchors based on aspect ratio and scale, and theseare common across
+        # generate anchors based on aspect ratio and scale, and these are common across
         # all feature levels, but we also create the anchors based on size where the
         # size is dependent upon feature level.
         self.anchors_per_cell = self._generate_cell_anchors(
@@ -65,7 +65,6 @@ class AnchorGenerator:
                 for stride in self.strides
             ]
         )
-
         self.anchors_over_all_feature_maps = self._grid_anchors(self.grid_sizes)
         self.all_anchors = torch.cat(self.anchors_over_all_feature_maps)
 
@@ -96,6 +95,7 @@ class AnchorGenerator:
         # https://github.com/facebookresearch/Detectron/issues/227
 
         anchors: List[torch.Tensor] = []
+
         # Generate anchors for each anchor size, scale, and aspect ratio
         for anchor_size in anchor_sizes:
             pyramid_anchors = []
