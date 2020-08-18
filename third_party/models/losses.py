@@ -225,7 +225,7 @@ class Matcher:
         # Note that the matches qualities must be positive due to the use of
         # `torch.nonzero`.
         gt_pred_pairs_of_highest_quality = torch.nonzero(
-            match_quality_matrix == highest_quality_foreach_gt[:, None]
+            match_quality_matrix == highest_quality_foreach_gt[:, None], as_tuple=False
         )
         # Example gt_pred_pairs_of_highest_quality:
         #   tensor([[    0, 39796],
@@ -261,7 +261,7 @@ def compute_losses(
         num_classes: Number of classes in the model.
 
     Returns:
-        Mapping from a named loss to a scalar tensor storing the loss. Used 
+        Mapping from a named loss to a scalar tensor storing the loss. Used
         during training only. The dict keys are: "loss_cls" and "loss_box_reg"
     """
     pred_class_logits, pred_anchor_deltas = postprocess.permute_to_N_HWA_K_and_concat(

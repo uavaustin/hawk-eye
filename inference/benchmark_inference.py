@@ -17,7 +17,7 @@ from core import pull_assets
 
 @torch.no_grad()
 def benchmark(
-    timestamp: str, model_type: str, batch_size: int, rum_time: float = 30.0
+    timestamp: str, model_type: str, batch_size: int, rum_time: float
 ) -> None:
 
     # Construct the model.
@@ -49,10 +49,21 @@ def benchmark(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Model benchmark script.")
-    parser.add_argument("--timestamp", type=str, required=True)
-    parser.add_argument("--model_type", type=str, required=True)
-    parser.add_argument("--batch_size", type=int, required=True)
+    parser = argparse.ArgumentParser(
+        description="Model benchmark script using FP16 if CUDA is available."
+    )
+    parser.add_argument(
+        "--timestamp", type=str, required=True, help="Model timestamp to test."
+    )
+    parser.add_argument(
+        "--model_type", type=str, required=True, help="Why model type to test."
+    )
+    parser.add_argument(
+        "--batch_size", type=int, required=True, help="How many images per batch."
+    )
+    parser.add_argument(
+        "--run_time", type=float, default=30.0, help="The duration of the inferencing."
+    )
     args = parser.parse_args()
 
-    benchmark(args.timestamp, args.model_type, args.batch_size)
+    benchmark(args.timestamp, args.model_type, args.batch_size, args.run_time)

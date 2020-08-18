@@ -6,27 +6,26 @@ model:
     type: "retinanet"
     num_channels: 128
     use_dw: false
-    levels: [3, 4, 5, 6, 7]
+    levels: [3, 4, 5]
   retinanet_head:
     num_levels: 4
     use_dw: false
   anchors:
     aspect_ratios: [0.5, 1, 2]  # H / W
-    sizes: [16, 32, 64, 128, 256]
+    sizes: [16, 32, 64]
     scales: [1.0, 1.25, 1.5]
 training:
   optimizer:
-    type: "AdamW"
-    lr: 1e-3
+    type: "SGD"
+    lr: 1e-4
     momentum: 0.9
     weight_decay: 1e-5
   lr_schedule:
-    start_lr: 1.0e-6
+    start_lr: 1.0e-5
     max_lr: 1.0e-1
-    end_lr: 1.0e-8
-    warmup_fraction: 0.25
-  epochs: 20
+    end_lr: 1.0e-7
+    warmup_fraction: 0.3
+  epochs: 50
   train_batch_size: 30
   eval_batch_size: 30
-  save_best: True
-  eval_start_epoch: 0
+  eval_start_epoch: 10

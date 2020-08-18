@@ -39,7 +39,8 @@ def det_train_augs(height: int, width: int) -> albu.Compose:
             albu.Flip(),
             albu.RandomRotate90(),
             albu.Normalize(),
-        ]
+        ],
+        albu.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
     )
 
 

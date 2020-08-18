@@ -14,7 +14,9 @@ import tempfile
 import datetime
 import json
 import time
+import logging
 import shutil
+import sys
 import os
 import yaml
 
@@ -31,8 +33,9 @@ import numpy as np
 
 from train import datasets
 from train import collate
-from train.train_utils import utils
 from train.train_utils import ema
+from train.train_utils import logger
+from train.train_utils import utils
 from data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
@@ -101,11 +104,14 @@ def train(
 
     # Do some general setup. When using distributed training and Apex, the device needs
     # to be set before loading the model.
+    is_main = local_rank == 0
     use_cuda = torch.cuda.is_available()
     device = torch.device(f"cuda:{local_rank}" if use_cuda else "cpu")
     if use_cuda:
         torch.cuda.set_device(device)
-    is_main = local_rank == 0
+
+    if is_main:
+        log = logger.Log(save_dir / "log.txt")
 
     # If we are using distributed training, initialize the backend through which process
     # can communicate to each other.
@@ -117,7 +123,7 @@ def train(
     model = detector.Detector(
         num_classes=len(generate_config.OD_CLASSES),
         model_params=model_cfg,
-        confidence=0.0,  # TODO(alex): Make configurable?
+        confidence=0.05,  # TODO(alex): Make configurable?
     )
     if initial_timestamp is not None:
         model.load_state_dict(
@@ -127,7 +133,7 @@ def train(
     model.to(device)
     model.train()
     if is_main:
-        print(f"Model architecture: \n {model}")
+        log.info(f"Model architecture: \n {model}")
 
     # TODO(alex) these paths should be in the generate config
     train_batch_size = train_cfg.get("train_batch_size")
@@ -174,11 +180,11 @@ def train(
 
     # Create the learning rate scheduler.
     lr_config = train_cfg.get("lr_schedule", {})
-    warm_up_percent = lr_config.get("warmup_fraction", 0) * epochs / 100
+    warm_up_percent = lr_config.get("warmup_fraction", 0)
     start_lr = float(lr_config.get("start_lr"))
     max_lr = float(lr_config.get("max_lr"))
     end_lr = float(lr_config.get("end_lr"))
-    """
+
     lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=max_lr,
@@ -187,7 +193,7 @@ def train(
         div_factor=max_lr / start_lr,
         pct_start=warm_up_percent,
     )
-    """
+
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
     for epoch in range(epochs):
@@ -198,6 +204,7 @@ def train(
         if world_size > 1:
             train_sampler.set_epoch(epoch)
 
+        previous_loss = None
         for idx, (images, gt_regressions, gt_classes) in enumerate(train_loader):
 
             optimizer.zero_grad()
@@ -217,10 +224,16 @@ def train(
                 reg_per_level=reg_per_level,
                 num_classes=len(generate_config.OD_CLASSES),
             )
-            reg_loss *= 2
+
             total_loss = cls_loss + reg_loss
             clf_losses.append(cls_loss)
             reg_losses.append(reg_loss)
+
+            if torch.isnan(total_loss):
+                raise ValueError("Loss is nan.")
+
+            if previous_loss is None:
+                previous_loss = total_loss
 
             if _USE_APEX:
                 # Propogate the gradients back through the model.
@@ -236,22 +249,30 @@ def train(
 
             ema_model.update(model)
 
-            # lr_scheduler.step()
+            lr_scheduler.step()
             lr = optimizer.param_groups[0]["lr"]
 
             if idx % _LOG_INTERVAL == 0 and is_main:
-                print(
+                log.info(
                     f"Epoch: {epoch} step {idx}, "
                     f"clf loss {sum(clf_losses) / len(clf_losses):.5}, "
                     f"reg loss {sum(reg_losses) / len(reg_losses):.5}, "
                     f"lr {lr:.5}"
                 )
 
+                if total_loss < previous_loss:
+                    if isinstance(
+                        model, apex.parallel.distributed.DistributedDataParallel
+                    ):
+                        utils.save_model(model.module, save_dir / f"min-loss.pt")
+                    else:
+                        utils.save_model(model, save_dir / f"min-loss.pt")
+
         # Call evaluation function if past eval delay.
         if epoch >= eval_start_epoch:
 
             if is_main:
-                print("Starting evaluation")
+                log.info("Starting evaluation")
 
             model.eval()
             start = time.perf_counter()
@@ -265,12 +286,12 @@ def train(
                 ema_model.ema_model, eval_loader, ema_eval_results, save_dir
             )
             if is_main:
-                print(f"Evaluation took {time.perf_counter() - start:.3f} seconds.")
-                print(f"Improved metrics: {improved_metics}")
-                print(f"Improved ema metrics: {improved_metics}")
+                log.info(f"Evaluation took {time.perf_counter() - start:.3f} seconds.")
+                log.info(f"Improved metrics: {improved_metics}")
+                log.info(f"Improved ema metrics: {improved_metics}")
 
         if is_main:
-            print(
+            log.info(
                 f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5} \n"
                 f"{eval_results} \n"
                 f"ema results: {ema_eval_results}"
@@ -377,9 +398,7 @@ def create_data_loader(
         collate_fn = collate.CollateVal()
     else:
         collate_fn = collate.Collate(
-            num_classes=len(generate_config.OD_CLASSES),
-            original_anchors=anchors,
-            image_size=generate_config.DETECTOR_SIZE[0],
+            num_classes=len(generate_config.OD_CLASSES), original_anchors=anchors
         )
 
     loader = torch.utils.data.DataLoader(

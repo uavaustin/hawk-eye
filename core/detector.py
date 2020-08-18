@@ -83,17 +83,17 @@ class Detector(torch.nn.Module):
         self.postprocess = postprocess.PostProcessor(
             num_classes=num_classes,
             image_size=self.image_size,
-            anchors_per_level=self.anchors.anchors_over_all_feature_maps,
             all_anchors=self.anchors.all_anchors,
             regressor=regression.Regressor(),
             max_detections_per_image=num_detections_per_image,
             score_threshold=confidence,
+            nms_threshold=0.2,
         )
 
         # After all the components are initialized, load the weights.
         if timestamp is not None:
             self.load_state_dict(
-                torch.load(model_path / "detector-ap30.pt", map_location="cpu")
+                torch.load(model_path / "detector-ap50.pt", map_location="cpu")
             )
 
         self.eval()
@@ -111,7 +111,7 @@ class Detector(torch.nn.Module):
         assert self.fpn_type is not None, "Must supply a fpn type."
 
         self.fpn_channels = fpn_params.get("num_channels", 128)
-        self.use_dw = fpn_params.get("use_dw")
+        self.use_dw = fpn_params.get("use_dw", False)
         self.num_head_convs = head_params.get("num_levels", 3)
 
         self.fpn_levels = fpn_params.get("levels", [3, 4, 5, 6, 7])

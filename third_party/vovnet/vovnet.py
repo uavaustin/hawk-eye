@@ -41,9 +41,6 @@ _STAGE_SPECS = {
     ),
 }
 
-_BN_MOMENTUM = 1e-1
-_BN_EPS = 1e-5
-
 
 def dw_conv(
     in_channels: int, out_channels: int, stride: int = 1
@@ -60,7 +57,7 @@ def dw_conv(
             bias=False,
         ),
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
+        torch.nn.BatchNorm2d(out_channels),
         torch.nn.ReLU(inplace=True),
     ]
 
@@ -84,7 +81,7 @@ def conv(
             groups=groups,
             bias=False,
         ),
-        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
+        torch.nn.BatchNorm2d(out_channels),
         torch.nn.ReLU(inplace=True),
     ]
 
@@ -93,7 +90,7 @@ def pointwise(in_channels: int, out_channels: int) -> List[torch.nn.Module]:
     """ Pointwise convolution."""
     return [
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
+        torch.nn.BatchNorm2d(out_channels),
         torch.nn.ReLU(inplace=True),
     ]
 
@@ -110,8 +107,7 @@ class ESE(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.avg_pool(x)
         out = self.fc(out)
-        out = torch.nn.functional.relu6(out + 3.0, inplace=True) / 6.0
-        return out * x
+        return torch.sigmoid(out) * x
 
 
 class _OSA(torch.nn.Module):
@@ -339,9 +335,7 @@ class VoVNet(torch.nn.Sequential):
         self.model.add_module(
             "classifier",
             torch.nn.Sequential(
-                torch.nn.BatchNorm2d(
-                    self._out_feature_channels[-1], _BN_MOMENTUM, _BN_EPS
-                ),
+                torch.nn.BatchNorm2d(self._out_feature_channels[-1]),
                 torch.nn.AdaptiveAvgPool2d(1),
                 torch.nn.Flatten(),
                 torch.nn.Dropout(0.2),

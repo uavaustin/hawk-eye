@@ -72,15 +72,15 @@ class DetDataset(torch.utils.data.Dataset):
         ]
 
         if boxes:
-            boxes = torch.stack(boxes).clamp(0.0, 1.0)
+            boxes = torch.stack(boxes).clamp(0.0, 1.0) * self.img_height
 
         category_ids = [label["class_id"] for label in labels["bboxes"]]
 
         return self.transform(
             image=image,
             bboxes=boxes,
-            category_id=category_ids,
-            image_id=labels["image_id"],
+            category_ids=category_ids,
+            image_ids=labels["image_id"],
         )
 
     def __len__(self) -> int:

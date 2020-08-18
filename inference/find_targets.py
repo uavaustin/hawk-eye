@@ -257,10 +257,9 @@ if __name__ == "__main__":
     )
     clf_model.eval()
     det_model = detector.Detector(
-        version=args.det_version,
+        timestamp=args.det_timestamp,
         num_classes=len(config.OD_CLASSES),
         confidence=0.3,
-        use_cuda=torch.cuda.is_available(),
         half_precision=torch.cuda.is_available(),
     )
     det_model.eval()

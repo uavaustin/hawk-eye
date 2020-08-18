@@ -10,7 +10,7 @@ from third_party.models import losses
 
 
 class CollateVal:
-    """ Simply return only the image tensors and the image ids for model evaluation. 
+    """ Simply return only the image tensors and the image ids for model evaluation.
     The image id's are need for COCO metrics. """
 
     def __init__(self) -> None:
@@ -23,19 +23,16 @@ class CollateVal:
 
             image_tensor = torch.Tensor(item["image"])
             images.append(image_tensor)
-            image_ids.append(torch.Tensor([item["image_id"]]))
+            image_ids.append(torch.Tensor([item["image_ids"]]))
 
         # BHWC -> BCHW the images
         return torch.stack(images).permute(0, 3, 1, 2), image_ids
 
 
 class Collate:
-    def __init__(
-        self, original_anchors: torch.Tensor, num_classes: int, image_size: int
-    ) -> None:
+    def __init__(self, original_anchors: torch.Tensor, num_classes: int) -> None:
         self.anchors = original_anchors.cpu()
         self.num_classes = num_classes
-        self.image_size = image_size
 
     def __call__(
         self, data_batch: List[dict]
@@ -43,10 +40,9 @@ class Collate:
         images, boxes, labels = [], [], []
 
         for item in data_batch:
-
             if item["bboxes"]:
-                boxes.append(torch.Tensor(item["bboxes"]) * self.image_size)
-                labels.append(torch.Tensor(item["category_id"]))
+                boxes.append(torch.Tensor(item["bboxes"]))
+                labels.append(torch.Tensor(item["category_ids"]))
             else:
                 # If there are no annotations in the image, append empty tensors.
                 boxes.append(torch.Tensor([]))

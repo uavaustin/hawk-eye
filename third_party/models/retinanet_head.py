@@ -58,6 +58,7 @@ class RetinaNetHead(torch.nn.Module):
                 *conv(in_channels, in_channels),
                 torch.nn.ReLU(inplace=True),
             ]
+
         # NOTE same basic architecture between box regression and classification
         regression_subnet = copy.deepcopy(classification_subnet)
 
@@ -77,7 +78,8 @@ class RetinaNetHead(torch.nn.Module):
                 for layer in subnet.modules():
                     if isinstance(layer, torch.nn.Conv2d):
                         torch.nn.init.normal_(layer.weight, mean=0, std=0.01)
-                        torch.nn.init.constant_(layer.bias, 0)
+                        if layer.bias is not None:
+                            torch.nn.init.constant_(layer.bias, 0)
 
         self.regression_subnet = torch.nn.Sequential(*regression_subnet)
         self.classification_subnet = torch.nn.Sequential(*classification_subnet)
