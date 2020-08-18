@@ -1,6 +1,7 @@
 py_test(
     name = "test_data_generation",
     srcs = ["test_data_generation.py"],
+    deps = ["//data_generation"]
 )
 
 py_test(

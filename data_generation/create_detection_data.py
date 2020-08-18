@@ -41,7 +41,7 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
         offset: TODO(alex): Are we still using this?
     """
     # Make the proper folders for storing the data.
-    images_dir = config.DATA_DIR / gen_type / "images"
+    images_dir = gen_type / "images"
     images_dir.mkdir(exist_ok=True, parents=True)
 
     r_state = random.getstate()
@@ -457,8 +457,12 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
 if __name__ == "__main__":
     # Pull the assets if not present locally.
     pull_assets.pull_all()
-    generate_all_images("detector_train", config.NUM_IMAGES, config.NUM_OFFSET)
-    generate_all_images("detector_val", config.NUM_VAL_IMAGES, config.NUM_VAL_OFFSET)
+    generate_all_images(
+        config.DATA_DIR / "detector_train", config.NUM_IMAGES, config.NUM_OFFSET
+    )
+    generate_all_images(
+        config.DATA_DIR / "detector_val", config.NUM_VAL_IMAGES, config.NUM_VAL_OFFSET
+    )
 
     # Loop back over the generated data and create the COCO datasets.
     create_coco_metadata(
