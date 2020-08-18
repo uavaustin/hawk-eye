@@ -15,9 +15,9 @@ import yaml
 try:
     import apex
 
-    USE_APEX = True
+    _USE_APEX = True
 except ImportError as e:
-    USE_APEX = False
+    _USE_APEX = False
     print(f"{e}. Apex will not be used.")
 
 import torch
@@ -25,14 +25,15 @@ import numpy as np
 
 from train import datasets
 from train import augmentations
-from train.train_utils import utils
 from train.train_utils import ema
+from train.train_utils import logger
+from train.train_utils import utils
 from core import classifier, pull_assets
 from data_generation import generate_config
 from third_party.models import losses
 
 _LOG_INTERVAL = 10
-_SAVE_DIR = pathlib.Path("~/runs/uav-clf").expanduser()
+_SAVE_DIR = pathlib.Path("~/runs/uav-classifier").expanduser()
 
 
 def train(
@@ -41,6 +42,7 @@ def train(
     model_cfg: dict,
     train_cfg: dict,
     save_dir: pathlib.Path = None,
+    initial_timestamp: str = None,
 ) -> None:
 
     # Do some general setup. When using distributed training and Apex, the device needs
@@ -50,6 +52,9 @@ def train(
     if use_cuda:
         torch.cuda.set_device(local_rank)
     is_main = local_rank == 0
+
+    if is_main:
+        log = logger.Log(save_dir / "log.txt")
 
     # If we are using distributed training, initialize the backend through which process
     # can communicate to each other.
@@ -73,20 +78,26 @@ def train(
         val=True,
     )
 
-    model_highest_score = {"base": 0}
-    ema_highest_score = {"base": 0}
+    model_highest_score = ema_highest_score = 0
 
     clf_model = classifier.Classifier(
-        backbone=model_cfg.get("backbone", None), num_classes=2
+        backbone=model_cfg.get("backbone", None),
+        num_classes=model_cfg.get("num_classes", 2),
     )
+    if initial_timestamp is not None:
+        clf_model.load_state_dict(
+            torch.load(initial_timestamp / "classifier.pt", map_location="cpu")
+        )
     clf_model.to(device)
 
     if is_main:
-        print("Model: \n", clf_model)
+        log.info(f"Model: \n {clf_model}")
 
     optimizer = utils.create_optimizer(train_cfg["optimizer"], clf_model)
-    if USE_APEX:
-        clf_model, optimizer = apex.amp.initialize(clf_model, optimizer, opt_level="O1")
+    if _USE_APEX:
+        clf_model, optimizer = apex.amp.initialize(
+            clf_model, optimizer, opt_level="O1", verbosity=is_main
+        )
 
     ema_model = ema.Ema(clf_model)
     lr_params = train_cfg.get("lr_schedule", {})
@@ -146,8 +157,8 @@ def train(
 
             all_losses.append(loss.item())
 
-            if USE_APEX:
-                # Propogate the gradients back through the model.
+            # Propogate the gradients back through the model.
+            if _USE_APEX:
                 with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
@@ -160,14 +171,14 @@ def train(
 
             if idx % _LOG_INTERVAL == 0 and is_main:
                 lr = optimizer.param_groups[0]["lr"]
-                print(
+                log.info(
                     f"Epoch: {epoch} step {idx}, loss "
                     f"{sum(all_losses) / len(all_losses):.5}. lr: {lr:.4}"
                 )
 
         # Call evaluation function
         if is_main:
-            print("Starting eval.")
+            log.info("Starting eval.")
         start_val = time.perf_counter()
         clf_model.eval()
         model_highest_score = eval_acc = eval(
@@ -192,11 +203,11 @@ def train(
         )
 
         if is_main:
-            print(f"Eval took {time.perf_counter() - start_val}.")
-            print(
-                f"Epoch: {epoch}, Training loss {sum(all_losses) / len(all_losses):.5}\n"
-                f"Best model accuracy: {model_highest_score}\n",
-                f"Best EMA accuracy: {ema_highest_score} \n",
+            log.info(f"Eval took {time.perf_counter() - start_val:.4f}s.")
+            log.info(
+                f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
+                f"Best model accuracy: {model_highest_score}\n"
+                f"Best EMA accuracy: {ema_highest_score} \n"
             )
 
 
@@ -207,7 +218,7 @@ def eval(
     device: torch.device,
     is_main: bool,
     world_size: int,
-    previous_best: dict = None,
+    previous_best: float,
     save_dir: pathlib.Path = None,
 ) -> float:
     """ Evaluate the model against the evaulation set. Save the best
@@ -235,14 +246,13 @@ def eval(
         num_correct += (predicted == labels).sum().item()
         total_num += data.shape[0]
 
-    accuracy = {"base": num_correct / total_num}
-    if is_main:
-        print(accuracy)
+    accuracy = num_correct / total_num
+
     if world_size > 1:
         # Make sure processes get to this point.
         torch.distributed.barrier()
 
-    if accuracy["base"] > previous_best["base"] and is_main:
+    if accuracy > previous_best and is_main:
 
         # Delete the previous best
         name = "classifier.pt"
@@ -289,12 +299,13 @@ def create_data_loader(
         if val
         else augmentations.clf_train_augs(224, 224),
     )
+    print(dataset)
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.
     sampler = None
     if world_size > 1:
         if not val:
-            sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+            sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
         else:
             sampler = torch.utils.data.SequentialSampler(dataset)
 
@@ -320,7 +331,20 @@ if __name__ == "__main__":
         type=pathlib.Path,
         help="Path to yaml model definition.",
     )
+    parser.add_argument(
+        "--initial_timestamp",
+        default=None,
+        type=str,
+        help="Model timestamp to load as a starting point.",
+    )
     args = parser.parse_args()
+
+    # Download initial timestamp.
+    initial_timestamp = None
+    if args.initial_timestamp is not None:
+        initial_timestamp = pull_assets.download_model(
+            "classifier", args.initial_timestamp
+        )
 
     config_path = args.config.expanduser()
     assert config_path.is_file(), f"Can't find {config_path}."
@@ -344,13 +368,15 @@ if __name__ == "__main__":
 
     os.environ["MASTER_ADDR"] = "127.0.0.1"
     os.environ["MASTER_PORT"] = "12345"
-
-    torch.multiprocessing.spawn(
-        train,
-        (world_size, model_cfg, train_cfg, save_dir),
-        nprocs=world_size,
-        join=True,
-    )
+    if world_size > 1:
+        torch.multiprocessing.spawn(
+            train,
+            (world_size, model_cfg, train_cfg, save_dir, initial_timestamp),
+            nprocs=world_size,
+            join=True,
+        )
+    else:
+        train(0, world_size, model_cfg, train_cfg, save_dir, initial_timestamp)
 
     # Create tar archive.
     save_archive = save_dir / f"{save_dir.name}.tar.gz"

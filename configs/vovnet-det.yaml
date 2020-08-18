@@ -1,7 +1,8 @@
 model:
   type: "detection"
-  backbone: "vovnet-19-slim"
+  backbone: "vovnet-19-slim-dw"
   image_size: 512
+  num_classes: 10
   fpn:
     type: "retinanet"
     num_channels: 128
@@ -24,7 +25,7 @@ training:
     start_lr: 1.0e-5
     max_lr: 1.0e-1
     end_lr: 1.0e-7
-    warmup_fraction: 0.3
+    warmup_fraction: 0.33
   epochs: 50
   train_batch_size: 30
   eval_batch_size: 30

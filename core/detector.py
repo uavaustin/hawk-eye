@@ -21,7 +21,6 @@ from third_party.models import retinanet_head
 class Detector(torch.nn.Module):
     def __init__(
         self,
-        num_classes: int = 10,
         model_params: dict = None,
         timestamp: str = None,
         confidence: float = 0.05,
@@ -29,7 +28,6 @@ class Detector(torch.nn.Module):
         half_precision: bool = False,
     ) -> None:
         super().__init__()
-        self.num_classes = num_classes
         self.half_precision = half_precision
         self.num_detections_per_image = num_detections_per_image
         self.confidence = confidence
@@ -37,7 +35,7 @@ class Detector(torch.nn.Module):
         if model_params is None and timestamp is None:
             raise ValueError("Must supply either model timestamp or backbone to load")
 
-        # If a version is given, download from bintray
+        # If a timestamp is given, download it.
         if timestamp is not None:
 
             # Download the model. This has the yaml containing the backbone.
@@ -124,6 +122,7 @@ class Detector(torch.nn.Module):
         self.anchor_scales = anchor_params.get("scales", [0.75, 1.0, 1.25])
 
         self.img_height, self.img_width = config.get("img_size", [512, 512])
+        self.num_classes = config.get("num_classes")
 
     def _load_backbone(self, backbone: str) -> torch.nn.Module:
         """Load the supplied backbone."""

@@ -119,15 +119,16 @@ def train(
         torch.distributed.init_process_group(
             "nccl", world_size=world_size, rank=local_rank
         )
+        if is_main:
+            log.info(f"Using distributed training on {world_size} gpus.")
+
     # Load the model.
     model = detector.Detector(
-        num_classes=len(generate_config.OD_CLASSES),
-        model_params=model_cfg,
-        confidence=0.05,  # TODO(alex): Make configurable?
+        model_params=model_cfg, confidence=0.05  # TODO(alex): Make configurable?
     )
     if initial_timestamp is not None:
         model.load_state_dict(
-            torch.load(initial_timestamp / "detector-ap30.pt", map_location="cpu")
+            torch.load(initial_timestamp / "min-loss.pt", map_location="cpu")
         )
     ema_model = ema.Ema(model)
     model.to(device)
@@ -171,6 +172,9 @@ def train(
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
         model = apex.parallel.DistributedDataParallel(model, delay_allreduce=True)
+        model = apex.parallel.convert_syncbn_model(model)
+        if is_main:
+            log.info("Using APEX DistributedDataParallel.")
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
@@ -459,14 +463,20 @@ if __name__ == "__main__":
     use_cuda = torch.cuda.is_available()
     world_size = torch.cuda.device_count() if use_cuda else 1  # GPUS or a CPU
 
+    if use_cuda:
+        torch.backends.cudnn.benchmark = True
+
     os.environ["MASTER_ADDR"] = "127.0.0.1"
     os.environ["MASTER_PORT"] = "12345"
-    torch.multiprocessing.spawn(
-        train,
-        (world_size, model_cfg, train_cfg, save_dir, initial_timestamp),
-        nprocs=world_size,
-        join=True,
-    )
+    if world_size > 1:
+        torch.multiprocessing.spawn(
+            train,
+            (world_size, model_cfg, train_cfg, save_dir, initial_timestamp),
+            nprocs=world_size,
+            join=True,
+        )
+    else:
+        train(0, world_size, model_cfg, train_cfg, save_dir, initial_timestamp)
 
     # Create tar archive.
     with tarfile.open(save_dir / "detector.tar.gz", mode="w:gz") as tar:

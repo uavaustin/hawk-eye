@@ -1,5 +1,7 @@
 import pathlib
-from typing import Any, Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
 
 import torch
 
@@ -78,5 +80,5 @@ def add_weight_decay(
 
 
 # TODO(alex): Unwrap DDP models.
-def unwrap_model() -> torch.nn.Module:
+def unwrap_model(model: Any) -> torch.nn.Module:
     ...

@@ -18,7 +18,7 @@ class ClfDataset(torch.utils.data.Dataset):
         data_dir: pathlib.Path,
         img_ext: str = ".png",
         augs: albumentations.Compose = None,
-    ):
+    ) -> None:
         super().__init__()
         self.images = list(data_dir.glob(f"*{img_ext}"))
         assert self.images, f"No images found in {data_dir}."
@@ -26,6 +26,10 @@ class ClfDataset(torch.utils.data.Dataset):
         self.len = len(self.images)
         self.transform = augs
         self.data_dir = data_dir
+
+        # Generate some simple stats about the data.
+        self.num_bkgs = sum([1 for img in self.images if "background" in img.stem])
+        self.num_targets = len(self.images) - self.num_bkgs
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))
@@ -38,6 +42,9 @@ class ClfDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return self.len
+
+    def __str__(self) -> str:
+        return f"{self.num_bkgs} backgrounds and {self.num_targets} targets."
 
 
 class DetDataset(torch.utils.data.Dataset):

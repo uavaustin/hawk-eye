@@ -18,6 +18,9 @@ class VoVNetParams:
 
 
 _STAGE_SPECS = {
+    "vovnet-19-clf-dw": VoVNetParams(
+        64, [64, 80, 96, 112], [112, 256, 256, 256], 3, [1, 1, 1, 1], True
+    ),
     "vovnet-19-slim-dw": VoVNetParams(
         64, [64, 80, 96, 112], [112, 256, 384, 512], 3, [1, 1, 1, 1], True
     ),

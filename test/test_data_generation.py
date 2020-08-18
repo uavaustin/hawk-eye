@@ -1,3 +1,4 @@
+#!/usr/bin/env ptyhon3
 """ Collection of unittests to test data generation scripts. """
 
 import unittest
@@ -9,3 +10,7 @@ import unittest
 class TempTest(unittest.TestCase):
     def test_temp(self) -> None:
         self.assertTrue(True)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -17,8 +17,8 @@ class CollateVal:
         pass
 
     def __call__(self, data_batch: List[dict]) -> Tuple[torch.Tensor, torch.Tensor]:
-        images = []
-        image_ids = []
+        images, image_ids = [], []
+
         for item in data_batch:
 
             image_tensor = torch.Tensor(item["image"])
