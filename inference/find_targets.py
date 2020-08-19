@@ -100,16 +100,14 @@ def find_targets(
 
             # Call the pre-clf to find the target tiles.
             preds = clf_model.classify(tiles, probability=True)[:, 1] > 0.8
-            print(tiles_batch.shape, preds.shape)
             if preds.sum().item():
                 for det_tiles, det_coords in create_batches(
-                    tiles_batch[preds.long()], coords, 15
+                    tiles_batch[preds], coords, 15
                 ):
                     # Pass these target-containing tiles to the detector
                     det_tiles = torch.nn.functional.interpolate(
                         det_tiles, config.DETECTOR_SIZE
                     )
-                    print(det_tiles.shape)
                     boxes = det_model(det_tiles)
 
                     retval.extend(zip(target_tiles, boxes))

@@ -134,7 +134,7 @@ class PostProcessor:
         Returns:
             A list of the bounding boxes predicted on one image.
         """
-        print(box_cls.shape)
+
         # (B, HxWxAxK)
         box_cls = box_cls.view(box_cls.shape[0], -1).sigmoid_()
 
