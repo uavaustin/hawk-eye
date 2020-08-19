@@ -3,6 +3,10 @@ package(default_visibility = ["//visibility:public"])
 py_library(
     name = "detection_data_generation",
     srcs = ["create_detection_data.py",],
+    deps = [
+        ":generate_config",
+        "//core:asset_manager"
+    ]
 )
 
 py_library(

@@ -18,7 +18,7 @@ import PIL
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from data_generation import generate_config as config
-from core import pull_assets
+from core import asset_manager
 
 # Get constants from config
 NUM_GEN = int(config.NUM_IMAGES)
@@ -456,7 +456,7 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
 
 if __name__ == "__main__":
     # Pull the assets if not present locally.
-    pull_assets.pull_all()
+    asset_manager.pull_all()
     generate_all_images(
         config.DATA_DIR / "detector_train", config.NUM_IMAGES, config.NUM_OFFSET
     )

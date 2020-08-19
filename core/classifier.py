@@ -5,7 +5,7 @@ import yaml
 
 import torch
 
-from core import pull_assets
+from core import asset_manager
 from third_party.rexnet import rexnet
 from third_party.vovnet import vovnet
 
@@ -37,7 +37,7 @@ class Classifier(torch.nn.Module):
         # If a version is given, download from bintray
         if timestamp is not None:
             # Download the model or find it locally.
-            model_path = pull_assets.download_model("classifier", timestamp)
+            model_path = asset_manager.download_model("classifier", timestamp)
             config = yaml.safe_load((model_path / "config.yaml").read_text())["model"]
             backbone = config.get("backbone", None)
             # Construct the model, then load the state
@@ -83,7 +83,7 @@ class Classifier(torch.nn.Module):
         if self.use_cuda and self.half_precision:
             x = x.half()
         if probability:
-            return torch.nn.functional.softmax(x, dim=1)
+            return torch.nn.functional.softmax(self.model(x), dim=1)
         else:
             _, predicted = torch.max(self.model(x).data, 1)
             return predicted

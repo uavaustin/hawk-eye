@@ -9,7 +9,7 @@ import yaml
 
 import torch
 
-from core import pull_assets
+from core import asset_manager
 from core import fpn
 from third_party.vovnet import vovnet
 from third_party.models import postprocess
@@ -39,7 +39,7 @@ class Detector(torch.nn.Module):
         if timestamp is not None:
 
             # Download the model. This has the yaml containing the backbone.
-            model_path = pull_assets.download_model("detector", timestamp)
+            model_path = asset_manager.download_model("detector", timestamp)
             config = yaml.safe_load((model_path / "config.yaml").read_text())
             model_params = config["model"]
             self._load_params(config["model"])
@@ -63,7 +63,7 @@ class Detector(torch.nn.Module):
 
         # Create the retinanet head.
         self.retinanet_head = retinanet_head.RetinaNetHead(
-            num_classes,
+            self.num_classes,
             in_channels=self.fpn_channels,
             anchors_per_cell=self.anchors.num_anchors_per_cell,
             num_convolutions=self.num_head_convs,
@@ -79,7 +79,7 @@ class Detector(torch.nn.Module):
 
         self.image_size = model_params.get("image_size", 512)
         self.postprocess = postprocess.PostProcessor(
-            num_classes=num_classes,
+            num_classes=self.num_classes,
             image_size=self.image_size,
             all_anchors=self.anchors.all_anchors,
             regressor=regression.Regressor(),
@@ -91,7 +91,7 @@ class Detector(torch.nn.Module):
         # After all the components are initialized, load the weights.
         if timestamp is not None:
             self.load_state_dict(
-                torch.load(model_path / "detector-ap50.pt", map_location="cpu")
+                torch.load(model_path / "min-loss.pt", map_location="cpu")
             )
 
         self.eval()
@@ -122,7 +122,7 @@ class Detector(torch.nn.Module):
         self.anchor_scales = anchor_params.get("scales", [0.75, 1.0, 1.25])
 
         self.img_height, self.img_width = config.get("img_size", [512, 512])
-        self.num_classes = config.get("num_classes")
+        self.num_classes = config.get("num_classes", 10)
 
     def _load_backbone(self, backbone: str) -> torch.nn.Module:
         """Load the supplied backbone."""

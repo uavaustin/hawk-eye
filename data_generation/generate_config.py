@@ -10,7 +10,7 @@ config = yaml.safe_load(pathlib.Path("data_generation/config.yaml").read_text())
 generate_config = config["generate"]
 
 # This is where we are going to store all the assets.
-ASSETS_DIR = pathlib.Path(__file__).parent / "assets"
+ASSETS_DIR = pathlib.Path("external")
 
 
 BACKGROUNDS = generate_config.get("backgrounds_archives", [])
@@ -18,6 +18,7 @@ BACKGROUNDS_URLS = [f"assets/{bkg}" for bkg in BACKGROUNDS]
 BACKGROUNDS_DIRS = [
     ASSETS_DIR / ARCHIVE_FILENAME.match(bkg).group() for bkg in BACKGROUNDS
 ]
+BACKGROUNDS_DIRS = [ASSETS_DIR / "backgrounds_test_data"]
 
 BASE_SHAPES_VERSION = generate_config.get("base_shapes_version", "v1")
 BASE_SHAPES_URL = [f"assets/base-shapes-{v}.tar.gz" for v in BASE_SHAPES_VERSION]
@@ -25,7 +26,7 @@ FONTS_URL = "assets/fonts.tar.gz"
 
 
 BASE_SHAPES_DIRS = [ASSETS_DIR / f"base-shapes-{v}" for v in BASE_SHAPES_VERSION]
-
+BASE_SHAPES_DIRS = [ASSETS_DIR / "base_shape_test_data"]
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 # [Number of Images]
