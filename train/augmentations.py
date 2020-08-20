@@ -10,19 +10,24 @@ def clf_train_augs(height: int, width: int) -> albu.Compose:
     return albu.Compose(
         [
             albu.Resize(height=height, width=width),
+            albu.ShiftScaleRotate(shift_limit=0.025, scale_limit=0.1, rotate_limit=10),
             albu.Flip(),
             albu.RandomRotate90(),
-            albu.ShiftScaleRotate(shift_limit=0.025, scale_limit=0.1, rotate_limit=10),
             albu.OneOf(
                 [
-                    albu.HueSaturationValue(),
+                    albu.HueSaturationValue(p=1.0),
+                    albu.IAAAdditiveGaussianNoise(p=1.0),
+                    albu.IAASharpen(p=1.0),
                     albu.RandomBrightnessContrast(
                         brightness_limit=0.1, contrast_limit=0.1, p=1.0
                     ),
-                    albu.Blur(blur_limit=2),
-                    albu.GaussNoise(),
-                    albu.RandomGamma(),
-                ]
+                    albu.RandomGamma(p=1.0),
+                ],
+                p=1.0,
+            ),
+            albu.OneOf(
+                [albu.Blur(blur_limit=3, p=1.0), albu.MotionBlur(blur_limit=3, p=1.0)],
+                p=1.0,
             ),
             albu.Normalize(),
         ]
@@ -41,16 +46,28 @@ def det_train_augs(height: int, width: int) -> albu.Compose:
             albu.ShiftScaleRotate(shift_limit=0.025, scale_limit=0.1, rotate_limit=10),
             albu.Flip(),
             albu.RandomRotate90(),
-            albu.RandomBrightnessContrast(
-                brightness_limit=0.1, contrast_limit=0.1, p=1.0
+            albu.OneOf(
+                [
+                    albu.HueSaturationValue(p=1.0),
+                    albu.IAAAdditiveGaussianNoise(p=1.0),
+                    albu.IAASharpen(p=1.0),
+                    albu.RandomBrightnessContrast(
+                        brightness_limit=0.1, contrast_limit=0.1, p=1.0
+                    ),
+                    albu.RandomGamma(p=1.0),
+                ],
+                p=1.0,
             ),
-            albu.RandomGamma(p=1.0),
+            albu.OneOf(
+                [albu.Blur(blur_limit=3, p=1.0), albu.MotionBlur(blur_limit=3, p=1.0)],
+                p=1.0,
+            ),
             albu.Normalize(),
         ]
     )
 
 
-def det_eval_augs(height: int, width: int) -> albu.Compose:
+def det_val_augs(height: int, width: int) -> albu.Compose:
     return albu.Compose([albu.Resize(height=height, width=width), albu.Normalize()])
 
 

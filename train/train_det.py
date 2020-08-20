@@ -73,7 +73,7 @@ def detections_to_dict(
             box *= image_size
             detections.append(
                 {
-                    "image_id": image_id.item(),
+                    "image_id": image_id.int().item(),
                     "category_id": bbox.class_id,
                     "bbox": box.int().tolist(),
                     "score": bbox.confidence,
@@ -272,7 +272,7 @@ def train(
                         utils.save_model(model, save_dir / f"min-loss.pt")
 
         # Call evaluation function if past eval delay.
-        if epoch >= eval_start_epoch:
+        if epoch >= eval_start_epoch and is_main:
 
             if is_main:
                 log.info("Starting evaluation")
@@ -334,6 +334,7 @@ def eval(
         )
     results = {}
     if detections_dict:
+
         with tempfile.TemporaryDirectory() as d:
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
@@ -389,11 +390,11 @@ def create_data_loader(
         img_ext=generate_config.IMAGE_EXT,
         img_width=image_size,
         img_height=image_size,
+        validation=val,
     )
 
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.
-    sampler = None
     if world_size > 1:
         if not val:
             sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
@@ -413,6 +414,7 @@ def create_data_loader(
         pin_memory=True,
         sampler=sampler,
         collate_fn=collate_fn,
+        num_workers=torch.multiprocessing.cpu_count() // world_size,
     )
     return loader, sampler
 

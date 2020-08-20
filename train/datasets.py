@@ -55,6 +55,7 @@ class DetDataset(torch.utils.data.Dataset):
         img_ext: str = ".png",
         img_width: int = 512,
         img_height: int = 512,
+        validation: bool = False,
     ) -> None:
         super().__init__()
         self.meta_data = json.loads(metadata_path.read_text())
@@ -64,7 +65,11 @@ class DetDataset(torch.utils.data.Dataset):
         self.img_height = img_height
         self.img_width = img_width
         self.len = len(self.images)
-        self.transform = augs.det_train_augs(img_height, img_width)
+        self.transform = (
+            augs.det_val_augs(img_height, img_width)
+            if validation
+            else augs.det_train_augs(img_height, img_width)
+        )
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))

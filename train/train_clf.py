@@ -78,6 +78,10 @@ def train(
         val=True,
     )
 
+    if is_main:
+        log.info(f"Train dataset: {train_loader.dataset}")
+        log.info(f"Val dataset: {eval_loader.dataset}")
+
     model_highest_score = ema_highest_score = 0
 
     clf_model = classifier.Classifier(
@@ -106,8 +110,6 @@ def train(
         clf_model = apex.parallel.DistributedDataParallel(
             clf_model, delay_allreduce=True
         )
-
-        clf_model = apex.parallel.convert_syncbn_model(clf_model)
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
@@ -172,30 +174,29 @@ def train(
         # Call evaluation function
         if is_main:
             log.info("Starting eval.")
-        start_val = time.perf_counter()
-        clf_model.eval()
-        model_highest_score = eval_acc = eval(
-            clf_model,
-            eval_loader,
-            device,
-            is_main,
-            world_size,
-            model_highest_score,
-            save_dir,
-        )
-        clf_model.train()
+            start_val = time.perf_counter()
+            clf_model.eval()
+            model_highest_score = eval_acc = eval(
+                clf_model,
+                eval_loader,
+                device,
+                is_main,
+                world_size,
+                model_highest_score,
+                save_dir,
+            )
+            clf_model.train()
 
-        ema_highest_score = eval_acc = eval(
-            ema_model,
-            eval_loader,
-            device,
-            is_main,
-            world_size,
-            ema_highest_score,
-            save_dir,
-        )
+            ema_highest_score = eval_acc = eval(
+                ema_model,
+                eval_loader,
+                device,
+                is_main,
+                world_size,
+                ema_highest_score,
+                save_dir,
+            )
 
-        if is_main:
             log.info(f"Eval took {time.perf_counter() - start_val:.4f}s.")
             log.info(
                 f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
@@ -240,10 +241,6 @@ def eval(
         total_num += data.shape[0]
 
     accuracy = num_correct / total_num
-
-    if world_size > 1:
-        # Make sure processes get to this point.
-        torch.distributed.barrier()
 
     if accuracy > previous_best and is_main:
 
@@ -292,7 +289,6 @@ def create_data_loader(
         if val
         else augmentations.clf_train_augs(224, 224),
     )
-    print(dataset)
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.
     sampler = None

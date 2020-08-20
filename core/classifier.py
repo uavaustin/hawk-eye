@@ -43,7 +43,7 @@ class Classifier(torch.nn.Module):
             # Construct the model, then load the state
             self.model = self._load_backbone(backbone)
             self.load_state_dict(
-                torch.load(model_path / "ema-classifier.pt", map_location="cpu")
+                torch.load(model_path / "classifier.pt", map_location="cpu")
             )
             self.image_size = config["image_size"]
         else:

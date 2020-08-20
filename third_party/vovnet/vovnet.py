@@ -61,7 +61,7 @@ def dw_conv(
         ),
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
         torch.nn.BatchNorm2d(out_channels),
-        torch.nn.ReLU(inplace=True),
+        torch.nn.ReLU(inplace=False),
     ]
 
 
@@ -85,7 +85,7 @@ def conv(
             bias=False,
         ),
         torch.nn.BatchNorm2d(out_channels),
-        torch.nn.ReLU(inplace=True),
+        torch.nn.ReLU(inplace=False),
     ]
 
 
@@ -94,7 +94,7 @@ def pointwise(in_channels: int, out_channels: int) -> List[torch.nn.Module]:
     return [
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
         torch.nn.BatchNorm2d(out_channels),
-        torch.nn.ReLU(inplace=True),
+        torch.nn.ReLU(inplace=False),
     ]
 
 

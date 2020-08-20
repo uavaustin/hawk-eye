@@ -170,7 +170,9 @@ class PostProcessor:
             for box, conf, cls_idx in zip(
                 predicted_boxes[keep], predicted_prob_[keep], classes_idxs[keep]
             ):
-                boxes.append(BoundingBox(box.cpu() / self.image_size, conf, cls_idx))
+                boxes.append(
+                    BoundingBox(box.cpu() / self.image_size, float(conf), int(cls_idx))
+                )
             boxes_batch.append(boxes)
 
         return boxes_batch

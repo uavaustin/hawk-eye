@@ -30,15 +30,13 @@ def tile_image(
 
     tiles = []
     coords = []
-    for x in range(0, image.shape[1] - tile_size[1] + overlap, tile_size[1] - overlap):
+    for x in range(0, image.shape[1], tile_size[1] - overlap):
 
         # Shift back to extract tiles on the image
         if x + tile_size[1] >= image.shape[1] and x != 0:
             x = image.shape[1] - tile_size[1]
 
-        for y in range(
-            0, image.shape[0] - tile_size[0] + overlap, tile_size[0] - overlap
-        ):
+        for y in range(0, image.shape[0], tile_size[0] - overlap):
             if y + tile_size[0] >= image.shape[0] and y != 0:
                 y = image.shape[0] - tile_size[0]
 
@@ -104,7 +102,7 @@ def find_targets(
             tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
 
             # Call the pre-clf to find the target tiles.
-            preds = clf_model.classify(tiles, probability=True)[:, 1] > 0.95
+            preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.95
 
             target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
             if preds.sum().item():
@@ -258,7 +256,7 @@ if __name__ == "__main__":
     clf_model.eval()
     det_model = detector.Detector(
         timestamp=args.det_timestamp,
-        confidence=0.3,
+        confidence=0.2,
         half_precision=torch.cuda.is_available(),
     )
     det_model.eval()

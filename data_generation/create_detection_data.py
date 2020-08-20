@@ -406,7 +406,7 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
         categories.append({"supercategory": "none", "name": name, "id": idx})
 
     jsons = sorted(list(data_dir.glob("*.json")))
-    for idx, label_file in enumerate(jsons):
+    for label_file in jsons:
         labels = json.loads(label_file.read_text())
         images.append(
             {

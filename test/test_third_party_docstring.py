@@ -12,6 +12,8 @@ def test_third_party() -> None:
     return test_suite
 
 
-suite = test_third_party()
-runner = unittest.TextTestRunner()
-runner.run(suite)
+if __name__ == "__main__":
+    suite = test_third_party()
+    runner = unittest.TextTestRunner(failfast=True)
+    out = runner.run(suite)
+    assert len(out.failures) == 0, "Failures in test"
