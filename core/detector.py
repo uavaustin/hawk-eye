@@ -109,7 +109,7 @@ class Detector(torch.nn.Module):
         assert self.fpn_type is not None, "Must supply a fpn type."
 
         self.fpn_channels = fpn_params.get("num_channels", 128)
-        self.use_dw = fpn_params.get("use_dw", False)
+        self.fpn_use_dw = fpn_params.get("use_dw", False)
         self.num_head_convs = head_params.get("num_levels", 3)
 
         self.fpn_levels = fpn_params.get("levels", [3, 4, 5, 6, 7])
@@ -139,6 +139,7 @@ class Detector(torch.nn.Module):
                 in_channels=features[-3:],
                 out_channels=self.fpn_channels,
                 num_levels=len(self.fpn_levels),
+                use_dw=self.fpn_use_dw,
             )
 
         return fpn_

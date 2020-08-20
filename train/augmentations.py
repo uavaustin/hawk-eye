@@ -12,10 +12,13 @@ def clf_train_augs(height: int, width: int) -> albu.Compose:
             albu.Resize(height=height, width=width),
             albu.Flip(),
             albu.RandomRotate90(),
+            albu.ShiftScaleRotate(shift_limit=0.025, scale_limit=0.1, rotate_limit=10),
             albu.OneOf(
                 [
                     albu.HueSaturationValue(),
-                    albu.RandomBrightnessContrast(),
+                    albu.RandomBrightnessContrast(
+                        brightness_limit=0.1, contrast_limit=0.1, p=1.0
+                    ),
                     albu.Blur(blur_limit=2),
                     albu.GaussNoise(),
                     albu.RandomGamma(),
@@ -35,12 +38,15 @@ def det_train_augs(height: int, width: int) -> albu.Compose:
     return albu.Compose(
         [
             albu.Resize(height=height, width=width),
-            albu.RandomGamma(),
+            albu.ShiftScaleRotate(shift_limit=0.025, scale_limit=0.1, rotate_limit=10),
             albu.Flip(),
             albu.RandomRotate90(),
+            albu.RandomBrightnessContrast(
+                brightness_limit=0.1, contrast_limit=0.1, p=1.0
+            ),
+            albu.RandomGamma(p=1.0),
             albu.Normalize(),
-        ],
-        albu.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+        ]
     )
 
 

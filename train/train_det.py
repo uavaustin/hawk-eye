@@ -40,7 +40,7 @@ from data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
 from core import detector
-from core import pull_assets
+from core import asset_manager
 
 _LOG_INTERVAL = 10
 _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
@@ -172,7 +172,6 @@ def train(
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
         model = apex.parallel.DistributedDataParallel(model, delay_allreduce=True)
-        model = apex.parallel.convert_syncbn_model(model)
         if is_main:
             log.info("Using APEX DistributedDataParallel.")
 
@@ -226,7 +225,7 @@ def train(
                 gt_anchors_deltas=gt_regressions,
                 cls_per_level=cls_per_level,
                 reg_per_level=reg_per_level,
-                num_classes=len(generate_config.OD_CLASSES),
+                num_classes=model.module.num_classes,
             )
 
             total_loss = cls_loss + reg_loss
@@ -396,7 +395,10 @@ def create_data_loader(
     # of data per process.
     sampler = None
     if world_size > 1:
-        sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+        if not val:
+            sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+        else:
+            sampler = torch.utils.data.SequentialSampler(dataset)
 
     if val:
         collate_fn = collate.CollateVal()
@@ -442,7 +444,7 @@ if __name__ == "__main__":
     # Download initial timestamp.
     initial_timestamp = None
     if args.initial_timestamp is not None:
-        initial_timestamp = pull_assets.download_model(
+        initial_timestamp = asset_manager.download_model(
             "detector", args.initial_timestamp
         )
 
@@ -462,9 +464,6 @@ if __name__ == "__main__":
 
     use_cuda = torch.cuda.is_available()
     world_size = torch.cuda.device_count() if use_cuda else 1  # GPUS or a CPU
-
-    if use_cuda:
-        torch.backends.cudnn.benchmark = True
 
     os.environ["MASTER_ADDR"] = "127.0.0.1"
     os.environ["MASTER_PORT"] = "12345"

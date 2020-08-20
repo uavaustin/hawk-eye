@@ -158,7 +158,7 @@ class Matcher:
         thresholds.insert(0, -float("inf"))
         thresholds.append(float("inf"))
         assert all(low <= high for (low, high) in zip(thresholds[:-1], thresholds[1:]))
-        assert all(l in [-1, 0, 1] for l in labels)
+        assert all(label in [-1, 0, 1] for label in labels)
         assert len(labels) == len(thresholds) - 1
         self.thresholds = thresholds
         self.labels = labels
@@ -347,8 +347,9 @@ def get_ground_truth(
             match_quality_matrix = boxes.box_iou(gt_boxes, original_anchors)
             gt_matched_idxs, anchor_labels = matcher(match_quality_matrix)
 
-            # Get the ground regressions from the matched GT to box labels.
+            # Get the ground truth regressions from the matched anchor to box labels.
             matched_gt_boxes = gt_boxes[gt_matched_idxs]
+
             gt_anchors_reg_deltas_i = regressor.get_deltas(
                 original_anchors, matched_gt_boxes
             )

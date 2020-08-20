@@ -1,10 +1,14 @@
 py_test(
     name = "test_data_generation",
-    srcs = ["test_data_generation.py"],
-    deps = ["//data_generation:detection_data_generation"],
+    srcs = [
+        "test_data_generation.py",
+        "test_generate_config.py",
+    ],
+    deps = ["//data_generation:detection_data_generation",],
     data = [
-        "@backgrounds_test_data//:images",
-        "@base_shape_test_data//:images"
+        "@base_shapes//:file",
+        "@backgrounds//:file",
+        "@fonts//:file",
     ]
 )
 

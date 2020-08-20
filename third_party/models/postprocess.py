@@ -149,46 +149,28 @@ class PostProcessor:
 
         # filter out the proposals with low confidence score
         keep_idxs = predicted_prob > self.score_threshold
-        predicted_prob.masked_scatter_(keep_idxs, predicted_prob)
-        topk_idxs.masked_scatter_(keep_idxs, topk_idxs)
-
-        anchor_idxs = (topk_idxs // self.num_classes).unsqueeze(-1)
-        classes_idxs = topk_idxs % self.num_classes
-        box_delta = box_delta.gather(dim=1, index=anchor_idxs.expand(-1, -1, 4))
-        anchors = self.all_anchors.index_select(0, anchor_idxs.flatten()).view_as(
-            box_delta
-        )
-
-        # Apply the predicted deltas to the original boxes and perform NMS over all
-        # the images in the batch.
-        predicted_boxes = self.regressor.apply_deltas(box_delta, anchors)
-
-        keep = [
-            ops.nms(b.float(), p, self.nms_threshold)
-            for b, p in zip(predicted_boxes, predicted_prob)
-        ]
-        keep = [k[: self.max_detections_per_image] for k in keep]
-        # print(self.max_detections_per_image)
-        keep_boxes = [
-            boxes.gather(0, idxs.unsqueeze(-1).expand(-1, 4))
-            for boxes, idxs in zip(predicted_boxes, keep)
-        ]
-        # print(keep_boxes)
-        keep_prob = [p.gather(0, idxs) for p, idxs in zip(predicted_prob, keep)]
-        keep_classes = [c.gather(0, idxs) for c, idxs in zip(classes_idxs, keep)]
-
         boxes_batch = []
-        for boxes, confs, cls_ids in zip(keep_boxes, keep_prob, keep_classes):
+        for idx, keeps in enumerate(keep_idxs):
 
-            boxes_final = []
-            for idx, box in enumerate(boxes):
-                boxes_final.append(
-                    BoundingBox(
-                        box.int().cpu() / self.image_size,
-                        float(confs[idx]),
-                        int(cls_ids[idx]),
-                    )
-                )
-            boxes_batch.append(boxes_final)
+            # Select the probabilities above the threshold for each image in the batch.
+            predicted_prob_ = predicted_prob[idx, keeps]
+            topk_idxs_ = topk_idxs[idx, keeps]
+
+            anchor_idxs = topk_idxs_ // self.num_classes
+            classes_idxs = topk_idxs_ % self.num_classes
+
+            # Apply the predicted deltas to the original boxes and perform NMS over all
+            # the images in the batch.
+            predicted_boxes = self.regressor.apply_deltas(
+                box_delta[idx, anchor_idxs], self.all_anchors[anchor_idxs]
+            )
+            keep = ops.nms(predicted_boxes, predicted_prob_, self.nms_threshold)
+
+            boxes = []
+            for box, conf, cls_idx in zip(
+                predicted_boxes[keep], predicted_prob_[keep], classes_idxs[keep]
+            ):
+                boxes.append(BoundingBox(box.cpu() / self.image_size, conf, cls_idx))
+            boxes_batch.append(boxes)
 
         return boxes_batch

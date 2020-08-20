@@ -28,7 +28,7 @@ from train import augmentations
 from train.train_utils import ema
 from train.train_utils import logger
 from train.train_utils import utils
-from core import classifier, pull_assets
+from core import classifier, asset_manager
 from data_generation import generate_config
 from third_party.models import losses
 
@@ -127,6 +127,7 @@ def train(
         pct_start=warm_up_percent,
     )
     global_step = 0
+    loss_fn = torch.nn.CrossEntropyLoss()
 
     for epoch in range(epochs):
         all_losses = []
@@ -142,19 +143,11 @@ def train(
             # BHWC -> BCHW
             data = data.permute(0, 3, 1, 2)
             data = data.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True).unsqueeze(1)
-
-            # Compute one hot encoding for focal loss function.
-            labels_one_hot = torch.zeros(
-                labels.shape[0], 2, device=labels.device
-            ).scatter_(1, labels, 1)
+            labels = labels.to(device, non_blocking=True)
 
             out = clf_model(data)
-            # TODO(alex): more tweaking of alpha/gamma. See retinanet paper for more info
-            loss = losses.sigmoid_focal_loss(
-                out, labels_one_hot, gamma=3.0, reduction="sum"
-            ) / max(1, labels_one_hot.shape[0])
 
+            loss = loss_fn(out, labels)
             all_losses.append(loss.item())
 
             # Propogate the gradients back through the model.
@@ -342,7 +335,7 @@ if __name__ == "__main__":
     # Download initial timestamp.
     initial_timestamp = None
     if args.initial_timestamp is not None:
-        initial_timestamp = pull_assets.download_model(
+        initial_timestamp = asset_manager.download_model(
             "classifier", args.initial_timestamp
         )
 
@@ -384,6 +377,6 @@ if __name__ == "__main__":
         for model_file in save_dir.glob("*"):
             tar.add(model_file, arcname=model_file.name)
 
-    pull_assets.upload_model("classifier", save_archive)
+    asset_manager.upload_model("classifier", save_archive)
 
     print(f"Saved model to {save_dir / save_dir.name}.tar.gz")

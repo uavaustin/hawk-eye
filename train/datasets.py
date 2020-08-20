@@ -79,7 +79,7 @@ class DetDataset(torch.utils.data.Dataset):
         ]
 
         if boxes:
-            boxes = torch.stack(boxes).clamp(0.0, 1.0) * self.img_height
+            boxes = torch.stack(boxes).clamp(0.0, 1.0)
 
         category_ids = [label["class_id"] for label in labels["bboxes"]]
 

@@ -30,18 +30,22 @@ def tile_image(
 
     tiles = []
     coords = []
-    for x in range(0, image.shape[1], tile_size[1] - overlap):
+    for x in range(0, image.shape[1] - tile_size[1] + overlap, tile_size[1] - overlap):
 
         # Shift back to extract tiles on the image
         if x + tile_size[1] >= image.shape[1] and x != 0:
-            x = image.shape[0] - tile_size[1]
+            x = image.shape[1] - tile_size[1]
 
-        for y in range(0, image.shape[0], tile_size[0] - overlap):
+        for y in range(
+            0, image.shape[0] - tile_size[0] + overlap, tile_size[0] - overlap
+        ):
             if y + tile_size[0] >= image.shape[0] and y != 0:
                 y = image.shape[0] - tile_size[0]
+
             tile = augmenation(image=image[y : y + tile_size[0], x : x + tile_size[1]])[
                 "image"
             ]
+
             tiles.append(torch.Tensor(tile))
             coords.append((x, y))
 
@@ -79,6 +83,7 @@ def find_targets(
     visualization_dir: pathlib.Path = None,
 ) -> None:
     for image_path in images:
+
         retval = []
         image = cv2.imread(str(image_path))
         assert image is not None, f"Could not read {image_path}."
@@ -99,7 +104,9 @@ def find_targets(
             tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
 
             # Call the pre-clf to find the target tiles.
-            preds = clf_model.classify(tiles, probability=True)[:, 1] > 0.8
+            preds = clf_model.classify(tiles, probability=True)[:, 1] > 0.95
+
+            target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
             if preds.sum().item():
                 for det_tiles, det_coords in create_batches(
                     tiles_batch[preds], coords, 15

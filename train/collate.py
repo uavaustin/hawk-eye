@@ -41,7 +41,7 @@ class Collate:
 
         for item in data_batch:
             if item["bboxes"]:
-                boxes.append(torch.Tensor(item["bboxes"]))
+                boxes.append(torch.Tensor(item["bboxes"]) * torch.Tensor([512] * 4))
                 labels.append(torch.Tensor(item["category_ids"]))
             else:
                 # If there are no annotations in the image, append empty tensors.

@@ -51,7 +51,7 @@ def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Opt
 
 
 def add_weight_decay(
-    model: torch.nn.Module, weight_decay: float = 1e-5
+    model: torch.nn.Module, weight_decay: float
 ) -> List[Dict[str, Any]]:
     """ Add weight decay to only the convolutional kernels. Do not add weight decay
     to biases and BN. TensorFlow does this automatically, but for some reason this is

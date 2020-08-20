@@ -6,11 +6,11 @@ model:
   fpn:
     type: "retinanet"
     num_channels: 128
-    use_dw: false
+    use_dw: true
     levels: [3, 4, 5]
   retinanet_head:
     num_levels: 4
-    use_dw: false
+    use_dw: true
   anchors:
     aspect_ratios: [0.5, 1, 2]  # H / W
     sizes: [16, 32, 64]
@@ -18,15 +18,15 @@ model:
 training:
   optimizer:
     type: "SGD"
-    lr: 1e-4
+    lr: 1.0e-2
     momentum: 0.9
-    weight_decay: 1e-5
+    weight_decay: 4.0e-5
   lr_schedule:
-    start_lr: 1.0e-5
-    max_lr: 1.0e-1
+    start_lr: 1.0e-3
+    max_lr: 0.2
     end_lr: 1.0e-7
     warmup_fraction: 0.33
   epochs: 50
   train_batch_size: 30
   eval_batch_size: 30
-  eval_start_epoch: 10
+  eval_start_epoch: 5

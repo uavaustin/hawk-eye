@@ -10,7 +10,7 @@ import torch
 
 def depthwise(in_channels: int, out_channels: int):
     """ A depthwise separable linear layer. """
-    return [
+    return torch.nn.Sequential(
         torch.nn.Conv2d(
             in_channels,
             in_channels,
@@ -20,14 +20,14 @@ def depthwise(in_channels: int, out_channels: int):
             groups=in_channels,
         ),
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-    ]
+    )
 
 
 def conv3x3(in_channels: int, out_channels: int):
     """ Simple Conv2d layer. """
-    return [
-        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True)
-    ]
+    return torch.nn.Conv2d(
+        in_channels, out_channels, kernel_size=3, padding=1, bias=True
+    )
 
 
 class FPN(torch.nn.Module):
@@ -60,7 +60,7 @@ class FPN(torch.nn.Module):
         # Construct a convolution per level.
         self.convs = torch.nn.ModuleList([])
         for _ in range(self.num_levels):
-            self.convs.extend(conv(out_channels, out_channels))
+            self.convs.append(conv(out_channels, out_channels))
 
     def __call__(
         self, feature_maps: collections.OrderedDict
@@ -101,7 +101,7 @@ class FPN(torch.nn.Module):
 
             # Apply relu to every new level but the last.
             if idx != (self.num_levels - self.num_in - 1):
-                new_level = torch.nn.functional.relu(new_level)
+                new_level = torch.nn.functional.relu(new_level, inplace=True)
 
             feature_maps[new_id] = new_level
 

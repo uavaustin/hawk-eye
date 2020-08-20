@@ -46,6 +46,7 @@ def create_clf_images(num_gen: int) -> None:
             list((config.DATA_DIR / "detector_val").rglob(f"*{config.IMAGE_EXT}"))
         )
 
+        random.shuffle(imgs)
         for image_path in tqdm.tqdm(imgs):
             if json.loads(image_path.with_suffix(".json").read_text())["bboxes"]:
                 # If there are labels, copy it to the save folder with the proper filename.
@@ -59,7 +60,7 @@ def create_clf_images(num_gen: int) -> None:
         # Collect all the backgrounds and slice them up.
         backgrounds = create_detection_data.get_backgrounds()
         num_tiles = 0
-        for idx, img in enumerate(backgrounds):
+        for idx, img in tqdm.tqdm(enumerate(backgrounds)):
             num_tiles = single_clf_image(img, idx, num_gen, tmp_dir, num_tiles)
 
         # Make output dir to save data after we do all the processing.
@@ -68,8 +69,9 @@ def create_clf_images(num_gen: int) -> None:
 
         val_dir = config.DATA_DIR / "clf_val"
         val_dir.mkdir(parents=True, exist_ok=True)
-
-        for img in tmp_dir.glob("*"):
+        imgs = list(tmp_dir.glob("*"))
+        random.shuffle(imgs)
+        for img in imgs:
             if random.randint(0, 100) < 20:
                 img.rename(val_dir / img.name)
             else:
@@ -91,7 +93,7 @@ def single_clf_image(
     tile_num = 0
     for x in range(0, image.size[0] - config.CROP_SIZE[1], config.CROP_SIZE[0]):
         for y in range(0, image.size[1] - config.CROP_SIZE[1], config.CROP_SIZE[1]):
-            if num_tiles > num_gen:
+            if num_tiles > 1.0e10:
                 break
             crop = image.crop((x, y, x + config.CROP_SIZE[0], y + config.CROP_SIZE[1]))
             crop = crop.resize(config.PRECLF_SIZE)

@@ -1,6 +1,6 @@
 __pycache__
 
-.tox
 bazel-*
+
 data_generation/data
 data_generation/assets
