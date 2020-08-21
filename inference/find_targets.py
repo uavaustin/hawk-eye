@@ -102,7 +102,7 @@ def find_targets(
             tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
 
             # Call the pre-clf to find the target tiles.
-            preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.95
+            preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
 
             target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
             if preds.sum().item():

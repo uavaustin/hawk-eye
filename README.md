@@ -70,9 +70,7 @@ The command above will visualize and save the models' predictions. See
 
 ## Testing
 
-Testing is performed by running `tox` at the repo root. The test in this repo consist
-of python unittests and doctests.
-
+TODO
 
 # TODO
 
@@ -85,8 +83,6 @@ separate independently.
 
 - [ ] Finish inference pipeline.
 
-- [ ] Work on Box Dev integration if platform available.
-
 - [ ] Weights & Biases integration once project is granted.
 
-- [ X ] GitHub Actions CI and unittests
+- [ ] unittests
