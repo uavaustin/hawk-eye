@@ -5,9 +5,15 @@ repos:
     -   id: check-yaml
     -   id: trailing-whitespace
     -   id: check-added-large-files
+    -   id: end-of-file-fixer
+    -   id: requirements-txt-fixer
         args: ['--maxkb=25']
     -   id: check-merge-conflict
 -   repo: https://github.com/psf/black
-    rev: 19.3b0
+    rev: 19.10b0
     hooks:
     -   id: black
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+    - id: flake8

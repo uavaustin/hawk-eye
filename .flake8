@@ -7,3 +7,4 @@ exclude =
     .git
     bazel-*
     __pycache__
+select = B,C,E,F,W,T4,B9

@@ -18,6 +18,8 @@ and make it available for other rules to use (e.g. container_image rule).
 To install gsutil, please refer to:
   https://cloud.google.com/storage/docs/gsutil
 You need to have read access to the GCS bucket.
+
+# Extended by UAV for usability.
 """
 
 _GCS_FILE_BUILD = """
