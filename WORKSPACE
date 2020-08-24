@@ -1,4 +1,4 @@
-# Load gcs_archive rule to download using gsutil
+workspace(name = "hawk_eye")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -45,12 +45,21 @@ load(
 
 container_repositories()
 
-load(
-    "@io_bazel_rules_docker//python3:image.bzl",
-    _py_image_repos = "repositories",
+# Load the macro that allows you to customize the docker toolchain configuration.
+load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
+    docker_toolchain_configure="toolchain_configure"
 )
 
-_py_image_repos()
+docker_toolchain_configure(
+  name = "docker_config",
+  # Replace this with an absolute path to a directory which has a custom docker
+  # client config.json. Note relative paths are not supported.
+  # Docker allows you to specify custom authentication credentials
+  # in the client configuration JSON file.
+  # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
+  # for more details.
+  client_config="/home/alex/.docker",
+)
 
 container_pull(
     name = "ubuntu",

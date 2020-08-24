@@ -17,3 +17,8 @@ py_library(
         "//core:detector",
     ]
 )
+
+py_library(
+    name = "types",
+    srcs = ["types.py"],
+)

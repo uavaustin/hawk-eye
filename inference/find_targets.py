@@ -254,14 +254,14 @@ if __name__ == "__main__":
         "--clf_timestamp",
         required=False,
         type=str,
-        default="dev",
+        default=_PROD_MODELS["clf"],
         help="Timestamp of the classifier model to use.",
     )
     parser.add_argument(
         "--det_timestamp",
         required=False,
         type=str,
-        default="dev",
+        default=_PROD_MODELS["det"],
         help="Timestamp of the detector model to use.",
     )
     parser.add_argument(
@@ -287,5 +287,5 @@ if __name__ == "__main__":
         viz_dir.mkdir(exist_ok=True, parents=True)
 
     find_targets(
-        args.clf_timestamp, args.det_timestampl, imgs, visualization_dir=viz_dir
+        args.clf_timestamp, args.det_timestamp, imgs, visualization_dir=viz_dir
     )

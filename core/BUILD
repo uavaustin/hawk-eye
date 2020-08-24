@@ -7,7 +7,10 @@ py_library(
 
 py_library(
     name = "detector",
-    srcs = ["detector.py"]
+    srcs = [
+        "detector.py",
+        "fpn.py",
+    ]
 )
 
 py_library(
