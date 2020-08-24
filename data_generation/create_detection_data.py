@@ -211,7 +211,7 @@ def add_shapes(
         x1, y1, x2, y2 = shape_img.getbbox()
         bg_at_shape = background.crop((x1 + x, y1 + y, x2 + x, y2 + y))
         bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        bg_at_shape = bg_at_shape.filter(ImageFilter.SMOOTH_MORE)
+        # bg_at_shape = bg_at_shape.filter(ImageFilter.MedianFilter())
         background.paste(bg_at_shape, (x, y))
 
         im_w, im_h = background.size
@@ -450,18 +450,20 @@ if __name__ == "__main__":
     # Pull the assets if not present locally.
     asset_manager.pull_all()
     generate_all_images(
-        config.DATA_DIR / "detector_train", config.NUM_IMAGES, config.NUM_OFFSET
+        config.DATA_DIR / "detector_train_tmp", config.NUM_IMAGES, config.NUM_OFFSET
     )
     generate_all_images(
-        config.DATA_DIR / "detector_val", config.NUM_VAL_IMAGES, config.NUM_VAL_OFFSET
+        config.DATA_DIR / "detector_val_tmp",
+        config.NUM_VAL_IMAGES,
+        config.NUM_VAL_OFFSET,
     )
 
     # Loop back over the generated data and create the COCO datasets.
     create_coco_metadata(
-        pathlib.Path(config.DATA_DIR / "detector_train/images"),
-        pathlib.Path(config.DATA_DIR / "detector_train/train_coco.json"),
+        pathlib.Path(config.DATA_DIR / "detector_train_tmp/images"),
+        pathlib.Path(config.DATA_DIR / "detector_train_tmp/train_coco.json"),
     )
     create_coco_metadata(
-        pathlib.Path(config.DATA_DIR / "detector_val/images"),
-        pathlib.Path(config.DATA_DIR / "detector_val/val_coco.json"),
+        pathlib.Path(config.DATA_DIR / "detector_val_tmp/images"),
+        pathlib.Path(config.DATA_DIR / "detector_val_tmp/val_coco.json"),
     )

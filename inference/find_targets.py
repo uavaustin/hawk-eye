@@ -17,6 +17,8 @@ from inference import types
 from data_generation import generate_config as config
 from third_party.models import postprocess
 
+_PROD_MODELS = {"clf": "2020-08-20T18.11.42", "det": "2020-08-21T00.46.40"}
+
 
 def _val_augmentations() -> albumentations.Compose:
     return albumentations.Compose([albumentations.Normalize()])
@@ -74,12 +76,32 @@ def create_batches(
 
 @torch.no_grad()
 def find_targets(
-    clf_model: torch.nn.Module,
-    det_model: torch.nn.Module,
     images: List[pathlib.Path],
+    clf_timestamp: str = _PROD_MODELS["clf"],
+    det_timestamp: str = _PROD_MODELS["det"],
     save_jsons: bool = False,
     visualization_dir: pathlib.Path = None,
 ) -> None:
+
+    clf_model = classifier.Classifier(
+        timestamp=clf_timestamp, half_precision=torch.cuda.is_available()
+    )
+    clf_model.eval()
+    det_model = detector.Detector(
+        timestamp=det_timestamp,
+        confidence=0.2,
+        half_precision=torch.cuda.is_available(),
+    )
+    det_model.eval()
+
+    # Do FP16 when inferencing
+    if torch.cuda.is_available():
+        det_model.cuda()
+        det_model.half()
+
+        clf_model.cuda()
+        clf_model.half()
+
     for image_path in images:
 
         retval = []
@@ -250,25 +272,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    clf_model = classifier.Classifier(
-        timestamp=args.clf_timestamp, half_precision=torch.cuda.is_available()
-    )
-    clf_model.eval()
-    det_model = detector.Detector(
-        timestamp=args.det_timestamp,
-        confidence=0.2,
-        half_precision=torch.cuda.is_available(),
-    )
-    det_model.eval()
-
-    # Do FP16 when inferencing
-    if torch.cuda.is_available():
-        det_model.cuda()
-        det_model.half()
-
-        clf_model.cuda()
-        clf_model.half()
-
     # Get either the image or images
     if args.image_path is None and args.image_dir is None:
         raise ValueError("Please supply either an image or directory of images.")
@@ -283,4 +286,6 @@ if __name__ == "__main__":
         viz_dir = args.visualization_dir.expanduser()
         viz_dir.mkdir(exist_ok=True, parents=True)
 
-    find_targets(clf_model, det_model, imgs, visualization_dir=viz_dir)
+    find_targets(
+        args.clf_timestamp, args.det_timestampl, imgs, visualization_dir=viz_dir
+    )

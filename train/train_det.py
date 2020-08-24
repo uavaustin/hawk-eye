@@ -283,11 +283,16 @@ def train(
                 model, eval_loader, eval_results, save_dir
             )
             model.train()
+            for metric in improved_metics:
+                utils.save_model(model, save_dir / f"{metric}.pt")
 
             # Call for EMA model.
             ema_eval_results, ema_improved_metrics = eval(
                 ema_model.ema_model, eval_loader, ema_eval_results, save_dir
             )
+            for metric in ema_improved_metrics:
+                utils.save_model(model, save_dir / f"ema-{metric}.pt")
+
             if is_main:
                 log.info(f"Evaluation took {time.perf_counter() - start:.3f} seconds.")
                 log.info(f"Improved metrics: {improved_metics}")
@@ -350,7 +355,6 @@ def eval(
         if new >= old:
             improved.append(metric)
             previous_best[metric] = new
-            utils.save_model(model, save_dir / f"detector-{metric}.pt")
 
     return previous_best, improved
 

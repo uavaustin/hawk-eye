@@ -34,7 +34,7 @@ def _summarize(
 def get_metrics(
     labels_path: pathlib.Path,
     predictions_path: pathlib.Path,
-    metrics: List[float] = [15, 30, 50, 75],
+    metrics: List[float] = [50, 75],
 ) -> dict:
     iou_thresholds = np.array(metrics) / 100
 

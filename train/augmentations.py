@@ -10,6 +10,14 @@ def clf_train_augs(height: int, width: int) -> albu.Compose:
     return albu.Compose(
         [
             albu.Resize(height=height, width=width),
+            albu.OneOf(
+                [
+                    alb.IAAAffine(shear=6, rotate=5, always_apply=True),
+                    albu.ShiftScaleRotate(
+                        shift_limit=0.025, scale_limit=0.1, rotate_limit=10
+                    ),
+                ]
+            ),
             albu.ShiftScaleRotate(shift_limit=0.025, scale_limit=0.1, rotate_limit=10),
             albu.Flip(),
             albu.RandomRotate90(),
@@ -26,7 +34,11 @@ def clf_train_augs(height: int, width: int) -> albu.Compose:
                 p=1.0,
             ),
             albu.OneOf(
-                [albu.Blur(blur_limit=3, p=1.0), albu.MotionBlur(blur_limit=3, p=1.0)],
+                [
+                    albu.Blur(blur_limit=3, p=1.0),
+                    albu.MedianBlur(blur_limit=3, p=1.0),
+                    albu.MotionBlur(blur_limit=3, p=1.0),
+                ],
                 p=1.0,
             ),
             albu.Normalize(),
