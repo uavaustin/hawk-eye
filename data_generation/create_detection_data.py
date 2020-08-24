@@ -5,6 +5,7 @@ can train on images with _and without_ targets. Training on images without any t
 is valuable so the model sees that not every image will have a target, as this is the
 real life case. """
 
+import dataclasses
 from typing import List
 from typing import Tuple
 import multiprocessing
@@ -207,11 +208,9 @@ def add_shapes(
         x = shape_param[-2]
         y = shape_param[-1]
         shape_img = shape_imgs[i]
-        shape_img = shape_img.filter(ImageFilter.GaussianBlur(1))
         x1, y1, x2, y2 = shape_img.getbbox()
         bg_at_shape = background.crop((x1 + x, y1 + y, x2 + x, y2 + y))
         bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        bg_at_shape = bg_at_shape.filter(ImageFilter.SMOOTH_MORE)
         background.paste(bg_at_shape, (x, y))
 
         im_w, im_h = background.size
@@ -280,6 +279,8 @@ def create_shape(
 
     image = get_base(base, target_rgb, size)
     image = strip_image(image)
+
+    image = image.filter(ImageFilter.MedianFilter(size=7))
     image = add_alphanumeric(image, shape, alpha, alpha_rgb, font_file)
 
     w, h = image.size
@@ -318,12 +319,19 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
 
             r, g, b, _ = image.getpixel((x, y))
 
-            if r == 255 and g == 255 and b == 255:
+            if r > 247 and g > 247 and b > 247:
+                if r != 255 and g != 255 and b != 255:
+                    print(r, g, b)
                 image.putpixel((x, y), (0, 0, 0, 0))
 
     image = image.crop(image.getbbox())
 
     return image
+
+
+@dataclasses.dataclass
+class alpha_params:
+    font_multiplier: Tuple[int, int]
 
 
 def add_alphanumeric(
@@ -333,25 +341,20 @@ def add_alphanumeric(
     alpha_rgb: Tuple[int, int, int],
     font_file,
 ) -> PIL.Image.Image:
-    # Adjust alphanumeric size based on the shape it will be on
-    if shape == "star":
-        font_multiplier = 0.14
-    if shape == "triangle":
-        font_multiplier = 0.5
-    elif shape == "rectangle":
-        font_multiplier = 0.72
-    elif shape == "quarter-circle":
-        font_multiplier = 0.60
-    elif shape == "semicircle":
-        font_multiplier = 0.55
-    elif shape == "circle":
-        font_multiplier = 0.55
-    elif shape == "square":
-        font_multiplier = 0.60
-    elif shape == "trapezoid":
-        font_multiplier = 0.60
-    else:
-        font_multiplier = 0.55
+
+    alpha_info = {
+        "circle": alpha_params((0.35, 0.65)),
+        "cross": alpha_params((0.35, 0.65)),
+        "pentagon": alpha_params((0.35, 0.65)),
+        "quarter-circle": alpha_params((0.35, 0.65)),
+        "rectangle": alpha_params((0.35, 0.7)),
+        "semicircle": alpha_params((0.35, 0.75)),
+        "square": alpha_params((0.30, 0.8)),
+        "star": alpha_params((0.25, 0.55)),
+        "trapezoid": alpha_params((0.25, 0.75)),
+        "triangle": alpha_params((0.25, 0.6)),
+    }
+    font_multiplier = random.uniform(*alpha_info[shape].font_multiplier)
 
     # Set font size, select font style from fonts file, set font color
     font_size = int(round(font_multiplier * image.height))
@@ -385,7 +388,7 @@ def add_alphanumeric(
     elif shape == "square":
         y -= 10
     elif shape == "circle":
-        pass
+        y -= 10
     else:
         pass
 

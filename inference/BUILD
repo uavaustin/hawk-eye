@@ -8,3 +8,12 @@ py_library(
         "//core:detector",
     ]
 )
+
+py_library(
+    name = "find_targets",
+    srcs = ["find_targets.py"],
+    deps = [
+        "//core:classifier",
+        "//core:detector",
+    ]
+)
