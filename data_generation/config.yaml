@@ -1,15 +1,6 @@
 classes:
   shapes:
     - circle
-    - cross
-    - pentagon
-    - quarter-circle
-    - rectangle
-    - semicircle
-    - square
-    - star
-    - trapezoid
-    - triangle
   alphas:
     - A
     - B
@@ -69,7 +60,7 @@ generate:
   empty_slice_probability: 0.2
   train_batch:
     offset: 0
-    images: 100
+    images: 50
   eval_batch:
     offset: 0
     images: 0
