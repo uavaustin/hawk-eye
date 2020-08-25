@@ -9,6 +9,7 @@ from typing import List, Tuple, Generator
 
 import albumentations
 import cv2
+from PIL import Image
 import numpy as np
 import torch
 
@@ -74,14 +75,10 @@ def create_batches(
         yield image_tensor[idx : idx + batch_size], coords[idx : idx + batch_size]
 
 
-@torch.no_grad()
-def find_targets(
-    images: List[pathlib.Path],
-    clf_timestamp: str = _PROD_MODELS["clf"],
-    det_timestamp: str = _PROD_MODELS["det"],
-    save_jsons: bool = False,
-    visualization_dir: pathlib.Path = None,
-) -> None:
+def load_models(
+    clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
+) -> Tuple[torch.nn.Module, torch.nn.Module]:
+    """ Loads the given time stamps for the classification and detector models. """
 
     clf_model = classifier.Classifier(
         timestamp=clf_timestamp, half_precision=torch.cuda.is_available()
@@ -102,52 +99,74 @@ def find_targets(
         clf_model.cuda()
         clf_model.half()
 
+    return clf_model, det_model
+
+
+def find_all_targets(
+    images: List[pathlib.Path],
+    clf_timestamp: str = _PROD_MODELS["clf"],
+    det_timestamp: str = _PROD_MODELS["det"],
+    save_jsons: bool = False,
+    visualization_dir: pathlib.Path = None,
+) -> None:
+
+    clf_model, det_model = load_models(clf_timestamp, det_timestamp)
+
     for image_path in images:
 
         retval = []
         image = cv2.imread(str(image_path))
+
         assert image is not None, f"Could not read {image_path}."
         start = time.perf_counter()
-        image_tensor, coords = tile_image(image, config.CROP_SIZE, config.CROP_OVERLAP)
 
-        # Keep track of the tiles that were classified as having targets for
-        # visualization.
-        target_tiles = []
-
-        # Get the image slices.
-        for tiles_batch, coords in create_batches(image_tensor, coords, 200):
-
-            if torch.cuda.is_available():
-                tiles_batch = tiles_batch.cuda().half()
-
-            # Resize the slices for classification.
-            tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
-
-            # Call the pre-clf to find the target tiles.
-            preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
-
-            target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
-            if preds.sum().item():
-                for det_tiles, det_coords in create_batches(
-                    tiles_batch[preds], coords, 15
-                ):
-                    # Pass these target-containing tiles to the detector
-                    det_tiles = torch.nn.functional.interpolate(
-                        det_tiles, config.DETECTOR_SIZE
-                    )
-                    boxes = det_model(det_tiles)
-
-                    retval.extend(zip(target_tiles, boxes))
-            else:
-                retval.extend(zip(coords, []))
-
-        targets = globalize_boxes(retval, config.CROP_SIZE[0])
-        print(time.perf_counter() - start)
+        targets = find_targets(image, clf_model, det_model)
 
         if visualization_dir is not None:
             visualize_image(
                 image_path.name, image, visualization_dir, targets, target_tiles
             )
+
+
+@torch.no_grad()
+def find_targets(
+    images: Image.Image, clf_model: torch.nn.Module, det_model: torch.nn.Module,
+) -> None:
+
+    image_tensor, coords = tile_image(image, config.CROP_SIZE, config.CROP_OVERLAP)
+
+    # Keep track of the tiles that were classified as having targets for
+    # visualization.
+    target_tiles = []
+
+    # Get the image slices.
+    for tiles_batch, coords in create_batches(image_tensor, coords, 200):
+
+        if torch.cuda.is_available():
+            tiles_batch = tiles_batch.cuda().half()
+
+        # Resize the slices for classification.
+        tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
+
+        # Call the pre-clf to find the target tiles.
+        preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
+
+        target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
+        if preds.sum().item():
+            for det_tiles, det_coords in create_batches(tiles_batch[preds], coords, 15):
+                # Pass these target-containing tiles to the detector
+                det_tiles = torch.nn.functional.interpolate(
+                    det_tiles, config.DETECTOR_SIZE
+                )
+                boxes = det_model(det_tiles)
+
+                retval.extend(zip(target_tiles, boxes))
+        else:
+            retval.extend(zip(coords, []))
+
+    targets = globalize_boxes(retval, config.CROP_SIZE[0])
+    print(time.perf_counter() - start)
+    return globalize_boxes(retval, config.CROP_SIZE[0])
 
 
 def globalize_boxes(
@@ -286,6 +305,6 @@ if __name__ == "__main__":
         viz_dir = args.visualization_dir.expanduser()
         viz_dir.mkdir(exist_ok=True, parents=True)
 
-    find_targets(
+    find_all_targets(
         args.clf_timestamp, args.det_timestamp, imgs, visualization_dir=viz_dir
     )

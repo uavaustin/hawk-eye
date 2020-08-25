@@ -3,6 +3,15 @@ workspace(name = "hawk_eye")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "bazel_skylib",
+    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+    ],
+)
+
+http_archive(
     name = "bazel_toolchains",
     sha256 = "7ebb200ed3ca3d1f7505659c7dfed01c4b5cb04c3a6f34140726fe22f5d35e86",
     strip_prefix = "bazel-toolchains-3.4.1",
@@ -50,15 +59,10 @@ load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
     docker_toolchain_configure="toolchain_configure"
 )
 
+# Get the Docker Hub credentials.
 docker_toolchain_configure(
   name = "docker_config",
-  # Replace this with an absolute path to a directory which has a custom docker
-  # client config.json. Note relative paths are not supported.
-  # Docker allows you to specify custom authentication credentials
-  # in the client configuration JSON file.
-  # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
-  # for more details.
-  client_config="/home/alex/.docker",
+  client_config="~/.docker",
 )
 
 container_pull(
@@ -74,7 +78,6 @@ container_pull(
   repository = "nvidia/l4t-base:r32.4.3",
   digest = "sha256:547dc36b81eddb7ca8eadd956c61bd96bf432486830701b3dbb019be7f6c9ce2",
 )
-
 
 load("//third_party:gcs.bzl", "gcs_file")
 

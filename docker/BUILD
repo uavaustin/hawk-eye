@@ -1,3 +1,5 @@
+package(default_visibility = ["//visibility:public"])
+
 load(
     "@io_bazel_rules_docker//container:container.bzl",
     "container_image",
@@ -5,6 +7,12 @@ load(
     "container_push"
 )
 
+genrule(
+    name = "version_file",
+    srcs = ["//:version.txt"],
+    cmd = 'echo "__version__ == " cat $< > $@',
+    outs = ["version.py"]
+)
 
 # This target packages all the necessary code for inference
 # into a tar which will upack itself in the docker container we
@@ -21,15 +29,8 @@ container_layer(
         "//third_party",
         "//data_generation:generate_config",
         "//data_generation:config.yaml",
+        "//:requirements.txt",
+        ":version_file",
     ],
     data_path = ".",
-)
-
-container_push(
-   name = "push_hawk_eye_arm",
-   image = ":latest",
-   format = "Docker",
-   registry = "index.docker.io",
-   repository = "uavaustin/hawk-eye-arm",
-   tag = "latest",
 )
