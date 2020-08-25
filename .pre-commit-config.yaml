@@ -17,4 +17,4 @@ repos:
         name: "Test style with flake8"
         entry: flake8
         language: system
-        types: [python]
+        files: \.x$
