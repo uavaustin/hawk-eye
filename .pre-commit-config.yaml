@@ -16,5 +16,5 @@ repos:
     -   id: flake8
         name: "Test style with flake8"
         entry: flake8
-        language: system
+        language: python
         files: \.x$
