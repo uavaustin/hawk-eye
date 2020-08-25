@@ -11,3 +11,4 @@ dataclasses==0.7
 Cython==0.29.21
 numpy==1.19.1
 requests==2.24.0
+flake8==3.8.3
