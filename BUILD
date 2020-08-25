@@ -9,7 +9,7 @@ load(
 
 
 container_image(
-    name = "latest",
+    name = "hawk_eye_arm_container",
     base = "@amd64_base//image",
     layers = ["//docker:hawk_eye"],
     env = { "PYTHONPATH": "/"},
@@ -18,7 +18,7 @@ container_image(
 
 container_push(
    name = "push_hawk_eye_arm",
-   image = ":latest",
+   image = ":hawk_eye_arm_container",
    format = "Docker",
    registry = "index.docker.io",
    repository = "uavaustin/hawk-eye-arm",

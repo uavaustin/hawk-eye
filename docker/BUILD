@@ -10,13 +10,10 @@ load(
 genrule(
     name = "version_file",
     srcs = ["//:version.txt"],
-    cmd = 'echo "__version__ == " cat $< > $@',
+    cmd = 'echo "__version__ ==" `cat $<` > $@',
     outs = ["version.py"]
 )
 
-# This target packages all the necessary code for inference
-# into a tar which will upack itself in the docker container we
-# create for the target platform.
 container_layer(
     name = "hawk_eye",
     directory = "hawk_eye",
