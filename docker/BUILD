@@ -2,11 +2,11 @@ package(default_visibility = ["//visibility:public"])
 
 load(
     "@io_bazel_rules_docker//container:container.bzl",
-    "container_image",
     "container_layer",
-    "container_push"
 )
 
+# This rule takes the version.txt and makes a version.py for
+# importing in the python package.
 genrule(
     name = "version_file",
     srcs = ["//:version.txt"],
@@ -14,6 +14,8 @@ genrule(
     outs = ["version.py"]
 )
 
+# Build a docker layer of all the needed files for using
+# hawk_eye for inference externally.
 container_layer(
     name = "hawk_eye",
     directory = "hawk_eye",
@@ -30,4 +32,5 @@ container_layer(
         ":version_file",
     ],
     data_path = ".",
+    env = { "PYTHONPATH": "/"},
 )

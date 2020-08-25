@@ -7,15 +7,17 @@ load(
     "container_push"
 )
 
-
+# Start from the LT4 Jetson image and add the hawk_eye
+# inference compoenents on top.
 container_image(
     name = "hawk_eye_arm_container",
     base = "@amd64_base//image",
     layers = ["//docker:hawk_eye"],
-    env = { "PYTHONPATH": "/"},
     repository = "uavaustin/hawk-eye-arm",
 )
 
+# Push the docker image to Docker Hub tagged based on the
+# version.txt at the project root.
 container_push(
    name = "push_hawk_eye_arm",
    image = ":hawk_eye_arm_container",
