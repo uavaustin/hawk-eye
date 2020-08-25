@@ -9,6 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: docker login
+      run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
+      env:
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
     - uses: actions/checkout@v2
 
     - name: Set up Python
