@@ -11,10 +11,3 @@ repos:
     rev: 19.10b0
     hooks:
     -   id: black
--   repo: local
-    hooks:
-    -   id: flake8
-        name: "Test style with flake8"
-        entry: flake8
-        language: system
-        files: '^\.[^.py]$'
