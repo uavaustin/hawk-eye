@@ -23,6 +23,7 @@ container_layer(
     env = {"PYTHONPATH": "/"},
     files = [
         ":version_file",
+        "//inference:requirements.txt",
         "//core:asset_manager",
         "//core:classifier",
         "//core:detector",

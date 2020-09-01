@@ -5,9 +5,7 @@ import argparse
 import pathlib
 import time
 import json
-from typing import List
-from typing import Tuple
-from typing import Generator
+from typing import List, Tuple, Generator
 
 import cv2
 from PIL import Image
@@ -21,15 +19,29 @@ from third_party.models import postprocess
 
 _PROD_MODELS = {"clf": "2020-08-20T18.11.42", "det": "2020-08-21T00.46.40"}
 
+
 # Taken directly from albumentation src: augmentations/functional.py#L131.
 # This is the only function we really need from albumentations for inference,
 # so it is not worth requiring that as a dependency for distribution.
 def normalize(
-    img: Image.Image,
+    img: np.ndarray,
     mean: Tuple[float, float, float] = (0.485, 0.456, 0.406),
     std: Tuple[float, float, float] = (0.229, 0.224, 0.225),
     max_pixel_value: float = 255.0,
-) -> Image.Image:
+) -> np.ndarray:
+    """ Normalize images based on ImageNet values. This is identical to
+    albumentations normalization used for training.
+
+    Args:
+        img: The image to normalize.
+        mean: The mean of each channel.
+        std: The standard deviation of each channel.
+        max_pixel_value: The max value a pixel can have.
+
+    Returns:
+        A normalized image as a numpy array.
+    """
+
     mean = np.array(mean, dtype=np.float32)
     mean *= max_pixel_value
 
@@ -41,17 +53,31 @@ def normalize(
     img = img.astype(np.float32)
     img -= mean
     img *= denominator
+
     return img
 
 
 def tile_image(
     image: np.ndarray, tile_size: Tuple[int, int], overlap: int  # (H, W)
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, List[Tuple[int, int]]]:
+    """ Take in an image and tile it into smaller tiles for inference.
 
-    tiles = []
-    coords = []
+    Args:
+        image: The input image to tile.
+        tile_size: The (width, height) of the tiles.
+        overlap: The overlap between adjacent tiles.
+
+    Returns:
+        A tensor of the tiles and a list of the (x, y) offset for the tiles.
+            The offets are needed to keep track of which tiles have targets.
+
+    Usage: TODO(alex): fix this test
+        >>> tile_image(np.zeros(1000, 1000, 3), (512, 512), overlap)
+        []
+    """
+    tiles, coords = [], []
     width, height = image.size
-    # image = image.load()
+
     for x in range(0, width, tile_size[0] - overlap):
 
         # Shift back to extract tiles on the image
@@ -80,11 +106,13 @@ def create_batches(
 ) -> Generator[types.BBox, None, None]:
     """ Creates batches of images based on the supplied params. The whole image
     is tiled first, the batches are generated.
+
     Args:
         image: The opencv opened image.
         tile_size: The height, width of the tiles to create.
         overlap: The amount of overlap between tiles.
         batch_size: The number of images to have per batch.
+
     Returns:
         Yields the image batch and the top left coordinate of the tile in the
         space of the original image.
@@ -97,11 +125,22 @@ def create_batches(
 def load_models(
     clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
 ) -> Tuple[torch.nn.Module, torch.nn.Module]:
-    """ Loads the given time stamps for the classification and detector models. """
+    """ Loads the given time stamps for the classification and detector models.
+
+    Args:
+        clf_timestamp: Which classification model to load.
+        det_timestamp: Which detection model to load.
+
+    Returns:
+        Returns both models.
+    """
+
     clf_model = classifier.Classifier(
         timestamp=clf_timestamp, half_precision=torch.cuda.is_available()
     )
     clf_model.eval()
+
+    # TODO(alex): Pass in the confidence for the detector.
     det_model = detector.Detector(
         timestamp=det_timestamp,
         confidence=0.2,
@@ -127,21 +166,32 @@ def find_all_targets(
     save_jsons: bool = False,
     visualization_dir: pathlib.Path = None,
 ) -> None:
+    """ Entrypoint function if running this script as main.
+
+    Args:
+        images: A list of all the images to inference.
+        clf_timestamp: The classification model to load.
+        det_timestamp: The detection model to load.
+        save_jsons: Whether or not to save the json files.
+        visualization_dir: Where to save the visualizations, if any.
+    """
 
     clf_model, det_model = load_models(clf_timestamp, det_timestamp)
 
     for image_path in images:
 
-        retval = []
-        image = Image.open(str(image_path))
+        image = Image.open(image_path)
         assert image is not None, f"Could not read {image_path}."
-        start = time.perf_counter()
 
-        targets = find_targets(image, clf_model, det_model)
+        targets, target_tiles = find_targets(image, clf_model, det_model)
 
         if visualization_dir is not None:
             visualize_image(
-                image_path.name, image, visualization_dir, targets, target_tiles
+                image_path.name,
+                np.array(image),
+                visualization_dir,
+                targets,
+                target_tiles,
             )
 
 
@@ -154,8 +204,7 @@ def find_targets(
 
     # Keep track of the tiles that were classified as having targets for
     # visualization.
-    target_tiles = []
-    retval = []
+    target_tiles, retval = [], []
 
     start = time.perf_counter()
 
@@ -169,6 +218,7 @@ def find_targets(
         tiles = torch.nn.functional.interpolate(tiles_batch, config.PRECLF_SIZE)
 
         # Call the pre-clf to find the target tiles.
+        # TODO(alex): Pass in the classification confidence from cmdl.
         preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
 
         target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
@@ -186,7 +236,7 @@ def find_targets(
 
     targets = globalize_boxes(retval, config.CROP_SIZE[0])
     print(time.perf_counter() - start)
-    return globalize_boxes(retval, config.CROP_SIZE[0])
+    return globalize_boxes(retval, config.CROP_SIZE[0]), target_tiles
 
 
 def globalize_boxes(
@@ -219,8 +269,17 @@ def visualize_image(
     targets: List[types.Target],
     clf_tiles: List[Tuple[int, int]],
 ) -> None:
-    """ Function used to draw boxes and information onto image for
-    visualizing the output of inference. """
+    """ Function used to draw boxes and information onto image for visualizing the output
+    of inference.
+
+    Args:
+        image_name: The original image name used for saving the visualization.
+        image: The image array.
+        visualization_dir: Where to save the visualizations.
+        targets: A list of the targets that were found during inference.
+        clf_tiles: Which tiles were classified as having targets in them.
+    """
+
     for target in targets:
         top_left = (target.x, target.y)
         bottom_right = (target.x + target.width, target.y + target.height)
@@ -242,8 +301,8 @@ def visualize_image(
         cv2.addWeighted(
             tile, 0.3, image[y : y + h, x : x + w], 0.7, 0, image[y : y + h, x : x + w]
         )
-
-    cv2.imwrite(str(visualization_dir / image_name), image)
+    image = Image.fromarray(image)
+    image.save(str(visualization_dir / image_name))
 
 
 # TODO(alex) use this
@@ -325,6 +384,4 @@ if __name__ == "__main__":
         viz_dir = args.visualization_dir.expanduser()
         viz_dir.mkdir(exist_ok=True, parents=True)
 
-    find_all_targets(
-        imgs, args.clf_timestamp, args.det_timestamp, imgs, visualization_dir=viz_dir
-    )
+    find_all_targets(imgs, args.clf_timestamp, args.det_timestamp, imgs, viz_dir)
