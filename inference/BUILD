@@ -6,7 +6,7 @@ py_library(
     deps = [
         "//core:classifier",
         "//core:detector",
-    ]
+    ],
 )
 
 py_library(
@@ -15,10 +15,13 @@ py_library(
     deps = [
         "//core:classifier",
         "//core:detector",
-    ]
+    ],
+    data = [":requirements.txt"]
 )
 
 py_library(
     name = "types",
     srcs = ["types.py"],
 )
+
+exports_files(["requirements.txt"])

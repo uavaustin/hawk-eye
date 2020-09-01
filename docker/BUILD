@@ -10,27 +10,26 @@ load(
 genrule(
     name = "version_file",
     srcs = ["//:version.txt"],
+    outs = ["version.py"],
     cmd = 'echo "__version__ ==" `cat $<` > $@',
-    outs = ["version.py"]
 )
 
 # Build a docker layer of all the needed files for using
 # hawk_eye for inference externally.
 container_layer(
     name = "hawk_eye",
+    data_path = ".",
     directory = "hawk_eye",
+    env = {"PYTHONPATH": "/"},
     files = [
-        "//inference:find_targets",
-        "//inference:types",
+        ":version_file",
+        "//core:asset_manager",
         "//core:classifier",
         "//core:detector",
-        "//core:asset_manager",
-        "//third_party",
-        "//data_generation:generate_config",
         "//data_generation:config.yaml",
-        "//:requirements.txt",
-        ":version_file",
+        "//data_generation:generate_config",
+        "//inference:find_targets",
+        "//inference:types",
+        "//third_party",
     ],
-    data_path = ".",
-    env = { "PYTHONPATH": "/"},
 )

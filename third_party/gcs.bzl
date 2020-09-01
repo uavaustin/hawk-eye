@@ -76,9 +76,8 @@ def _gcs_file_impl(ctx):
     if rm_result.return_code:
         fail("Failed to remove temporary file: %s" % rm_result.stderr)
 
-
     # Extract the downloaded archive.
-    ctx.extract(download_path, stripPrefix=ctx.attr.strip_prefix)
+    ctx.extract(download_path, stripPrefix = ctx.attr.strip_prefix)
 
 gcs_file = repository_rule(
     attrs = {

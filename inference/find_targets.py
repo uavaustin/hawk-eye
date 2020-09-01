@@ -5,9 +5,10 @@ import argparse
 import pathlib
 import time
 import json
-from typing import List, Tuple, Generator
+from typing import List
+from typing import Tuple
+from typing import Generator
 
-import albumentations
 import cv2
 from PIL import Image
 import numpy as np
@@ -20,32 +21,50 @@ from third_party.models import postprocess
 
 _PROD_MODELS = {"clf": "2020-08-20T18.11.42", "det": "2020-08-21T00.46.40"}
 
+# Taken directly from albumentation src: augmentations/functional.py#L131.
+# This is the only function we really need from albumentations for inference,
+# so it is not worth requiring that as a dependency for distribution.
+def normalize(
+    img: Image.Image,
+    mean: Tuple[float, float, float] = (0.485, 0.456, 0.406),
+    std: Tuple[float, float, float] = (0.229, 0.224, 0.225),
+    max_pixel_value: float = 255.0,
+) -> Image.Image:
+    mean = np.array(mean, dtype=np.float32)
+    mean *= max_pixel_value
 
-def _val_augmentations() -> albumentations.Compose:
-    return albumentations.Compose([albumentations.Normalize()])
+    std = np.array(std, dtype=np.float32)
+    std *= max_pixel_value
+
+    denominator = np.reciprocal(std, dtype=np.float32)
+
+    img = img.astype(np.float32)
+    img -= mean
+    img *= denominator
+    return img
 
 
 def tile_image(
     image: np.ndarray, tile_size: Tuple[int, int], overlap: int  # (H, W)
 ) -> torch.Tensor:
 
-    augmenation = _val_augmentations()
-
     tiles = []
     coords = []
-    for x in range(0, image.shape[1], tile_size[1] - overlap):
+    width, height = image.size
+    # image = image.load()
+    for x in range(0, width, tile_size[0] - overlap):
 
         # Shift back to extract tiles on the image
-        if x + tile_size[1] >= image.shape[1] and x != 0:
-            x = image.shape[1] - tile_size[1]
+        if x + tile_size[0] >= width and x != 0:
+            x = width - tile_size[0]
 
-        for y in range(0, image.shape[0], tile_size[0] - overlap):
-            if y + tile_size[0] >= image.shape[0] and y != 0:
-                y = image.shape[0] - tile_size[0]
+        for y in range(0, height, tile_size[1] - overlap):
+            if y + tile_size[1] >= height and y != 0:
+                y = height - tile_size[1]
 
-            tile = augmenation(image=image[y : y + tile_size[0], x : x + tile_size[1]])[
-                "image"
-            ]
+            tile = normalize(
+                np.array(image.crop((x, y, x + tile_size[0], y + tile_size[1])))
+            )
 
             tiles.append(torch.Tensor(tile))
             coords.append((x, y))
@@ -79,7 +98,6 @@ def load_models(
     clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
 ) -> Tuple[torch.nn.Module, torch.nn.Module]:
     """ Loads the given time stamps for the classification and detector models. """
-
     clf_model = classifier.Classifier(
         timestamp=clf_timestamp, half_precision=torch.cuda.is_available()
     )
@@ -115,8 +133,7 @@ def find_all_targets(
     for image_path in images:
 
         retval = []
-        image = cv2.imread(str(image_path))
-
+        image = Image.open(str(image_path))
         assert image is not None, f"Could not read {image_path}."
         start = time.perf_counter()
 
@@ -130,7 +147,7 @@ def find_all_targets(
 
 @torch.no_grad()
 def find_targets(
-    images: Image.Image, clf_model: torch.nn.Module, det_model: torch.nn.Module,
+    image: Image.Image, clf_model: torch.nn.Module, det_model: torch.nn.Module,
 ) -> None:
 
     image_tensor, coords = tile_image(image, config.CROP_SIZE, config.CROP_OVERLAP)
@@ -138,6 +155,9 @@ def find_targets(
     # Keep track of the tiles that were classified as having targets for
     # visualization.
     target_tiles = []
+    retval = []
+
+    start = time.perf_counter()
 
     # Get the image slices.
     for tiles_batch, coords in create_batches(image_tensor, coords, 200):
@@ -306,5 +326,5 @@ if __name__ == "__main__":
         viz_dir.mkdir(exist_ok=True, parents=True)
 
     find_all_targets(
-        args.clf_timestamp, args.det_timestamp, imgs, visualization_dir=viz_dir
+        imgs, args.clf_timestamp, args.det_timestamp, imgs, visualization_dir=viz_dir
     )

@@ -131,16 +131,13 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
     )
 
     with multiprocessing.Pool(None) as pool:
-
-        # Put everything into one large iterable so that we can split up
-        # data across thread pools.ImageFile.LOAD_TRUNCATED_IMAGES = True
-
         processes = pool.imap_unordered(generate_single_example, data)
+
         for _ in tqdm(processes, total=num_gen):
             pass
 
 
-def generate_single_example(data: zip) -> None:
+def generate_single_example(data) -> None:
     """Creates a single full image"""
     (
         number,
@@ -211,7 +208,7 @@ def add_shapes(
         x1, y1, x2, y2 = shape_img.getbbox()
         bg_at_shape = background.crop((x1 + x, y1 + y, x2 + x, y2 + y))
         bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        # bg_at_shape = bg_at_shape.filter(ImageFilter.MedianFilter())
+        bg_at_shape = bg_at_shape.filter(ImageFilter.MedianFilter(3))
         background.paste(bg_at_shape, (x, y))
 
         im_w, im_h = background.size
@@ -254,7 +251,10 @@ def get_base_shapes(shape):
     """Get the base shape images for a given shapes"""
     # For now just using the first one to prevent bad alpha placement
     base_path = config.BASE_SHAPES_DIRS[0] / shape / f"{shape}-01.png"
-    return [Image.open(base_path)]
+    return [
+        Image.open(base_path)
+        for base_path in (config.BASE_SHAPES_DIRS[0] / shape).glob("*.png")
+    ]
 
 
 def random_list(items, count):
@@ -281,14 +281,13 @@ def create_shape(
     image = get_base(base, target_rgb, size)
     image = strip_image(image)
 
-    image = image.filter(ImageFilter.MedianFilter(size=7))
     image = add_alphanumeric(image, shape, alpha, alpha_rgb, font_file)
 
     w, h = image.size
     ratio = min(size / w, size / h)
     image = image.resize((int(w * ratio), int(h * ratio)), 1)
 
-    image = rotate_shape(image, shape, angle)
+    image = rotate_shape(image, angle)
     image = strip_image(image)
 
     return image
@@ -398,7 +397,7 @@ def add_alphanumeric(
     return image
 
 
-def rotate_shape(image, shape, angle):
+def rotate_shape(image, angle):
     return image.rotate(angle, expand=1)
 
 
