@@ -13,8 +13,10 @@ py_library(
     name = "find_targets",
     srcs = ["find_targets.py"],
     deps = [
+        ":types",
         "//core:classifier",
         "//core:detector",
+        "//data_generation:generate_config"
     ],
     data = [":requirements.txt"]
 )

@@ -17,3 +17,9 @@ py_test(
     srcs = ["test_third_party_docstring.py"],
     deps = ["//third_party"],
 )
+
+py_test(
+    name = "test_inference",
+    srcs = ["test_inference.py"],
+    deps = ["//inference:find_targets"]
+)

@@ -484,6 +484,11 @@ if __name__ == "__main__":
         train(0, world_size, model_cfg, train_cfg, save_dir, initial_timestamp)
 
     # Create tar archive.
-    with tarfile.open(save_dir / "detector.tar.gz", mode="w:gz") as tar:
+    save_archive = save_dir / f"{save_dir.name}.tar.gz"
+    with tarfile.open(save_archive, mode="w:gz") as tar:
         for model_file in save_dir.glob("*"):
             tar.add(model_file, arcname=model_file.name)
+
+    asset_manager.upload_model("detector", save_archive)
+
+    print(f"Saved model to {save_dir / save_dir.name}.tar.gz")

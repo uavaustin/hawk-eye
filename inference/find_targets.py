@@ -7,14 +7,15 @@ import time
 import json
 from typing import List, Tuple, Generator
 
-import cv2
 from PIL import Image
+from PIL import ImageDraw
 import numpy as np
 import torch
 
-from core import classifier, detector
-from inference import types
+from core import classifier
+from core import detector
 from data_generation import generate_config as config
+from inference import types
 from third_party.models import postprocess
 
 _PROD_MODELS = {"clf": "2020-08-20T18.11.42", "det": "2020-08-21T00.46.40"}
@@ -58,7 +59,7 @@ def normalize(
 
 
 def tile_image(
-    image: np.ndarray, tile_size: Tuple[int, int], overlap: int  # (H, W)
+    image: Image.Image, tile_size: Tuple[int, int], overlap: int  # (H, W)
 ) -> Tuple[torch.Tensor, List[Tuple[int, int]]]:
     """ Take in an image and tile it into smaller tiles for inference.
 
@@ -71,9 +72,14 @@ def tile_image(
         A tensor of the tiles and a list of the (x, y) offset for the tiles.
             The offets are needed to keep track of which tiles have targets.
 
-    Usage: TODO(alex): fix this test
-        >>> tile_image(np.zeros(1000, 1000, 3), (512, 512), overlap)
-        []
+    Usage:
+        >>> tiles, coords = tile_image(Image.new("RGB", (1000, 1000)), (512, 512), 50)
+        >>> tiles.shape[0]
+        9
+        >>> len(coords)
+        9
+        >>> tiles.shape[-2:]
+        torch.Size([512, 512])
     """
     tiles, coords = [], []
     width, height = image.size
@@ -163,7 +169,6 @@ def find_all_targets(
     images: List[pathlib.Path],
     clf_timestamp: str = _PROD_MODELS["clf"],
     det_timestamp: str = _PROD_MODELS["det"],
-    save_jsons: bool = False,
     visualization_dir: pathlib.Path = None,
 ) -> None:
     """ Entrypoint function if running this script as main.
@@ -172,7 +177,6 @@ def find_all_targets(
         images: A list of all the images to inference.
         clf_timestamp: The classification model to load.
         det_timestamp: The detection model to load.
-        save_jsons: Whether or not to save the json files.
         visualization_dir: Where to save the visualizations, if any.
     """
 
@@ -199,6 +203,13 @@ def find_all_targets(
 def find_targets(
     image: Image.Image, clf_model: torch.nn.Module, det_model: torch.nn.Module,
 ) -> None:
+    """ Tile up image, classify them, then perform object detection where it's needed.
+
+    Args:
+        image: The input image to inference.
+        clf_model: The loaded classification model.
+        det_model: The loaded detection model.
+    """
 
     image_tensor, coords = tile_image(image, config.CROP_SIZE, config.CROP_OVERLAP)
 
@@ -222,7 +233,7 @@ def find_targets(
         preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
 
         target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
-        if preds.sum().item():
+        if preds.numel():
             for det_tiles, det_coords in create_batches(tiles_batch[preds], coords, 15):
                 # Pass these target-containing tiles to the detector
                 det_tiles = torch.nn.functional.interpolate(
@@ -236,16 +247,30 @@ def find_targets(
 
     targets = globalize_boxes(retval, config.CROP_SIZE[0])
     print(time.perf_counter() - start)
+
     return globalize_boxes(retval, config.CROP_SIZE[0]), target_tiles
 
 
 def globalize_boxes(
     results: List[postprocess.BoundingBox], img_size: int
 ) -> List[types.Target]:
+    """ Take the normalized detections on a _tile_ and gloabalize them to pixel space of
+    the original large image.
+
+    Args:
+        results: A list of the detections for the tiles.
+        img_size: The size of the tile whihc is needed to unnormalize the detections.
+
+    Returns:
+        A list of the globalized boxes
+    """
+
     final_targets = []
+    img_size = torch.Tensor([img_size] * 4)
+
     for coords, bboxes in results:
         for box in bboxes:
-            relative_coords = box.box * torch.Tensor([img_size] * 4)
+            relative_coords = box.box * img_size
             relative_coords += torch.Tensor(2 * list(coords)).int()
             final_targets.append(
                 types.Target(
@@ -279,33 +304,33 @@ def visualize_image(
         targets: A list of the targets that were found during inference.
         clf_tiles: Which tiles were classified as having targets in them.
     """
+    # Create a PIL drawable object.
+    image = Image.fromarray(image).convert("RGBA")
+    image_draw = ImageDraw.Draw(image)
 
+    # Draw the target rectangles.
     for target in targets:
         top_left = (target.x, target.y)
         bottom_right = (target.x + target.width, target.y + target.height)
-        image = cv2.rectangle(image, top_left, bottom_right, (255, 0, 0), 1)
-        cv2.putText(
-            image,
-            target.shape.name.lower(),
-            (target.x, target.y - 3),  # Shift text tinsy bit
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
-            1,
+        image_draw.rectangle([top_left, bottom_right], outline=(0, 255, 0), width=2)
+        image_draw.text(
+            (target.x, target.y - 10), target.shape.name.lower(), (0, 255, 0)
         )
+
+    # Draw an overlay onto the tiles which were classified as having targets.
+    w, h = config.CROP_SIZE
+    overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
 
     for group in clf_tiles:
         x, y = group
-        w, h = config.CROP_SIZE
-        tile = np.zeros((w, h, 3), dtype=np.uint8)
-        cv2.addWeighted(
-            tile, 0.3, image[y : y + h, x : x + w], 0.7, 0, image[y : y + h, x : x + w]
-        )
-    image = Image.fromarray(image)
-    image.save(str(visualization_dir / image_name))
+        draw.rectangle([(x, y), (x + w, y + h)], fill=(0, 0, 0, 40))
+        image = Image.alpha_composite(image, overlay)
+
+    image.convert("RGB").save((visualization_dir / image_name))
 
 
-# TODO(alex) use this
+# TODO(alex) use this for writing jsons.
 def save_target_meta(filename_meta, filename_image, target):
     """ Save target metadata to a file. """
     with open(filename_meta, "w") as f:
@@ -384,4 +409,4 @@ if __name__ == "__main__":
         viz_dir = args.visualization_dir.expanduser()
         viz_dir.mkdir(exist_ok=True, parents=True)
 
-    find_all_targets(imgs, args.clf_timestamp, args.det_timestamp, imgs, viz_dir)
+    find_all_targets(imgs, args.clf_timestamp, args.det_timestamp, viz_dir)
