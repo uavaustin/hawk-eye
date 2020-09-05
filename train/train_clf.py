@@ -192,19 +192,27 @@ def train(
 
         # Call evaluation function
         if is_main and epoch >= train_cfg.get("eval_start_epoch", 10):
+            improved_scores = []
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
-            model_highest_score = eval_acc = evaluate(
-                clf_model, eval_loader, device, is_main, model_highest_score, save_dir,
-            )
+            new_model_highest_score = evaluate(clf_model, eval_loader, device)
             clf_model.train()
 
-            ema_highest_score = eval_acc = evaluate(
-                ema_model, eval_loader, device, is_main, ema_highest_score, save_dir,
-            )
+            if new_model_highest_score > model_highest_score:
+                model_highest_score = new_model_highest_score
+                improved_scores.append("base-acc")
+                # TODO(alex): Fix this .module
+                utils.save_model(clf_model.module, save_dir / "classifier.pt")
+
+            new_ema_highest_score = evaluate(ema_model, eval_loader, device)
+            if new_ema_highest_score > ema_highest_score:
+                ema_highest_score = new_ema_highest_score
+                improved_scores.append("ema-acc")
+                utils.save_model(ema_model.ema_model, save_dir / "ema-classifier.pt")
 
             log.info(f"Eval took {time.perf_counter() - start_val:.4f}s.")
+            log.info(f"Improved metrics: {improved_scores}.")
             log.info(
                 f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
                 f"Best model accuracy: {model_highest_score}\n"
@@ -217,21 +225,17 @@ def evaluate(
     clf_model: torch.nn.Module,
     eval_loader: torch.utils.data.DataLoader,
     device: torch.device,
-    is_main: bool,
-    previous_best: float,
-    save_dir: pathlib.Path = None,
 ) -> float:
     """ Evaluate the model against the evaulation set. Save the best
     weights if specified.
 
     Args:
-        model: The model to evaluate.
+        clf_model: The model to evaluate.
         eval_loader: The eval dataset loader.
-        previous_best: The current best eval metrics.
-        save_dir: Where to save the model weights.
+        device: Which device to send data to.
 
     Returns:
-        The updated best metrics and a list of the metrics that improved.
+        The accuracy over the evaluation set.
     """
     num_correct = total_num = 0
 
@@ -246,23 +250,7 @@ def evaluate(
         num_correct += (predicted == labels).sum().item()
         total_num += data.shape[0]
 
-    accuracy = num_correct / total_num
-
-    if accuracy > previous_best and is_main:
-
-        # Delete the previous best
-        name = "classifier.pt"
-        if isinstance(clf_model, ema.Ema):
-            clf_model = clf_model.ema_model
-            name = "ema-classifier.pt"
-        else:
-            clf_model = clf_model.module
-
-        utils.save_model(clf_model, save_dir / name)
-
-        return accuracy
-    else:
-        return previous_best
+    return num_correct / total_num
 
 
 def create_data_loader(

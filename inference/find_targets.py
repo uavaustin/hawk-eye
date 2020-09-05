@@ -18,7 +18,7 @@ from data_generation import generate_config as config
 from inference import types
 from third_party.models import postprocess
 
-_PROD_MODELS = {"clf": "2020-08-20T18.11.42", "det": "2020-08-21T00.46.40"}
+_PROD_MODELS = {"clf": "2020-09-05T15.51.57", "det": "2020-08-21T00.46.40"}
 
 
 # Taken directly from albumentation src: augmentations/functional.py#L131.
