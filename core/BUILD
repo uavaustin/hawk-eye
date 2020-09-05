@@ -12,6 +12,7 @@ py_library(
 py_library(
     name = "detector",
     srcs = [
+        ":asset_manager",
         "detector.py",
         "fpn.py",
     ],

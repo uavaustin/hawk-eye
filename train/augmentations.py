@@ -7,12 +7,21 @@ import albumentations as albu
 
 
 def clf_train_augs(height: int, width: int) -> albu.Compose:
+    """ Training augmentations for classification. We prefer for this model to be really
+    robust. Feel free to tweak these paramters or ad other augmentations.
+
+    Usage:
+        >>> import numpy as np
+        >>> img = np.zeros(1, 512, 512, 3)
+        >>> augs = clf_train_augs(224, 224)
+        >>> out = augs(image=img)["image"].shape
+    """
     return albu.Compose(
         [
             albu.Resize(height=height, width=width),
             albu.OneOf(
                 [
-                    alb.IAAAffine(shear=6, rotate=5, always_apply=True),
+                    albu.IAAAffine(shear=6, rotate=5, always_apply=True),
                     albu.ShiftScaleRotate(
                         shift_limit=0.025, scale_limit=0.1, rotate_limit=10
                     ),

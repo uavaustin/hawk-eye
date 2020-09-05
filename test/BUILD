@@ -21,5 +21,14 @@ py_test(
 py_test(
     name = "test_inference",
     srcs = ["test_inference.py"],
-    deps = ["//inference:find_targets"]
+    deps = ["//inference:find_targets"],
+)
+
+py_test(
+    name = "test_benchmark_inference",
+    srcs = ["test_benchmark_inference.py"],
+    deps = [
+        "//inference:benchmark_inference",
+        "//inference:find_targets"
+    ],
 )

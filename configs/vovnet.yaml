@@ -5,7 +5,7 @@ model:
 training:
   optimizer:
     type: "AdamW"
-    lr: 2.0
+    lr: 1.0e-2
     momentum: 0.9
     weight_decay: 1.0e-5
   lr_schedule:
@@ -13,5 +13,6 @@ training:
     max_lr: 1.0e-1
     end_lr: 1.0e-8
     warmup_fraction: 0.05
-  epochs: 50
+  epochs: 15
   batch_size: 200
+  eval_start_epoch: 5

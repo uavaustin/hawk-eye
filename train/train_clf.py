@@ -23,14 +23,15 @@ except ImportError as e:
 import torch
 import numpy as np
 
+from core import asset_manager
+from core import classifier
+from data_generation import generate_config
+from third_party.models import losses
 from train import datasets
 from train import augmentations
 from train.train_utils import ema
 from train.train_utils import logger
 from train.train_utils import utils
-from core import classifier, asset_manager
-from data_generation import generate_config
-from third_party.models import losses
 
 _LOG_INTERVAL = 10
 _SAVE_DIR = pathlib.Path("~/runs/uav-classifier").expanduser()
@@ -41,9 +42,20 @@ def train(
     world_size: int,
     model_cfg: dict,
     train_cfg: dict,
-    save_dir: pathlib.Path = None,
+    save_dir: pathlib.Path,
     initial_timestamp: str = None,
 ) -> None:
+    """ Entrypoint for training. This is where most of the logic is executed.
+
+    Args:
+        local_rank: Which GPU subprocess rank this is executed in. For CPU and 1 GPU,
+            this is 0.
+        world_size: How many processes are being run.
+        model_cfg: The model definition dictionary.
+        train_cfg: The training config dictionary.
+        save_dir: Where to write checkpoints.
+        initial_timestamp: Which model to start from.
+    """
 
     # Do some general setup. When using distributed training and Apex, the device needs
     # to be set before loading the model.
@@ -51,8 +63,8 @@ def train(
     device = torch.device(f"cuda:{local_rank}" if use_cuda else "cpu")
     if use_cuda:
         torch.cuda.set_device(local_rank)
-    is_main = local_rank == 0
 
+    is_main = local_rank == 0
     if is_main:
         log = logger.Log(save_dir / "log.txt")
 
@@ -70,12 +82,14 @@ def train(
         generate_config.DATA_DIR / "clf_train",
         world_size=world_size,
         val=False,
+        img_size=model_cfg.get("image_size", 224),
     )
     eval_loader, _ = create_data_loader(
         batch_size,
         generate_config.DATA_DIR / "clf_val",
         world_size=world_size,
         val=True,
+        img_size=model_cfg.get("image_size", 224),
     )
 
     if is_main:
@@ -115,21 +129,24 @@ def train(
     assert epochs > 0, "Please supply epoch > 0"
 
     # Create the learning rate scheduler.
-    lr_config = train_cfg.get("lr_schedule", {})
-    warm_up_percent = lr_config.get("warmup_fraction", 0)
-    start_lr = float(lr_config.get("start_lr"))
-    max_lr = float(lr_config.get("max_lr"))
-    end_lr = float(lr_config.get("end_lr"))
-    lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=max_lr,
-        total_steps=len(train_loader) * epochs,
-        final_div_factor=start_lr / end_lr,
-        div_factor=max_lr / start_lr,
-        pct_start=warm_up_percent,
-    )
-    global_step = 0
+    lr_scheduler = None
+    if train_cfg["optimizer"]["type"].lower() == "sgd":
+        lr_config = train_cfg.get("lr_schedule", {})
+        warm_up_percent = lr_config.get("warmup_fraction", 0)
+        start_lr = float(lr_config.get("start_lr"))
+        max_lr = float(lr_config.get("max_lr"))
+        end_lr = float(lr_config.get("end_lr"))
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=max_lr,
+            total_steps=len(train_loader) * epochs,
+            final_div_factor=start_lr / end_lr,
+            div_factor=max_lr / start_lr,
+            pct_start=warm_up_percent,
+        )
+
     loss_fn = torch.nn.CrossEntropyLoss()
+    global_step = 0
 
     for epoch in range(epochs):
         all_losses = []
@@ -160,7 +177,9 @@ def train(
                 loss.backward()
 
             optimizer.step()
-            # lr_scheduler.step()
+
+            if lr_scheduler is not None:
+                lr_scheduler.step()
 
             ema_model.update(clf_model)
 
@@ -172,29 +191,17 @@ def train(
                 )
 
         # Call evaluation function
-        if is_main:
+        if is_main and epoch >= train_cfg.get("eval_start_epoch", 10):
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
-            model_highest_score = eval_acc = eval(
-                clf_model,
-                eval_loader,
-                device,
-                is_main,
-                world_size,
-                model_highest_score,
-                save_dir,
+            model_highest_score = eval_acc = evaluate(
+                clf_model, eval_loader, device, is_main, model_highest_score, save_dir,
             )
             clf_model.train()
 
-            ema_highest_score = eval_acc = eval(
-                ema_model,
-                eval_loader,
-                device,
-                is_main,
-                world_size,
-                ema_highest_score,
-                save_dir,
+            ema_highest_score = eval_acc = evaluate(
+                ema_model, eval_loader, device, is_main, ema_highest_score, save_dir,
             )
 
             log.info(f"Eval took {time.perf_counter() - start_val:.4f}s.")
@@ -206,12 +213,11 @@ def train(
 
 
 @torch.no_grad()
-def eval(
+def evaluate(
     clf_model: torch.nn.Module,
     eval_loader: torch.utils.data.DataLoader,
     device: torch.device,
     is_main: bool,
-    world_size: int,
     previous_best: float,
     save_dir: pathlib.Path = None,
 ) -> float:
@@ -260,7 +266,7 @@ def eval(
 
 
 def create_data_loader(
-    batch_size: dict, data_dir: pathlib.Path, world_size: int, val: bool
+    batch_size: dict, data_dir: pathlib.Path, world_size: int, val: bool, img_size: int
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
     """ This function acts as a DataLoader factory. Depending on the type of input
     data, either train or val, we construct a DataLoader which will be used during
@@ -279,15 +285,15 @@ def create_data_loader(
     """
     assert data_dir.is_dir(), data_dir
 
-    augmentations.clf_eval_augs(224, 224) if val else augmentations.clf_train_augs(
-        224, 224
-    )
+    augmentations.clf_eval_augs(
+        img_size, img_size
+    ) if val else augmentations.clf_train_augs(img_size, img_size)
     dataset = datasets.ClfDataset(
         data_dir,
         img_ext=generate_config.IMAGE_EXT,
-        augs=augmentations.clf_eval_augs(224, 224)
+        augs=augmentations.clf_eval_augs(img_size, img_size)
         if val
-        else augmentations.clf_train_augs(224, 224),
+        else augmentations.clf_train_augs(img_size, img_size),
     )
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.

@@ -9,8 +9,6 @@ import tempfile
 import subprocess
 from typing import List, Union
 
-import requests
-
 from data_generation import generate_config as config
 
 _BUCKET = "gs://uav-austin-test"
@@ -86,5 +84,6 @@ def download_model(model_type: str, timestamp: str) -> pathlib.Path:
 
 
 def upload_model(model_type: str, path: pathlib.Path) -> None:
-    blob = bucket.blob(f"{model_type}/{path.name}")
-    blob.upload_from_filename(str(path))
+    subprocess.check_call(
+        ["gsutil", "cp", str(path), f"{_BUCKET}/{model_type}/{path.name}"]
+    )

@@ -12,12 +12,11 @@ import yaml
 
 from core import classifier
 from core import detector
-from core import pull_assets
 
 
 @torch.no_grad()
 def benchmark(
-    timestamp: str, model_type: str, batch_size: int, rum_time: float
+    timestamp: str, model_type: str, batch_size: int, run_time: float
 ) -> None:
 
     # Construct the model.
@@ -34,8 +33,9 @@ def benchmark(
         batch = batch.cuda().half()
 
     print("Starting inference.")
+    start_loop = time.perf_counter()
     times = []
-    for _ in range(1000):
+    while time.perf_counter() - start_loop < run_time:
         start = time.perf_counter()
         model(batch)
         times.append(time.perf_counter() - start)

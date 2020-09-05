@@ -5,10 +5,7 @@ training to speed the process up. """
 
 import argparse
 import pathlib
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 import tarfile
 import tempfile
 import datetime

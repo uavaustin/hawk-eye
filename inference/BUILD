@@ -6,6 +6,7 @@ py_library(
     deps = [
         "//core:classifier",
         "//core:detector",
+        "//data_generation:generate_config"
     ],
 )
 
