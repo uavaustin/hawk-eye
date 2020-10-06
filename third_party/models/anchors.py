@@ -6,7 +6,7 @@ import torch
 import numpy as np
 
 
-class AnchorGenerator(torch.nn.Module):
+class AnchorGenerator:
     def __init__(
         self,
         img_height: int,
@@ -40,7 +40,6 @@ class AnchorGenerator(torch.nn.Module):
         >>> set([cell.shape for cell in anchor_gen.anchors_per_cell])
         {torch.Size([9, 4])}
         """
-        super().__init__()
         self.pyramid_levels = pyramid_levels
         self.img_height = img_height
         self.img_width = img_width
@@ -49,7 +48,7 @@ class AnchorGenerator(torch.nn.Module):
         self.strides = [2 ** level for level in pyramid_levels]
 
         # Generate all anchors based on the sizes, aspect ratios, and scales. We
-        # generate anchors based on aspect ratio and scale, and theseare common across
+        # generate anchors based on aspect ratio and scale, and these are common across
         # all feature levels, but we also create the anchors based on size where the
         # size is dependent upon feature level.
         self.anchors_per_cell = self._generate_cell_anchors(
@@ -66,7 +65,6 @@ class AnchorGenerator(torch.nn.Module):
                 for stride in self.strides
             ]
         )
-
         self.anchors_over_all_feature_maps = self._grid_anchors(self.grid_sizes)
         self.all_anchors = torch.cat(self.anchors_over_all_feature_maps)
 
@@ -97,6 +95,7 @@ class AnchorGenerator(torch.nn.Module):
         # https://github.com/facebookresearch/Detectron/issues/227
 
         anchors: List[torch.Tensor] = []
+
         # Generate anchors for each anchor size, scale, and aspect ratio
         for anchor_size in anchor_sizes:
             pyramid_anchors = []

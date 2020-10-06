@@ -2,13 +2,15 @@
 
 import pathlib
 from typing import List
+import sys
+import os
 
 from pycocotools import coco, cocoeval
 import numpy as np
 
 
 def _summarize(
-    eval: dict, iou: float, iou_thresholds: np.ndarray, average_precision: bool = True,
+    eval: dict, iou: float, iou_thresholds: np.ndarray, average_precision: bool = True
 ) -> dict:
 
     if average_precision:
@@ -32,18 +34,20 @@ def _summarize(
 def get_metrics(
     labels_path: pathlib.Path,
     predictions_path: pathlib.Path,
-    metrics: List[float] = [30, 50, 75],
+    metrics: List[float] = [50, 75],
 ) -> dict:
     iou_thresholds = np.array(metrics) / 100
 
+    sys.stdout = open(os.devnull, "w")
     coco_gt = coco.COCO(labels_path)
     coco_predicted = coco_gt.loadRes(str(predictions_path))
     cocoEval = cocoeval.COCOeval(coco_gt, coco_predicted, "bbox")
     cocoEval.params.iouThrs = iou_thresholds
     cocoEval.params.areaRngLbl = "all"
-    cocoEval.params.maxDets = [100]
+    cocoEval.params.maxDets = [1]
     cocoEval.evaluate()
     cocoEval.accumulate()
+    sys.stdout = sys.__stdout__
 
     results = {}
     for eval_type in ["ap", "ar"]:

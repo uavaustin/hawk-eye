@@ -1,0 +1,3 @@
+# Run the python tests with no accessible gpus. This is how the Github Actions
+# CI will be running.
+test --test_env=CUDA_VISIBLE_DEVICES=-1

@@ -27,7 +27,7 @@ def depthwise(in_channels: int, out_channels: int):
 def conv3x3(in_channels: int, out_channels: int):
     """ Simple Conv2d layer. """
     return [
-        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True),
+        torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=True)
     ]
 
 
@@ -56,9 +56,9 @@ class RetinaNetHead(torch.nn.Module):
         for idx in range(num_convolutions):
             classification_subnet += [
                 *conv(in_channels, in_channels),
-                torch.nn.BatchNorm2d(in_channels),
                 torch.nn.ReLU(inplace=True),
             ]
+
         # NOTE same basic architecture between box regression and classification
         regression_subnet = copy.deepcopy(classification_subnet)
 
@@ -78,7 +78,8 @@ class RetinaNetHead(torch.nn.Module):
                 for layer in subnet.modules():
                     if isinstance(layer, torch.nn.Conv2d):
                         torch.nn.init.normal_(layer.weight, mean=0, std=0.01)
-                        torch.nn.init.constant_(layer.bias, 0)
+                        if layer.bias is not None:
+                            torch.nn.init.constant_(layer.bias, 0)
 
         self.regression_subnet = torch.nn.Sequential(*regression_subnet)
         self.classification_subnet = torch.nn.Sequential(*classification_subnet)
@@ -87,7 +88,6 @@ class RetinaNetHead(torch.nn.Module):
         prior_prob = 0.01
         bias_value = -(math.log((1 - prior_prob) / prior_prob))
         torch.nn.init.constant_(self.classification_subnet[-1].bias, bias_value)
-        torch.nn.init.constant_(self.regression_subnet[-1].bias, bias_value)
 
     def __call__(
         self, feature_maps: collections.OrderedDict
@@ -95,11 +95,10 @@ class RetinaNetHead(torch.nn.Module):
         """ Applies the regression and classification subnets to each of the
         incoming feature maps. """
 
-        bbox_regressions = [
-            self.regression_subnet(level) for level in feature_maps.values()
-        ]
-        classifications = [
-            self.classification_subnet(level) for level in feature_maps.values()
-        ]
+        bbox_regressions, classifications = [], []
+
+        for level in feature_maps.values():
+            bbox_regressions.append(self.regression_subnet(level))
+            classifications.append(self.classification_subnet(level))
 
         return classifications, bbox_regressions

@@ -18,6 +18,9 @@ class VoVNetParams:
 
 
 _STAGE_SPECS = {
+    "vovnet-19-clf-dw": VoVNetParams(
+        64, [64, 80, 96, 112], [112, 256, 256, 256], 3, [1, 1, 1, 1], True
+    ),
     "vovnet-19-slim-dw": VoVNetParams(
         64, [64, 80, 96, 112], [112, 256, 384, 512], 3, [1, 1, 1, 1], True
     ),
@@ -41,9 +44,6 @@ _STAGE_SPECS = {
     ),
 }
 
-_BN_MOMENTUM = 1e-1
-_BN_EPS = 1e-5
-
 
 def dw_conv(
     in_channels: int, out_channels: int, stride: int = 1
@@ -60,8 +60,8 @@ def dw_conv(
             bias=False,
         ),
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
-        torch.nn.ReLU(inplace=True),
+        torch.nn.BatchNorm2d(out_channels),
+        torch.nn.ReLU(inplace=False),
     ]
 
 
@@ -84,8 +84,8 @@ def conv(
             groups=groups,
             bias=False,
         ),
-        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
-        torch.nn.ReLU(inplace=True),
+        torch.nn.BatchNorm2d(out_channels),
+        torch.nn.ReLU(inplace=False),
     ]
 
 
@@ -93,29 +93,24 @@ def pointwise(in_channels: int, out_channels: int) -> List[torch.nn.Module]:
     """ Pointwise convolution."""
     return [
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
-        torch.nn.BatchNorm2d(out_channels, eps=_BN_EPS, momentum=_BN_MOMENTUM),
-        torch.nn.ReLU(inplace=True),
+        torch.nn.BatchNorm2d(out_channels),
+        torch.nn.ReLU(inplace=False),
     ]
 
 
-# As seen here: https://arxiv.org/pdf/1910.03151v4.pdf. Can outperform ESE with far fewer
-# paramters.
-class ESA(torch.nn.Module):
-    def __init__(self, channels: int) -> None:
+class ESE(torch.nn.Module):
+    """This is adapted from the efficientnet Squeeze Excitation. The idea is to not
+    squeeze the number of channels to keep more information."""
+
+    def __init__(self, channel: int) -> None:
         super().__init__()
-        self.pool = torch.nn.AdaptiveAvgPool2d(1)
-        self.conv = torch.nn.Conv2d(1, 1, kernel_size=3, padding=1, bias=False)
+        self.avg_pool = torch.nn.AdaptiveAvgPool2d(1)
+        self.fc = torch.nn.Conv2d(channel, channel, kernel_size=1)  # (Linear)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = self.pool(x)
-        # BCHW -> BHCW
-        y = y.permute(0, 2, 1, 3)
-        y = self.conv(y)
-
-        # Change the dimensions back to BCHW
-        y = y.permute(0, 2, 1, 3)
-        y = torch.sigmoid_(y)
-        return x * y.expand_as(x)
+        out = self.avg_pool(x)
+        out = self.fc(out)
+        return torch.sigmoid(out) * x
 
 
 class _OSA(torch.nn.Module):
@@ -127,11 +122,11 @@ class _OSA(torch.nn.Module):
         layer_per_block: int,
         use_depthwise: bool = False,
     ) -> None:
-        """ Implementation of an OSA layer which takes the output of its conv layers and 
+        """ Implementation of an OSA layer which takes the output of its conv layers and
         concatenates them into one large tensor which is passed to the next layer. The
         goal with this concatenation is to preserve information flow through the model
-        layers. This also ends up helping with small object detection. 
-        
+        layers. This also ends up helping with small object detection.
+
         Args:
             in_channels: Channel depth of the input to the OSA block.
             stage_channels: Channel depth to reduce the input.
@@ -172,7 +167,7 @@ class _OSA(torch.nn.Module):
         # feature aggregation
         aggregated += layer_per_block * stage_channels
         self.concat = torch.nn.Sequential(*pointwise(aggregated, concat_channels))
-        self.esa = ESA(concat_channels)
+        self.ese = ESE(concat_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
@@ -190,7 +185,7 @@ class _OSA(torch.nn.Module):
 
         x = torch.cat(output, dim=1)
         xt = self.concat(x)
-        xt = self.esa(xt)
+        # xt = self.ese(xt)
 
         if self.identity:
             xt += identity_feat
@@ -343,9 +338,7 @@ class VoVNet(torch.nn.Sequential):
         self.model.add_module(
             "classifier",
             torch.nn.Sequential(
-                torch.nn.BatchNorm2d(
-                    self._out_feature_channels[-1], _BN_MOMENTUM, _BN_EPS
-                ),
+                torch.nn.BatchNorm2d(self._out_feature_channels[-1]),
                 torch.nn.AdaptiveAvgPool2d(1),
                 torch.nn.Flatten(),
                 torch.nn.Dropout(0.2),

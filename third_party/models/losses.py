@@ -158,7 +158,7 @@ class Matcher:
         thresholds.insert(0, -float("inf"))
         thresholds.append(float("inf"))
         assert all(low <= high for (low, high) in zip(thresholds[:-1], thresholds[1:]))
-        assert all(l in [-1, 0, 1] for l in labels)
+        assert all(label in [-1, 0, 1] for label in labels)
         assert len(labels) == len(thresholds) - 1
         self.thresholds = thresholds
         self.labels = labels
@@ -225,7 +225,7 @@ class Matcher:
         # Note that the matches qualities must be positive due to the use of
         # `torch.nonzero`.
         gt_pred_pairs_of_highest_quality = torch.nonzero(
-            match_quality_matrix == highest_quality_foreach_gt[:, None]
+            match_quality_matrix == highest_quality_foreach_gt[:, None], as_tuple=False
         )
         # Example gt_pred_pairs_of_highest_quality:
         #   tensor([[    0, 39796],
@@ -246,16 +246,14 @@ class Matcher:
 
 
 def compute_losses(
-    original_anchors: torch.Tensor,
-    gt_classes: List[torch.Tensor],
-    gt_boxes: List[torch.Tensor],
+    gt_classes: torch.Tensor,
+    gt_anchors_deltas: torch.Tensor,
     cls_per_level: List[torch.Tensor],
     reg_per_level: List[torch.Tensor],
     num_classes: int,
 ) -> Dict[str, float]:
     """
     Args:
-        original_anchors: A tensor containing all the original anchors. (N x 4)
         gt_classes: Ground truth classes per image.
         gt_anchors: Ground truth boxes per image.
         cls_per_level: Predicted classes for each image per pyramid level.
@@ -263,17 +261,11 @@ def compute_losses(
         num_classes: Number of classes in the model.
 
     Returns:
-        Mapping from a named loss to a scalar tensor storing the loss. Used 
+        Mapping from a named loss to a scalar tensor storing the loss. Used
         during training only. The dict keys are: "loss_cls" and "loss_box_reg"
     """
     pred_class_logits, pred_anchor_deltas = postprocess.permute_to_N_HWA_K_and_concat(
         cls_per_level, reg_per_level, num_classes
-    )
-
-    # Take the ground truth labels and boxes and find which original anchors
-    # match the ground truth boxes the best.
-    gt_classes, gt_anchors_deltas = get_ground_truth(
-        original_anchors, gt_boxes, gt_classes, num_classes=num_classes
     )
 
     gt_classes = gt_classes.flatten().long()
@@ -355,8 +347,9 @@ def get_ground_truth(
             match_quality_matrix = boxes.box_iou(gt_boxes, original_anchors)
             gt_matched_idxs, anchor_labels = matcher(match_quality_matrix)
 
-            # Get the ground regressions from the matched GT to box labels.
+            # Get the ground truth regressions from the matched anchor to box labels.
             matched_gt_boxes = gt_boxes[gt_matched_idxs]
+
             gt_anchors_reg_deltas_i = regressor.get_deltas(
                 original_anchors, matched_gt_boxes
             )

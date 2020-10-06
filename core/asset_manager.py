@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-""" Functions to pull in data from the cloud. """
+""" Functions to pull in data from the cloud.
+This relies on Google Cloud Storage python API. Please see the Image Recognition lead
+to recieve the proper credentials for access to the bucket. """
+
 import tarfile
 import pathlib
 import tempfile
+import subprocess
 from typing import List, Union
 
-import requests
-
 from data_generation import generate_config as config
+
+_BUCKET = "gs://uav-austin-test"
 
 
 def pull_all() -> None:
@@ -19,7 +23,7 @@ def pull_all() -> None:
 
 def pull_backgrounds() -> None:
     """Pull the shape generation backgrounds."""
-    download_file(config.BACKGROUNDS_URL, config.ASSETS_DIR)
+    download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
@@ -39,16 +43,17 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
         filenames = [filenames]
 
     for filename in filenames:
-        folder_name = filename.split(".", 1)[0]
+        filename = pathlib.Path(filename)
+        folder_name = filename.stem.split(".", 1)[0]
         if not (destination / folder_name).is_dir():
-            url = f"{config._DOWNLOAD_BASE}{filename}"
             print(f"Fetching {filename}...", end="", flush=True)
-            res = requests.get(str(url), stream=True)
 
             with tempfile.TemporaryDirectory() as d:
                 tmp_file = pathlib.Path(d) / "file.tar.gz"
+                subprocess.check_call(
+                    ["gsutil", "cp", f"{_BUCKET}/{filename}", str(tmp_file)]
+                )
 
-                tmp_file.write_bytes(res.raw.read())
                 untar_and_move(tmp_file, destination)
 
             print(" done.")
@@ -57,8 +62,8 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 # Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
 
-    print(f"Extracting {filename.name}...", end="", flush=True)
-    with tarfile.open(filename) as tar:
+    print(f"Extracting to {destination}...", end="", flush=True)
+    with tarfile.open(filename, "r") as tar:
         tar.extractall(destination)
 
     # Remove hidden files that might have been left behind by
@@ -67,9 +72,18 @@ def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
         filename.unlink()
 
 
-def download_model(model_type: str, version: str) -> pathlib.Path:
+def download_model(model_type: str, timestamp: str) -> pathlib.Path:
     assert model_type in ["classifier", "detector"], f"Unsupported model {model_type}."
-    filename = f"{model_type}-{version}"
-    if not (config.ASSETS_DIR / filename).is_dir():
-        download_file(f"{filename}.tar.gz", config.ASSETS_DIR / filename)
-    return config.ASSETS_DIR / filename
+    filename = f"{model_type}/{timestamp}.tar.gz"
+    destination = pathlib.Path(f"~/runs/uav-{model_type}").expanduser() / timestamp
+
+    if not destination.is_dir():
+        download_file(filename, destination)
+
+    return destination
+
+
+def upload_model(model_type: str, path: pathlib.Path) -> None:
+    subprocess.check_call(
+        ["gsutil", "cp", str(path), f"{_BUCKET}/{model_type}/{path.name}"]
+    )

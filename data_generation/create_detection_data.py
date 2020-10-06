@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-""" This script generates training data for the object
-detector model. The output will be directories of images
-plus COCO metadata jsons. """
+""" This script generates training data for the object detector model. The output will be
+images and the corresponding COCO metadata jsons. For most RetinaNet related training we
+can train on images with _and without_ targets. Training on images without any targets
+is valuable so the model sees that not every image will have a target, as this is the
+real life case. """
 
-from typing import List, Tuple
+import dataclasses
+from typing import List
+from typing import Tuple
 import multiprocessing
 import random
 import json
 import pathlib
+import time
 
 from tqdm import tqdm
 import PIL
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from data_generation import generate_config as config
-from core import pull_assets
+from core import asset_manager
 
 # Get constants from config
 NUM_GEN = int(config.NUM_IMAGES)
@@ -27,10 +32,17 @@ CLASSES = config.OD_CLASSES
 ALPHAS = config.ALPHAS
 
 
-def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
-    """ Generate the full sized images. """
-    images_dir = config.DATA_DIR / gen_type / "images"
-    config.DATA_DIR.mkdir(exist_ok=True, parents=True)
+def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
+    """ Main function which prepares all the relevant information regardining data
+    generation. Data will be generated using a multiprocessing pool for efficiency.
+
+    Args:
+        gen_type: The name of the data being generated.
+        num_gen: The number of images to generate.
+        offset: TODO(alex): Are we still using this?
+    """
+    # Make the proper folders for storing the data.
+    images_dir = gen_type / "images"
     images_dir.mkdir(exist_ok=True, parents=True)
 
     r_state = random.getstate()
@@ -44,11 +56,11 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
 
     numbers = list(range(offset, num_gen + offset))
 
+    # Create a random list of the background files.
     backgrounds = random_list(get_backgrounds(), num_gen)
     flip_bg = random_list([False, True], num_gen)
     mirror_bg = random_list([False, True], num_gen)
-    sharpen = random_list(range(0, 3), num_gen)
-    blurs = random_list(range(1, 2), num_gen)
+    blurs = random_list([1], num_gen)
     num_targets = random_list(range(1, MAX_SHAPES), num_gen)
 
     crop_xs = random_list(range(0, config.FULL_SIZE[0] - config.CROP_SIZE[0]), num_gen)
@@ -74,12 +86,12 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
         target_rgbs = [random.choice(COLORS[color]) for color in target_colors]
         alpha_rgbs = [random.choice(COLORS[color]) for color in alpha_colors]
 
-        sizes = random_list(range(20, 65), num_targets)
+        sizes = random_list(range(20, 100), num_targets)
 
         angles = random_list(range(0, 360), num_targets)
 
-        xs = random_list(range(70, config.CROP_SIZE[0] - 70), num_targets)
-        ys = random_list(range(70, config.CROP_SIZE[1] - 70), num_targets)
+        xs = random_list(range(120, config.CROP_SIZE[0] - 120), num_targets)
+        ys = random_list(range(120, config.CROP_SIZE[1] - 120), num_targets)
 
         shape_params.append(
             list(
@@ -100,8 +112,12 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
             )
         )
 
-    # Put everything into one large iterable so that we can split up
-    # data across thread pools.ImageFile.LOAD_TRUNCATED_IMAGES = True
+    random.setstate(r_state)
+
+    # Generate data in a multiprocessing pool to use the specified amount of CPU
+    # resources. We have to be careful to ensure we do not access and background image
+    # at the same time. We use a manager dictionary to let us know if the image to be
+    # opened is already being read somewhere else.
     data = zip(
         numbers,
         backgrounds,
@@ -109,31 +125,27 @@ def generate_all_images(gen_type: str, num_gen: int, offset=0) -> None:
         crop_ys,
         flip_bg,
         mirror_bg,
-        sharpen,
         blurs,
         shape_params,
         [gen_type] * num_gen,
     )
 
-    random.setstate(r_state)
-
-    # Generate in a pool. If specificed, use a given number of threads.
     with multiprocessing.Pool(None) as pool:
         processes = pool.imap_unordered(generate_single_example, data)
+
         for _ in tqdm(processes, total=num_gen):
             pass
 
 
-def generate_single_example(data: zip) -> None:
+def generate_single_example(data) -> None:
     """Creates a single full image"""
     (
         number,
-        background,
+        background_path,
         crop_x,
         crop_y,
         flip_bg,
         mirror_bg,
-        sharpen,
         blur,
         shape_params,
         gen_type,
@@ -143,7 +155,8 @@ def generate_single_example(data: zip) -> None:
     labels_fn = data_path / f"ex_{number}.json"
     img_fn = data_path / f"ex_{number}{config.IMAGE_EXT}"
 
-    background = background.copy()
+    background = PIL.Image.open(background_path)
+    assert background is not None
     background = background.crop(
         (crop_x, crop_y, crop_x + config.CROP_SIZE[0], crop_y + config.CROP_SIZE[1])
     )
@@ -153,15 +166,16 @@ def generate_single_example(data: zip) -> None:
     if mirror_bg:
         background = ImageOps.mirror(background)
 
-    shape_imgs = [create_shape(*shape_param) for shape_param in shape_params]
+    if random.randint(0, 100) / 100 >= config.EMPTY_TILE_PROB:
+        shape_imgs = [create_shape(*shape_param) for shape_param in shape_params]
+        shape_bboxes, background = add_shapes(
+            background, shape_imgs, shape_params, blur
+        )
+    else:
+        shape_bboxes = []
 
-    shape_bboxes, full_img = add_shapes(background, shape_imgs, shape_params, blur)
-
-    if sharpen == 1:
-        full_img = full_img.filter(ImageFilter.SHARPEN)
-
-    full_img = full_img.resize(config.DETECTOR_SIZE)
-    full_img.save(img_fn)
+    background = background.resize(config.DETECTOR_SIZE)
+    background.save(img_fn)
 
     objects = [
         {
@@ -191,11 +205,10 @@ def add_shapes(
         x = shape_param[-2]
         y = shape_param[-1]
         shape_img = shape_imgs[i]
-        shape_img = shape_img.filter(ImageFilter.GaussianBlur(1))
         x1, y1, x2, y2 = shape_img.getbbox()
         bg_at_shape = background.crop((x1 + x, y1 + y, x2 + x, y2 + y))
         bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        bg_at_shape = bg_at_shape.filter(ImageFilter.SMOOTH_MORE)
+        bg_at_shape = bg_at_shape.filter(ImageFilter.MedianFilter(3))
         background.paste(bg_at_shape, (x, y))
 
         im_w, im_h = background.size
@@ -220,21 +233,28 @@ def add_shapes(
     return shape_bboxes, background.convert("RGB")
 
 
-def get_backgrounds():
-    """Get the background assets"""
-    # Can be a mix of .png and .jpg
+def get_backgrounds() -> List[pathlib.Path]:
+    """ Get a list of all the background images. """
+    # Cover all the necessary extensions
+    exts, filenames = ["png", "jpg", "jpeg"], []
     for backgrounds_folder in config.BACKGROUNDS_DIRS:
-        filenames = list(backgrounds_folder.rglob("*.png"))
-        filenames += list(backgrounds_folder.rglob("*.jpg"))
+        for ext in exts:
+            filenames.extend(list(backgrounds_folder.rglob(f"*.{ext}")))
+            filenames.extend(list(backgrounds_folder.rglob(f"*.{ext.upper()}")))
 
-    return [Image.open(img).resize(config.FULL_SIZE) for img in filenames]
+    print(f"Found {len(filenames)} backgrounds.")
+
+    return filenames
 
 
 def get_base_shapes(shape):
     """Get the base shape images for a given shapes"""
     # For now just using the first one to prevent bad alpha placement
-    base_path = config.BASE_SHAPES_DIR / shape / f"{shape}-01.png"
-    return [Image.open(base_path)]
+    base_path = config.BASE_SHAPES_DIRS[0] / shape / f"{shape}-01.png"
+    return [
+        Image.open(base_path)
+        for base_path in (config.BASE_SHAPES_DIRS[0] / shape).glob("*.png")
+    ]
 
 
 def random_list(items, count):
@@ -257,30 +277,20 @@ def create_shape(
     y,
 ) -> PIL.Image.Image:
     """Create a shape given all the input parameters"""
-    target_rgb = augment_color(target_rgb)
-    alpha_rgb = augment_color(alpha_rgb)
 
     image = get_base(base, target_rgb, size)
     image = strip_image(image)
+
     image = add_alphanumeric(image, shape, alpha, alpha_rgb, font_file)
 
     w, h = image.size
     ratio = min(size / w, size / h)
     image = image.resize((int(w * ratio), int(h * ratio)), 1)
 
-    image = rotate_shape(image, shape, angle)
+    image = rotate_shape(image, angle)
     image = strip_image(image)
 
     return image
-
-
-def augment_color(color_rgb):
-    """Shift the color a bit"""
-    r, g, b = color_rgb
-    r = max(min(r + random.randint(-10, 11), 255), 1)
-    g = max(min(g + random.randint(-10, 11), 255), 1)
-    b = max(min(b + random.randint(-10, 11), 255), 1)
-    return (r, g, b)
 
 
 def get_base(base, target_rgb, size):
@@ -309,12 +319,19 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
 
             r, g, b, _ = image.getpixel((x, y))
 
-            if r == 255 and g == 255 and b == 255:
+            if r > 247 and g > 247 and b > 247:
+                if r != 255 and g != 255 and b != 255:
+                    print(r, g, b)
                 image.putpixel((x, y), (0, 0, 0, 0))
 
     image = image.crop(image.getbbox())
 
     return image
+
+
+@dataclasses.dataclass
+class alpha_params:
+    font_multiplier: Tuple[int, int]
 
 
 def add_alphanumeric(
@@ -324,25 +341,20 @@ def add_alphanumeric(
     alpha_rgb: Tuple[int, int, int],
     font_file,
 ) -> PIL.Image.Image:
-    # Adjust alphanumeric size based on the shape it will be on
-    if shape == "star":
-        font_multiplier = 0.14
-    if shape == "triangle":
-        font_multiplier = 0.5
-    elif shape == "rectangle":
-        font_multiplier = 0.72
-    elif shape == "quarter-circle":
-        font_multiplier = 0.60
-    elif shape == "semicircle":
-        font_multiplier = 0.55
-    elif shape == "circle":
-        font_multiplier = 0.55
-    elif shape == "square":
-        font_multiplier = 0.60
-    elif shape == "trapezoid":
-        font_multiplier = 0.60
-    else:
-        font_multiplier = 0.55
+
+    alpha_info = {
+        "circle": alpha_params((0.35, 0.65)),
+        "cross": alpha_params((0.35, 0.65)),
+        "pentagon": alpha_params((0.35, 0.65)),
+        "quarter-circle": alpha_params((0.35, 0.65)),
+        "rectangle": alpha_params((0.35, 0.7)),
+        "semicircle": alpha_params((0.35, 0.75)),
+        "square": alpha_params((0.30, 0.8)),
+        "star": alpha_params((0.25, 0.55)),
+        "trapezoid": alpha_params((0.25, 0.75)),
+        "triangle": alpha_params((0.25, 0.6)),
+    }
+    font_multiplier = random.uniform(*alpha_info[shape].font_multiplier)
 
     # Set font size, select font style from fonts file, set font color
     font_size = int(round(font_multiplier * image.height))
@@ -376,7 +388,7 @@ def add_alphanumeric(
     elif shape == "square":
         y -= 10
     elif shape == "circle":
-        pass
+        y -= 10
     else:
         pass
 
@@ -385,7 +397,7 @@ def add_alphanumeric(
     return image
 
 
-def rotate_shape(image, shape, angle):
+def rotate_shape(image, angle):
     return image.rotate(angle, expand=1)
 
 
@@ -397,7 +409,7 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
         categories.append({"supercategory": "none", "name": name, "id": idx})
 
     jsons = sorted(list(data_dir.glob("*.json")))
-    for idx, label_file in enumerate(jsons):
+    for label_file in jsons:
         labels = json.loads(label_file.read_text())
         images.append(
             {
@@ -439,16 +451,22 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
 
 if __name__ == "__main__":
     # Pull the assets if not present locally.
-    pull_assets.pull_all()
-    generate_all_images("detector_train", config.NUM_IMAGES, config.NUM_OFFSET)
-    generate_all_images("detector_val", config.NUM_VAL_IMAGES, config.NUM_VAL_OFFSET)
-
-    create_coco_metadata(
-        pathlib.Path(config.DATA_DIR / "detector_train/images"),
-        pathlib.Path(config.DATA_DIR / "detector_train/train_coco.json"),
+    asset_manager.pull_all()
+    generate_all_images(
+        config.DATA_DIR / "detector_train_tmp", config.NUM_IMAGES, config.NUM_OFFSET
+    )
+    generate_all_images(
+        config.DATA_DIR / "detector_val_tmp",
+        config.NUM_VAL_IMAGES,
+        config.NUM_VAL_OFFSET,
     )
 
+    # Loop back over the generated data and create the COCO datasets.
     create_coco_metadata(
-        pathlib.Path(config.DATA_DIR / "detector_val/images"),
-        pathlib.Path(config.DATA_DIR / "detector_val/val_coco.json"),
+        pathlib.Path(config.DATA_DIR / "detector_train_tmp/images"),
+        pathlib.Path(config.DATA_DIR / "detector_train_tmp/train_coco.json"),
+    )
+    create_coco_metadata(
+        pathlib.Path(config.DATA_DIR / "detector_val_tmp/images"),
+        pathlib.Path(config.DATA_DIR / "detector_val_tmp/val_coco.json"),
     )

@@ -2,13 +2,13 @@ classes:
   shapes:
     - circle
     - cross
-    - pentagon 
-    - quarter-circle 
-    - rectangle 
-    - semicircle 
-    - square 
+    - pentagon
+    - quarter-circle
+    - rectangle
+    - semicircle
+    - square
     - star
-    - trapezoid 
+    - trapezoid
     - triangle
   alphas:
     - A
@@ -56,16 +56,21 @@ inputs:
     width: 224
     height: 224
 generate:
-  backgrounds_versions: ["v4"]
-  base_shapes_version: v1
-  download_base_url: https://bintray.com/uavaustin/target-finder-assets/download_file?file_path=
+  backgrounds_archives: [
+    "competition-2018.tar.gz",
+    "competition-2019.tar.gz",
+    "test_flight_20190215.tar.gz"
+  ]
+  base_shapes_version: ["v1"]
   max_shapes_per_image: 2
   threads: 0
   delete_on_convert: false
+  # The detectors we use can train on images with no targets.
+  empty_slice_probability: 0.2
   train_batch:
     offset: 0
-    images: 10000
+    images: 50
   eval_batch:
     offset: 0
-    images: 1000
+    images: 0
   img_ext: png

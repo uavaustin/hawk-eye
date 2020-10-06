@@ -1,6 +1,7 @@
-"""Contains basic storage types passed around in the library."""
+""" Contains basic storage types passed around in the library. """
 
-from enum import Enum, unique
+from enum import Enum
+from enum import unique
 
 from PIL import Image
 
@@ -115,7 +116,7 @@ class Target:
         image: Image.Image = None,
         confidence: float = 0.0,
     ) -> None:
-        """Create a new Target object."""
+        """ Create a new Target object. """
         self.x = x
         self.y = y
         self.width = width
