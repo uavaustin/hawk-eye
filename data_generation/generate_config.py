@@ -12,7 +12,6 @@ generate_config = config["generate"]
 # This is where we are going to store all the assets.
 ASSETS_DIR = pathlib.Path(__file__).parent / "assets"
 
-
 BACKGROUNDS = generate_config.get("backgrounds_archives", [])
 BACKGROUNDS_URLS = [f"assets/{bkg}" for bkg in BACKGROUNDS]
 BACKGROUNDS_DIRS = [
@@ -27,13 +26,6 @@ FONTS_URL = "assets/fonts.tar.gz"
 BASE_SHAPES_DIRS = [ASSETS_DIR / f"base-shapes-{v}" for v in BASE_SHAPES_VERSION]
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
-
-# [Number of Images]
-# Generate num - offset images
-NUM_OFFSET = config["generate"]["train_batch"]["offset"]
-NUM_IMAGES = config["generate"]["train_batch"]["images"]
-NUM_VAL_OFFSET = config["generate"]["eval_batch"]["offset"]
-NUM_VAL_IMAGES = config["generate"]["eval_batch"]["images"]
 
 # Max images to generate per image
 MAX_PER_SHAPE = config["generate"]["max_shapes_per_image"]
@@ -127,7 +119,6 @@ DELETE_ON_CONVERT = generate_config.get("delete_on_convert", False)
 IMAGE_EXT = generate_config.get("img_ext", ".png")
 IMAGE_EXT = f".{IMAGE_EXT.replace('.', '')}"
 
-
 TARGET_COMBINATIONS = [
     SHAPE_TYPES,
     TARGET_COLORS,
@@ -136,4 +127,15 @@ TARGET_COMBINATIONS = [
     [angle for angle in range(0, 360, 45)],
 ]
 
+# Dataset images and splits
+detection = generate_config.get("detection", {})
 EMPTY_TILE_PROB = generate_config.get("empty_slice_probability", 0.0)
+DET_TRAIN_OFFSET = detection.get("train_offset", 0)
+DET_TRAIN_IMAGES = detection.get("train_images", 10)
+DET_VAL_OFFSET = detection.get("val_offset", 0)
+DET_VAL_IMAGES = detection.get("val_images", 10)
+
+clf = generate_config.get("classification", {})
+CLF_OFFSET = clf.get("offset", 0)
+CLF_IMAGES = clf.get("images", 10)
+CLF_VAL_FRACTION = clf.get("val_fraction", 0.2)

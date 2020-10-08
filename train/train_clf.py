@@ -4,6 +4,7 @@ distributed training if available any PyTorch AMP to speed up training. """
 
 import argparse
 import datetime
+import json
 import pathlib
 import time
 from typing import Tuple
@@ -26,7 +27,6 @@ import numpy as np
 from core import asset_manager
 from core import classifier
 from data_generation import generate_config
-from third_party.models import losses
 from train import datasets
 from train import augmentations
 from train.train_utils import ema
@@ -96,7 +96,9 @@ def train(
         log.info(f"Train dataset: {train_loader.dataset}")
         log.info(f"Val dataset: {eval_loader.dataset}")
 
-    model_highest_score = ema_highest_score = 0
+    scores = {"model_highest_score": 0, "ema_highest_score": 0}
+    best_scores_path = pathlib.Path(save_dir / "best_scores.json")
+    best_scores_path.write_text(json.dumps({}))
 
     clf_model = classifier.Classifier(
         backbone=model_cfg.get("backbone", None),
@@ -118,7 +120,6 @@ def train(
         )
 
     ema_model = ema.Ema(clf_model)
-    lr_params = train_cfg.get("lr_schedule", {})
 
     if world_size > 1:
         clf_model = apex.parallel.DistributedDataParallel(
@@ -192,31 +193,37 @@ def train(
 
         # Call evaluation function
         if is_main and epoch >= train_cfg.get("eval_start_epoch", 10):
-            improved_scores = []
+            improved_scores = set()
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
             new_model_highest_score = evaluate(clf_model, eval_loader, device)
             clf_model.train()
 
-            if new_model_highest_score > model_highest_score:
-                model_highest_score = new_model_highest_score
-                improved_scores.append("base-acc")
+            if new_model_highest_score > scores["model_highest_score"]:
+                scores["model_highest_score"] = new_model_highest_score
+                improved_scores.add("model_highest_score")
                 # TODO(alex): Fix this .module
                 utils.save_model(clf_model.module, save_dir / "classifier.pt")
 
             new_ema_highest_score = evaluate(ema_model, eval_loader, device)
-            if new_ema_highest_score > ema_highest_score:
-                ema_highest_score = new_ema_highest_score
-                improved_scores.append("ema-acc")
+            if new_ema_highest_score > scores["ema_highest_score"]:
+                scores["ema_highest_score"] = new_ema_highest_score
+                improved_scores.add("ema-acc")
                 utils.save_model(ema_model.ema_model, save_dir / "ema-classifier.pt")
+
+            # Write the best metrics to a file so we know which model weights to load.
+            if improved_scores:
+                best_scores = json.loads(best_scores_path.read_text())
+                best_scores.update(scores)
+                best_scores_path.write_text(json.dumps(best_scores))
 
             log.info(f"Eval took {time.perf_counter() - start_val:.4f}s.")
             log.info(f"Improved metrics: {improved_scores}.")
             log.info(
                 f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
-                f"Best model accuracy: {model_highest_score}\n"
-                f"Best EMA accuracy: {ema_highest_score} \n"
+                f"Best model accuracy: {scores['model_highest_score']:.5f}\n"
+                f"Best EMA accuracy: {scores['ema_highest_score']:.5f} \n"
             )
 
 

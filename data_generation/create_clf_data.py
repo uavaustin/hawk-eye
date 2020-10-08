@@ -28,24 +28,32 @@ CLF_WIDTH, CLF_HEIGHT = config.PRECLF_SIZE
 CROP_WIDTH, CROP_HEIGHT = config.CROP_SIZE
 
 
-def create_clf_images(num_gen: int) -> None:
+def create_clf_images(num_gen: int, save_dir: pathlib.Path = config.DATA_DIR) -> None:
     """ Generate data for the classifier model. """
+
+    # We want to make sure create_detection_data has already been run so there are tiles
+    # with targets. If the folders do not exist, we need to make the data first here.
+    if not (config.DATA_DIR / "detector_train").is_dir():
+        create_detection_data.generate_all_images(
+            save_dir / "detector_train", config.NUM_IMAGES
+        )
+
+    if not (config.DATA_DIR / "detector_val").is_dir():
+        create_detection_data.generate_all_images(
+            save_dir / "detector_val", config.NUM_VAL_IMAGES
+        )
 
     # Do the initial processing in a temporary directory so we don't pollute the
     # workspace unncessarily.
     with tempfile.TemporaryDirectory() as d:
         tmp_dir = pathlib.Path(d)
-        idx = 0
 
         print("Copying target tiles.")
         imgs = []
-        imgs.extend(
-            list((config.DATA_DIR / "detector_train").rglob(f"*{config.IMAGE_EXT}"))
-        )
-        imgs.extend(
-            list((config.DATA_DIR / "detector_val").rglob(f"*{config.IMAGE_EXT}"))
-        )
+        imgs.extend(list((save_dir / "detector_train").rglob(f"*{config.IMAGE_EXT}")))
+        imgs.extend(list((save_dir / "detector_val").rglob(f"*{config.IMAGE_EXT}")))
 
+        idx = 0
         random.shuffle(imgs)
         for image_path in tqdm.tqdm(imgs):
             if json.loads(image_path.with_suffix(".json").read_text())["bboxes"]:
@@ -64,18 +72,18 @@ def create_clf_images(num_gen: int) -> None:
             num_tiles = single_clf_image(img, idx, num_gen, tmp_dir, num_tiles)
 
         # Make output dir to save data after we do all the processing.
-        train_dir = config.DATA_DIR / "clf_train"
+        train_dir = save_dir / "clf_train"
         train_dir.mkdir(parents=True, exist_ok=True)
 
-        val_dir = config.DATA_DIR / "clf_val"
+        val_dir = save_dir / "clf_val"
         val_dir.mkdir(parents=True, exist_ok=True)
         imgs = list(tmp_dir.glob("*"))
         random.shuffle(imgs)
         for img in imgs:
             if random.randint(0, 100) < 20:
-                img.rename(val_dir / img.name)
+                shutil.move(img, val_dir / img.name)
             else:
-                img.rename(train_dir / img.name)
+                shutil.move(img, train_dir / img.name)
 
 
 def single_clf_image(
@@ -111,4 +119,4 @@ if __name__ == "__main__":
     random.seed(42)
 
     if config.NUM_IMAGES != 0:
-        create_clf_images(config.NUM_IMAGES)
+        create_clf_images(config.NUM_IMAGES, config.DATA_DIR)
