@@ -16,7 +16,9 @@ source ~/python_envs/hawk_eye/bin/activate
 python3 -m pip install -U Cython==0.29.21 numpy==1.19.1
 python3 -m pip install -U -r requirements.txt
 
-if sudo lspci | grep --quiet ' VGA ' | cut -d" " -f 1 | xargs -i lspci -v -s {};
+GPU=$(sudo lspci | grep --quiet ' VGA ' | cut -d" " -f 1 | xargs -i lspci -v -s {})
+echo $GPU
+if [[ $GPU ]];
 then
     echo "GPU found."
     python3 -m pip install -U -r requirements-gpu.txt

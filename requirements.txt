@@ -9,7 +9,7 @@ pycocotools==2.0.0
 pyyaml==5.3.1
 dataclasses==0.7
 Cython==0.29.21
-numpy==1.19.1
+numpy==1.17
 requests==2.24.0
 flake8==3.8.3
 pre-commit==2.7.1

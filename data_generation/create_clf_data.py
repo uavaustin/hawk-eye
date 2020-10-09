@@ -118,5 +118,5 @@ def single_clf_image(
 if __name__ == "__main__":
     random.seed(42)
 
-    if config.NUM_IMAGES != 0:
-        create_clf_images(config.NUM_IMAGES, config.DATA_DIR)
+    if config.CLF_IMAGES != 0:
+        create_clf_images(config.CLF_IMAGES, config.DATA_DIR)
