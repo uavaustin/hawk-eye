@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-sudo apt update && sudo apt install python3
+sudo apt update && sudo apt upgrade -y && sudo apt install python3
 
 pushd $(mktemp -d)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
@@ -16,9 +16,7 @@ source ~/python_envs/hawk_eye/bin/activate
 python3 -m pip install -U Cython==0.29.21 numpy==1.19.1
 python3 -m pip install -U -r requirements.txt
 
-GPU=$(sudo lspci | grep --quiet ' VGA ' | cut -d" " -f 1 | xargs -i lspci -v -s {})
-echo $GPU
-if [[ $GPU ]];
+if lspci -vnnn | perl -lne 'print if /^\d+\:.+(\[\S+\:\S+\])/' | grep -q NVIDIA;
 then
     echo "GPU found."
     python3 -m pip install -U -r requirements-gpu.txt
