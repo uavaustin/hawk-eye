@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+if [ -z "$1" ]
+  then
+    echo "No python virtual environment specified."
+    USE_VENV=0
+else
+    echo "Python virtual environment will be created."
+    USE_VENV=1
+    VENV_PATH="$1"
+fi
+
 sudo apt update && sudo apt upgrade -y && sudo apt install python3
 
 pushd $(mktemp -d)
@@ -9,12 +19,15 @@ rm get-pip.py
 popd
 python3 -m pip install --upgrade pip
 
-# Create a virtual environment for hawk_eye
-python3 -m venv ~/python_envs/hawk_eye
-source ~/python_envs/hawk_eye/bin/activate
+if [ $USE_VENV -eq 1 ]; then
+    # Create a virtual environment for hawk_eye
+    python3 -m venv $VENV_PATH
+    source "$VENV_PATH/bin/activate"
+fi
 
-python3 -m pip install -U Cython==0.29.21 numpy==1.19.1
+python3 -m pip install -U Cython==0.29.21 numpy==1.17.4
 python3 -m pip install -U -r requirements.txt
+pre-commit && pre-commit install
 
 if lspci -vnnn | perl -lne 'print if /^\d+\:.+(\[\S+\:\S+\])/' | grep -q NVIDIA;
 then
