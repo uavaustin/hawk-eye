@@ -35,12 +35,12 @@ def create_clf_images(num_gen: int, save_dir: pathlib.Path = config.DATA_DIR) ->
     # with targets. If the folders do not exist, we need to make the data first here.
     if not (config.DATA_DIR / "detector_train").is_dir():
         create_detection_data.generate_all_images(
-            save_dir / "detector_train", config.NUM_IMAGES
+            save_dir / "detector_train", config.DET_TRAIN_IMAGES
         )
 
     if not (config.DATA_DIR / "detector_val").is_dir():
         create_detection_data.generate_all_images(
-            save_dir / "detector_val", config.NUM_VAL_IMAGES
+            save_dir / "detector_val", config.DET_VAL_IMAGES
         )
 
     # Do the initial processing in a temporary directory so we don't pollute the
@@ -92,7 +92,7 @@ def single_clf_image(
     num_gen: int,
     save_dir: pathlib.Path,
     num_tiles: int,
-) -> None:
+) -> int:
     """ Slice out crops from the original background image and save to disk. NOTE: we do
     not have any overlap between adjacent tiles because we want to avoid having any
     leakage between images. With data leakage, we might end up with two adjacent tiles in
@@ -101,7 +101,7 @@ def single_clf_image(
     tile_num = 0
     for x in range(0, image.size[0] - config.CROP_SIZE[1], config.CROP_SIZE[0]):
         for y in range(0, image.size[1] - config.CROP_SIZE[1], config.CROP_SIZE[1]):
-            if num_tiles > 1.0e10:
+            if num_tiles > num_gen:
                 break
             crop = image.crop((x, y, x + config.CROP_SIZE[0], y + config.CROP_SIZE[1]))
             crop = crop.resize(config.PRECLF_SIZE)
