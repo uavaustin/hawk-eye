@@ -10,7 +10,9 @@ else
     VENV_PATH="$1"
 fi
 
-sudo apt update && sudo apt upgrade -y && sudo apt install python3
+sudo apt update && \
+    sudo apt upgrade -y && \
+    sudo apt install python3 build-essential
 
 pushd $(mktemp -d)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
@@ -39,7 +41,7 @@ then
     pushd apex
     export TORCH_CUDA_ARCH_LIST="6.0;6.1;6.2;7.0;7.5"
     git checkout 1ff54b8fed441c39dac181091b44fecdca31a403
-    CUDA_HOME="/usr/local/cuda-10.1" pip install -v --no-cache-dir \
+    CUDA_HOME="/usr/local/cuda-10.2" pip install -v --no-cache-dir \
         --global-option="--cpp_ext" --global-option="--cuda_ext" ./
     popd
     popd

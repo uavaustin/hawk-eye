@@ -91,7 +91,7 @@ class Detector(torch.nn.Module):
         # After all the components are initialized, load the weights.
         if timestamp is not None:
             self.load_state_dict(
-                torch.load(model_path / "detector-ap50.pt", map_location="cpu")
+                torch.load(model_path / "min-loss.pt", map_location="cpu")
             )
 
         self.eval()
