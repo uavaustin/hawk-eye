@@ -5,22 +5,40 @@ import pathlib
 import tempfile
 import unittest
 
-from test import test_generate_config
+from test import generate_config_test
+from data_generation import create_clf_data
 from data_generation import create_detection_data
 
-# TODO This replaces the build.py. This would test as many
-# of the shape generation utilities as possible, then also
-# do end-to-end tests.
-class DetectionDataGeneration(unittest.TestCase):
-    create_detection_data.config = test_generate_config
 
-    def test_temp(self) -> None:
+class DetectionDataGeneration(unittest.TestCase):
+    create_detection_data.config = generate_config_test
+
+    def test_create_train_data(self) -> None:
         num_imgs = 10
         with tempfile.TemporaryDirectory() as d:
             tmp_dir = pathlib.Path(d)
             create_detection_data.generate_all_images(tmp_dir / "train", num_imgs, 0)
-
             self.assertEqual(len(list((tmp_dir / "train").rglob("*.png"))), num_imgs)
+
+    def test_create_val_data(self) -> None:
+        num_imgs = 10
+        with tempfile.TemporaryDirectory() as d:
+            tmp_dir = pathlib.Path(d)
+            create_detection_data.generate_all_images(tmp_dir / "val", num_imgs, 0)
+            self.assertEqual(len(list((tmp_dir / "val").rglob("*.png"))), num_imgs)
+
+
+class ClassificationDataGeneration(unittest.TestCase):
+    create_clf_data.config = generate_config_test
+
+    def test_create_data(self) -> None:
+        num_imgs = 10
+        with tempfile.TemporaryDirectory() as d:
+            tmp_dir = pathlib.Path(d)
+            create_clf_data.create_clf_images(num_imgs, tmp_dir)
+            self.assertEqual(
+                len(list((tmp_dir / "clf_train").rglob("*.png"))), num_imgs
+            )
 
 
 if __name__ == "__main__":

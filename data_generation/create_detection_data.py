@@ -16,13 +16,13 @@ import time
 
 from tqdm import tqdm
 import PIL
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import Image
+from PIL import ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from data_generation import generate_config as config
 from core import asset_manager
 
 # Get constants from config
-NUM_GEN = int(config.NUM_IMAGES)
 MAX_SHAPES = int(config.MAX_PER_SHAPE)
 FULL_SIZE = config.FULL_SIZE
 TARGET_COLORS = config.TARGET_COLORS
@@ -32,7 +32,7 @@ CLASSES = config.OD_CLASSES
 ALPHAS = config.ALPHAS
 
 
-def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
+def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -> None:
     """ Main function which prepares all the relevant information regardining data
     generation. Data will be generated using a multiprocessing pool for efficiency.
 
@@ -42,7 +42,7 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
         offset: TODO(alex): Are we still using this?
     """
     # Make the proper folders for storing the data.
-    images_dir = gen_type / "images"
+    images_dir = pathlib.Path(gen_type) / "images"
     images_dir.mkdir(exist_ok=True, parents=True)
 
     r_state = random.getstate()
@@ -135,6 +135,11 @@ def generate_all_images(gen_type: str, num_gen: int, offset: int = 0) -> None:
 
         for _ in tqdm(processes, total=num_gen):
             pass
+
+    create_coco_metadata(
+        gen_type / "images",
+        gen_type / ("val_coco.json" if "val" in gen_type.name else "train_coco.json"),
+    )
 
 
 def generate_single_example(data) -> None:
@@ -320,8 +325,6 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
             r, g, b, _ = image.getpixel((x, y))
 
             if r > 247 and g > 247 and b > 247:
-                if r != 255 and g != 255 and b != 255:
-                    print(r, g, b)
                 image.putpixel((x, y), (0, 0, 0, 0))
 
     image = image.crop(image.getbbox())
@@ -453,20 +456,10 @@ if __name__ == "__main__":
     # Pull the assets if not present locally.
     asset_manager.pull_all()
     generate_all_images(
-        config.DATA_DIR / "detector_train_tmp", config.NUM_IMAGES, config.NUM_OFFSET
+        config.DATA_DIR / "detector_train",
+        config.DET_TRAIN_IMAGES,
+        config.DET_TRAIN_OFFSET,
     )
     generate_all_images(
-        config.DATA_DIR / "detector_val_tmp",
-        config.NUM_VAL_IMAGES,
-        config.NUM_VAL_OFFSET,
-    )
-
-    # Loop back over the generated data and create the COCO datasets.
-    create_coco_metadata(
-        pathlib.Path(config.DATA_DIR / "detector_train_tmp/images"),
-        pathlib.Path(config.DATA_DIR / "detector_train_tmp/train_coco.json"),
-    )
-    create_coco_metadata(
-        pathlib.Path(config.DATA_DIR / "detector_val_tmp/images"),
-        pathlib.Path(config.DATA_DIR / "detector_val_tmp/val_coco.json"),
+        config.DATA_DIR / "detector_val", config.DET_VAL_IMAGES, config.DET_VAL_OFFSET,
     )

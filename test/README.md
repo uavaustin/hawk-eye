@@ -9,3 +9,7 @@
 test output, which can be helpful for test debugging, can be done like so:
 
 `bazel test --test_output=streamed //test:test_benchmark_inference`
+
+#### Test Structure
+Each test file corresponds to a module in `hawk_eye`, and within each file,
+you'll find the tests corresponding to files and functions.

@@ -5,7 +5,7 @@ training to speed the process up. """
 
 import argparse
 import pathlib
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 import tarfile
 import tempfile
 import datetime
@@ -185,14 +185,14 @@ def train(
     max_lr = float(lr_config.get("max_lr"))
     end_lr = float(lr_config.get("end_lr"))
 
-    lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=max_lr,
-        total_steps=len(train_loader) * epochs,
-        final_div_factor=start_lr / end_lr,
-        div_factor=max_lr / start_lr,
-        pct_start=warm_up_percent,
-    )
+    # lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
+    #    optimizer,
+    #    max_lr=max_lr,
+    #    total_steps=len(train_loader) * epochs,
+    #    final_div_factor=start_lr / end_lr,
+    #    div_factor=max_lr / start_lr,
+    #    pct_start=warm_up_percent,
+    # )
 
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
@@ -249,7 +249,7 @@ def train(
 
             ema_model.update(model)
 
-            lr_scheduler.step()
+            # lr_scheduler.step()
             lr = optimizer.param_groups[0]["lr"]
 
             if idx % _LOG_INTERVAL == 0 and is_main:
