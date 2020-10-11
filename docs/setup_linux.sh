@@ -12,7 +12,7 @@ fi
 
 sudo apt update && \
     sudo apt upgrade -y && \
-    sudo apt install python3 build-essential
+    sudo apt install python3-dev build-essential
 
 pushd $(mktemp -d)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
