@@ -28,8 +28,14 @@ CLF_WIDTH, CLF_HEIGHT = config.PRECLF_SIZE
 CROP_WIDTH, CROP_HEIGHT = config.CROP_SIZE
 
 
-def create_clf_images(num_gen: int, save_dir: pathlib.Path = config.DATA_DIR) -> None:
+def create_clf_images(
+    num_gen: int,
+    save_dir: pathlib.Path = config.DATA_DIR,
+    val_fraction: float = config.CLF_VAL_FRACTION,
+) -> None:
     """ Generate data for the classifier model. """
+
+    val_int = int(val_fraction * 100)
 
     # We want to make sure create_detection_data has already been run so there are tiles
     # with targets. If the folders do not exist, we need to make the data first here.
@@ -62,7 +68,7 @@ def create_clf_images(num_gen: int, save_dir: pathlib.Path = config.DATA_DIR) ->
                 image = Image.open(image_path).resize(config.PRECLF_SIZE)
                 image.save(tmp_dir / f"target_{idx}{image_path.suffix}")
                 idx += 1
-                if idx > num_gen:
+                if idx == num_gen:
                     break
 
         # Collect all the backgrounds and slice them up.
@@ -80,7 +86,7 @@ def create_clf_images(num_gen: int, save_dir: pathlib.Path = config.DATA_DIR) ->
         imgs = list(tmp_dir.glob("*"))
         random.shuffle(imgs)
         for img in imgs:
-            if random.randint(0, 100) < 20:
+            if random.randint(0, 100) < val_int:
                 shutil.move(img, val_dir / img.name)
             else:
                 shutil.move(img, train_dir / img.name)
@@ -119,4 +125,4 @@ if __name__ == "__main__":
     random.seed(42)
 
     if config.CLF_IMAGES != 0:
-        create_clf_images(config.CLF_IMAGES, config.DATA_DIR)
+        create_clf_images(config.CLF_IMAGES, config.DATA_DIR, config.CLF_VAL_FRACTION)

@@ -391,7 +391,7 @@ def add_alphanumeric(
     elif shape == "square":
         y -= 10
     elif shape == "circle":
-        y -= 10
+        y -= 50
     else:
         pass
 

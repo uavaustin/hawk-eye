@@ -197,11 +197,11 @@ def train(
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
-            new_model_highest_score = evaluate(clf_model, eval_loader, device)
+            new_model_score = evaluate(clf_model, eval_loader, device)
             clf_model.train()
 
-            if new_model_highest_score > scores["model_highest_score"]:
-                scores["model_highest_score"] = new_model_highest_score
+            if new_model_score > scores["model_highest_score"]:
+                scores["model_highest_score"] = new_model_score
                 improved_scores.add("model_highest_score")
                 # TODO(alex): Fix this .module
                 utils.save_model(clf_model.module, save_dir / "classifier.pt")
