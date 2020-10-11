@@ -57,7 +57,7 @@ jobs:
         "${GITHUB_WORKSPACE}/bin/bazel" run //:push_hawk_eye_arm
 
   ubuntu18:
-    runs-on: macos-latest
+    runs-on: ubuntu-18.04
     steps:
 
     - name: docker login
