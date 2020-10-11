@@ -7,8 +7,11 @@ jobs:
 
   ubuntu20:
     runs-on: ubuntu-20.04
-    steps:
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
 
+    steps:
     - name: docker login
       run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
       env:
@@ -17,10 +20,11 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: '3.6'
+        python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -58,6 +62,10 @@ jobs:
 
   ubuntu18:
     runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
     steps:
 
     - name: docker login
@@ -68,10 +76,10 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: '3.6'
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
