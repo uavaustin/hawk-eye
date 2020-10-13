@@ -170,6 +170,7 @@ def find_all_targets(
     clf_timestamp: str = _PROD_MODELS["clf"],
     det_timestamp: str = _PROD_MODELS["det"],
     visualization_dir: pathlib.Path = None,
+    save_json_data: bool = True,
 ) -> None:
     """ Entrypoint function if running this script as main.
 
@@ -197,6 +198,14 @@ def find_all_targets(
                 targets,
                 target_tiles,
             )
+
+        if save_json_data:
+            if targets:
+                save_target_meta(
+                    (visualization_dir / image_path.name).with_suffix(".json"),
+                    image_path.name,
+                    targets,
+                )
 
 
 @torch.no_grad()
@@ -230,6 +239,7 @@ def find_targets(
 
         # Call the pre-clf to find the target tiles.
         # TODO(alex): Pass in the classification confidence from cmdl.
+        v = clf_model.classify(tiles, probability=True)
         preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
 
         target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
@@ -240,13 +250,9 @@ def find_targets(
                     det_tiles, config.DETECTOR_SIZE
                 )
                 boxes = det_model(det_tiles)
-
                 retval.extend(zip(target_tiles, boxes))
         else:
             retval.extend(zip(coords, []))
-
-    targets = globalize_boxes(retval, config.CROP_SIZE[0])
-    print(time.perf_counter() - start)
 
     return globalize_boxes(retval, config.CROP_SIZE[0]), target_tiles
 
@@ -331,22 +337,26 @@ def visualize_image(
 
 
 # TODO(alex) use this for writing jsons.
-def save_target_meta(filename_meta, filename_image, target):
+def save_target_meta(
+    filename_meta: pathlib.Path, filename_image: str, targets: List[types.Target]
+):
     """ Save target metadata to a file. """
     with open(filename_meta, "w") as f:
-        meta = {
-            "x": target.x,
-            "y": target.y,
-            "width": target.width,
-            "height": target.height,
-            "orientation": target.orientation,
-            "shape": target.shape.name.lower(),
-            "background_color": target.background_color.name.lower(),
-            "alphanumeric": target.alphanumeric,
-            "alphanumeric_color": target.alphanumeric_color.name.lower(),
-            "image": filename_image,
-            "confidence": target.confidence,
-        }
+        meta = {}
+        for idx, target in enumerate(targets):
+            meta[f"target-{idx}"] = {
+                "x": target.x,
+                "y": target.y,
+                "width": target.width,
+                "height": target.height,
+                "orientation": target.orientation,
+                "shape": target.shape.name.lower(),
+                "background_color": target.background_color.name.lower(),
+                "alphanumeric": target.alphanumeric,
+                "alphanumeric_color": target.alphanumeric_color.name.lower(),
+                "image": filename_image,
+                "confidence": target.confidence,
+            }
 
         json.dump(meta, f, indent=2)
 
