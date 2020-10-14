@@ -44,11 +44,11 @@ jobs:
 
     - name: Test
       run: |
-        "${GITHUB_WORKSPACE}/bin/bazel" test --test_output=streamed //...
+        bazel test --test_output=streamed //...
 
     - name: Build and push ARM Container
       run: |
-        "${GITHUB_WORKSPACE}/bin/bazel" run //:push_hawk_eye_arm
+        bazel run //:push_hawk_eye_arm
 
   ubuntu18:
     runs-on: ubuntu-18.04
