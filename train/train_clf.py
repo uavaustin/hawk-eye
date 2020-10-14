@@ -182,7 +182,7 @@ def train(
             if lr_scheduler is not None:
                 lr_scheduler.step()
 
-            ema_model.update(clf_model)
+            # ema_model.update(clf_model)
 
             if idx % _LOG_INTERVAL == 0 and is_main:
                 lr = optimizer.param_groups[0]["lr"]
@@ -204,7 +204,7 @@ def train(
                 scores["model_highest_score"] = new_model_highest_score
                 improved_scores.add("model_highest_score")
                 # TODO(alex): Fix this .module
-                utils.save_model(clf_model.module, save_dir / "classifier.pt")
+                utils.save_model(clf_model, save_dir / "classifier.pt")
 
             new_ema_highest_score = evaluate(ema_model, eval_loader, device)
             if new_ema_highest_score > scores["ema_highest_score"]:
@@ -246,6 +246,7 @@ def evaluate(
     """
     num_correct = total_num = 0
 
+    print(eval_loader)
     for data, labels in eval_loader:
         data = data.permute(0, 3, 1, 2)
         data = data.to(device, non_blocking=True)
@@ -300,7 +301,11 @@ def create_data_loader(
             sampler = torch.utils.data.SequentialSampler(dataset)
 
     loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, pin_memory=True, sampler=sampler, drop_last=True
+        dataset,
+        batch_size=batch_size,
+        pin_memory=True,
+        sampler=sampler,
+        drop_last=False,
     )
     return loader, sampler
 

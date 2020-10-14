@@ -34,3 +34,5 @@ class Log:
 
     def error(self, message: str) -> None:
         logging.error(message)
+
+    # def metric
