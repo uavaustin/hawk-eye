@@ -58,4 +58,8 @@ chmod 755 bazel
 sudo mv bazel /usr/local/bin
 popd
 
-sudo ln -sf $(which python3) /usr/bin/python
+if test -f "/usr/bin/python"; then
+    echo "Not making python symlink"
+else
+    sudo ln -sf $(which python3) /usr/bin/python
+fi
