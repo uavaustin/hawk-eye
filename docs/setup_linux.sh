@@ -28,6 +28,7 @@ if [ $USE_VENV -eq 1 ]; then
 fi
 
 python3 -m pip install -U Cython==0.29.21 numpy==1.17.4
+python3 -m pip install -U dataclasses==0.6
 python3 -m pip install -U -r requirements.txt
 pre-commit && pre-commit install
 
@@ -56,14 +57,5 @@ wget -O bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.7.1/ba
 chmod 755 bazel
 sudo mv bazel /usr/local/bin
 popd
-
-
-# Setup gsutil. Taken from https://cloud.google.com/storage/docs/gsutil_install#deb
-
-echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-sudo apt-get install apt-transport-https ca-certificates gnupg
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-sudo apt-get update -y && sudo apt-get install google-cloud-sdk
-gcloud init
 
 sudo ln -sf $(which python3) /usr/bin/python
