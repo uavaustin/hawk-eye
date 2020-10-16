@@ -8,6 +8,7 @@ real life case. """
 import dataclasses
 from typing import List
 from typing import Tuple
+import numpy as np
 import multiprocessing
 import random
 import json
@@ -332,6 +333,25 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
 @dataclasses.dataclass
 class alpha_params:
     font_multiplier: Tuple[int, int]
+    gaussian_adjuster_x_coordinate: Tuple[int, int]
+    gaussian_adjuster_y_coordinate: Tuple[int, int]
+
+
+def is_valid_letter(x_var, y_var, image_height, image_width, font_width, font_height):
+    upper_bound = 30
+    right_bound = image_width - font_width - 30
+    left_bound = 30
+    bottom_bound = image_height - font_height - 30
+    new_x_val = (image_width - font_width) / 2 + x_var
+    new_y_val = (image_height - font_height) / 2 + y_var
+    if (
+        new_x_val < right_bound
+        and new_x_val > left_bound
+        and new_y_val > upper_bound
+        and new_y_val < bottom_bound
+    ):
+        return True
+    return False
 
 
 def add_alphanumeric(
@@ -341,59 +361,61 @@ def add_alphanumeric(
     alpha_rgb: Tuple[int, int, int],
     font_file,
 ) -> PIL.Image.Image:
-
+    standard_deviation = 10
     alpha_info = {
-        "circle": alpha_params((0.35, 0.65)),
-        "cross": alpha_params((0.35, 0.65)),
-        "pentagon": alpha_params((0.35, 0.65)),
-        "quarter-circle": alpha_params((0.35, 0.65)),
-        "rectangle": alpha_params((0.35, 0.7)),
-        "semicircle": alpha_params((0.35, 0.75)),
-        "square": alpha_params((0.30, 0.8)),
-        "star": alpha_params((0.25, 0.55)),
-        "trapezoid": alpha_params((0.25, 0.75)),
-        "triangle": alpha_params((0.25, 0.6)),
+        "circle": alpha_params(
+            (0.35, 0.65), (0, standard_deviation), (-10, standard_deviation)
+        ),
+        "cross": alpha_params(
+            (0.35, 0.65), (0, standard_deviation), (-25, standard_deviation)
+        ),
+        "pentagon": alpha_params(
+            (0.35, 0.65), (0, standard_deviation), (0, standard_deviation)
+        ),
+        "quarter-circle": alpha_params(
+            (0.35, 0.65), (14, standard_deviation), (-40, standard_deviation)
+        ),
+        "rectangle": alpha_params(
+            (0.35, 0.7), (0, standard_deviation), (0, standard_deviation)
+        ),
+        "semicircle": alpha_params(
+            (0.35, 0.75), (0, standard_deviation), (0, standard_deviation)
+        ),
+        "square": alpha_params(
+            (0.30, 0.8), (0, standard_deviation), (-10, standard_deviation)
+        ),
+        "star": alpha_params(
+            (0.25, 0.55), (0, standard_deviation), (0, standard_deviation)
+        ),
+        "trapezoid": alpha_params(
+            (0.25, 0.75), (0, standard_deviation), (-20, standard_deviation)
+        ),
+        "triangle": alpha_params(
+            (0.25, 0.6), (-24, standard_deviation), (12, standard_deviation)
+        ),
     }
-    font_multiplier = random.uniform(*alpha_info[shape].font_multiplier)
+    is_valid = False
+    x = y = 0
+    while not is_valid:
+        font_multiplier = random.uniform(*alpha_info[shape].font_multiplier)
+        x_variance = int(
+            np.random.normal(*alpha_info[shape].gaussian_adjuster_x_coordinate)
+        )
+        y_variance = int(
+            np.random.normal(*alpha_info[shape].gaussian_adjuster_y_coordinate)
+        )
+        # Set font size, select font style from fonts file, set font color
+        font_size = int(round(font_multiplier * image.height))
+        font = ImageFont.truetype(str(font_file), font_size)
+        draw = ImageDraw.Draw(image)
 
-    # Set font size, select font style from fonts file, set font color
-    font_size = int(round(font_multiplier * image.height))
-    font = ImageFont.truetype(str(font_file), font_size)
-    draw = ImageDraw.Draw(image)
-
-    w, h = draw.textsize(alpha, font=font)
-
-    x = (image.width - w) / 2
-    y = (image.height - h) / 2
-
-    # Adjust centering of alphanumerics on shapes
-    if shape == "pentagon":
-        pass
-    elif shape == "semicircle":
-        pass
-    elif shape == "rectangle":
-        pass
-    elif shape == "trapezoid":
-        y -= 20
-    elif shape == "star":
-        pass
-    elif shape == "triangle":
-        x -= 24
-        y += 12
-    elif shape == "quarter-circle":
-        y -= 40
-        x += 14
-    elif shape == "cross":
-        y -= 25
-    elif shape == "square":
-        y -= 10
-    elif shape == "circle":
-        y -= 10
-    else:
-        pass
-
+        w, h = draw.textsize(alpha, font=font)
+        x = (image.width - w) / 2 + x_variance
+        y = (image.height - h) / 2 + y_variance
+        is_valid = is_valid_letter(
+            x_variance, y_variance, image.width, image.height, w, h
+        )
     draw.text((x, y), alpha, alpha_rgb, font=font)
-
     return image
 
 
