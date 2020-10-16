@@ -197,11 +197,11 @@ def train(
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
-            new_model_highest_score = evaluate(clf_model, eval_loader, device)
+            most_recent_model_score = evaluate(clf_model, eval_loader, device)
             clf_model.train()
 
-            if new_model_highest_score > scores["model_highest_score"]:
-                scores["model_highest_score"] = new_model_highest_score
+            if most_recent_model_score > scores["model_highest_score"]:
+                scores["model_highest_score"] = most_recent_model_score
                 improved_scores.add("model_highest_score")
                 # TODO(alex): Fix this .module
                 utils.save_model(clf_model, save_dir / "classifier.pt")
@@ -225,6 +225,8 @@ def train(
                 f"Best model accuracy: {scores['model_highest_score']:.5f}\n"
                 f"Best EMA accuracy: {scores['ema_highest_score']:.5f} \n"
             )
+            log.metric("Model score", most_recent_model_score, epoch)
+            log.metric("Highest model score", scores["model_highest_score"], epoch)
 
 
 @torch.no_grad()
@@ -246,7 +248,6 @@ def evaluate(
     """
     num_correct = total_num = 0
 
-    print(eval_loader)
     for data, labels in eval_loader:
         data = data.permute(0, 3, 1, 2)
         data = data.to(device, non_blocking=True)

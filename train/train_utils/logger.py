@@ -2,6 +2,7 @@
 
 import pathlib
 import logging
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Log:
@@ -25,6 +26,7 @@ class Log:
         console.setFormatter(formatter)
         # add the handler to the root logger
         logging.getLogger("").addHandler(console)
+        self.tensorboard_writer = SummaryWriter(log_dir=log_file.parent)
 
     def info(self, message: str) -> None:
         logging.info(message)
@@ -35,4 +37,5 @@ class Log:
     def error(self, message: str) -> None:
         logging.error(message)
 
-    # def metric
+    def metric(self, tag, value, pos):
+        self.tensorboard_writer.add_scalar(tag, value, pos)
