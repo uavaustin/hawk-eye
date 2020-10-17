@@ -9,9 +9,11 @@ import tempfile
 import subprocess
 from typing import List, Union
 
+from google.cloud import storage
+
 from data_generation import generate_config as config
 
-_BUCKET = "gs://uav-austin-test"
+_BUCKET = "uav-austin-test"
 
 
 def pull_all() -> None:
@@ -50,10 +52,9 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 
             with tempfile.TemporaryDirectory() as d:
                 tmp_file = pathlib.Path(d) / "file.tar.gz"
-                subprocess.check_call(
-                    ["gsutil", "cp", f"{_BUCKET}/{filename}", str(tmp_file)]
-                )
-
+                client = storage.Client("zeta-time-285220")
+                bucket = client.get_bucket(_BUCKET)
+                bucket.get_blob(str(filename)).download_to_filename(tmp_file)
                 untar_and_move(tmp_file, destination)
 
             print(" done.")
@@ -85,5 +86,5 @@ def download_model(model_type: str, timestamp: str) -> pathlib.Path:
 
 def upload_model(model_type: str, path: pathlib.Path) -> None:
     subprocess.check_call(
-        ["gsutil", "cp", str(path), f"{_BUCKET}/{model_type}/{path.name}"]
+        ["gsutil", "cp", "-z", str(path), f"{_BUCKET}/{model_type}/{path.name}"]
     )
