@@ -45,7 +45,9 @@ jobs:
       id: cache
       uses: actions/cache@v2
       with:
-        path: ~/.cache/bazel
+        path: |
+          ~/.cache/bazel
+          ~/runs
         key: ${{ runner.os }}-bazel
 
     - name: Test
