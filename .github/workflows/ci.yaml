@@ -11,8 +11,11 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, macos-latest]
         python-version: [3.6, 3.7, 3.8]
-
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: key.json
     steps:
+    - uses: actions/checkout@v2
+
     - name: docker login
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
@@ -22,8 +25,6 @@ jobs:
       env:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-
-    - uses: actions/checkout@v2
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -43,6 +44,8 @@ jobs:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
+
+    - run: echo -n ${{ secrets.GCP_SA_KEY }} | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
 
     - name: Mount bazel cache
       uses: actions/cache@v1
