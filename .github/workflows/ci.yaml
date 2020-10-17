@@ -34,9 +34,6 @@ jobs:
     - name: Setup Machine
       run: ./docs/setup_linux.sh
 
-    - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
-
     - name: Authenticate on GCS
       uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
@@ -44,8 +41,6 @@ jobs:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
-
-    - run: echo -n ${{ secrets.GCP_SA_KEY }} | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
 
     - name: Mount bazel cache
       uses: actions/cache@v1
