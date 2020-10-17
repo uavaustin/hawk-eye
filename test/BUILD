@@ -28,4 +28,5 @@ py_test(
         "//inference:find_targets",
         "//inference:benchmark_inference"
     ],
+    local = True,
 )
