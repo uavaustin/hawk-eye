@@ -52,7 +52,7 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
 
             with tempfile.TemporaryDirectory() as d:
                 tmp_file = pathlib.Path(d) / "file.tar.gz"
-                client = storage.Client("zeta-time-285220")
+                client = storage.Client()
                 bucket = client.get_bucket(_BUCKET)
                 bucket.get_blob(str(filename)).download_to_filename(tmp_file)
                 untar_and_move(tmp_file, destination)
