@@ -41,9 +41,15 @@ jobs:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
 
+    - name: Cache Bazel Deps
+      id: cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel
+
     - name: Test
       run: |
-        test -f $GOOGLE_APPLICATION_CREDENTIALS
         bazel test --test_output=streamed //...
 
     - name: Build and push ARM Container
