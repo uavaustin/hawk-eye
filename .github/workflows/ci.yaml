@@ -45,7 +45,7 @@ jobs:
 
     - name: Test
       run: |
-        ls /*.json
+        test -f $GOOGLE_APPLICATION_CREDENTIALS
         bazel test --test_output=streamed //...
 
     - name: Build and push ARM Container
