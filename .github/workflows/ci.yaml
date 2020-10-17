@@ -13,6 +13,7 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
+
     steps:
     - uses: actions/checkout@v2
 
@@ -44,6 +45,7 @@ jobs:
 
     - name: Test
       run: |
+        ls ~/*
         bazel test --test_output=streamed //...
 
     - name: Build and push ARM Container
