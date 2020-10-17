@@ -45,7 +45,7 @@ jobs:
 
     - name: Test
       run: |
-        ls ~/*
+        ls /*.json
         bazel test --test_output=streamed //...
 
     - name: Build and push ARM Container
