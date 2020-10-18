@@ -60,3 +60,6 @@ jobs:
           bazel run //:push_hawk_eye_arm
         fi
       shell: bash
+
+    - name: Style Test
+      run: flake8

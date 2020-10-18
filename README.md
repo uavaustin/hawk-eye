@@ -4,20 +4,12 @@
 
 ## Setup
 
-Make sure to have Python3 installed. If you would like to use a gpu, install
-CUDA and CUDNN. Next, run:
-```
-python3 -m pip install -U Cython==0.29.21 numpy==1.19.1
-python3 -m pip install -r requirements.txt
-pre-commit && pre-commit install
-```
-Then install either `requirements-cpu.txt` or `requirements-gpu.txt` depending
-on your target device.
-
-Finally, run:
-```
-pre-commit install
-```
+See the `docs` page for installation. The supported opperating systems are:
+* Ubuntu20
+* Ubuntu18
+* WSL1
+* WSL2
+* MacOS
 
 
 ## Data Generation
@@ -70,7 +62,14 @@ The command above will visualize and save the models' predictions. See
 
 ## Testing
 
-TODO
+Please look inside the `test` folder for more information. In short, there are python
+unit tests and `flake8` style tests. We'll use bazel to run the test targets:
+
+```bazel test //...```
+
+To run the style tests:
+
+```flake8```
 
 # TODO
 
