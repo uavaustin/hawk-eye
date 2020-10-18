@@ -76,5 +76,5 @@ To run the style tests:
 ## Style
 
 All python code will be automatically formatted using `Black` through `pre-commit`.
-`flake8` will be employeed to correct any other style errors. Please familiarize yourself
+`flake8` will be employed to correct any other style errors. Please familiarize yourself
 with the [`Google python style guide`](https://google.github.io/styleguide/pyguide.html).
