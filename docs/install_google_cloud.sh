@@ -12,3 +12,4 @@ else
     sudo apt-get update -y && sudo apt-get install -y google-cloud-sdk
 fi
 gcloud init
+gcloud auth login
