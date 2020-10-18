@@ -1,6 +1,7 @@
 # hawk_eye
 > Code to find targets in aerial imagery.
 
+![Python3 CI](https://github.com/uavaustin/hawk-eye/workflows/Python3%20CI/badge.svg)
 
 ## Setup
 
