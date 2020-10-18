@@ -245,7 +245,6 @@ def find_targets(
         else:
             retval.extend(zip(coords, []))
 
-    targets = globalize_boxes(retval, config.CROP_SIZE[0])
     print(time.perf_counter() - start)
 
     return globalize_boxes(retval, config.CROP_SIZE[0]), target_tiles

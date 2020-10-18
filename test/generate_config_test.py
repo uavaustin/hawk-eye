@@ -1,14 +1,11 @@
 """ Contains various configuration settings used for unit testing with bazel. """
 
 import pathlib
-import re
-import yaml
 
 from data_generation.generate_config import *
 
 
 # This is where we are going to store all the assets.
-print(pathlib.Path(__file__).expanduser())
 ASSETS_DIR = pathlib.Path("external").expanduser()
 BACKGROUNDS_DIRS = [ASSETS_DIR / "backgrounds/backgrounds-v1"]
 

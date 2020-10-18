@@ -178,21 +178,22 @@ def train(
     eval_start_epoch = train_cfg.get("eval_start_epoch", 10)
     eval_results, ema_eval_results = {}, {}
 
-    # Create the learning rate scheduler.
-    lr_config = train_cfg.get("lr_schedule", {})
-    warm_up_percent = lr_config.get("warmup_fraction", 0)
-    start_lr = float(lr_config.get("start_lr"))
-    max_lr = float(lr_config.get("max_lr"))
-    end_lr = float(lr_config.get("end_lr"))
-
-    # lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
-    #    optimizer,
-    #    max_lr=max_lr,
-    #    total_steps=len(train_loader) * epochs,
-    #    final_div_factor=start_lr / end_lr,
-    #    div_factor=max_lr / start_lr,
-    #    pct_start=warm_up_percent,
-    # )
+    lr_scheduler = None
+    if train_cfg["optimizer"].lower() == "sgd":
+        # Create the learning rate scheduler.
+        lr_config = train_cfg.get("lr_schedule", {})
+        warm_up_percent = lr_config.get("warmup_fraction", 0)
+        start_lr = float(lr_config.get("start_lr"))
+        max_lr = float(lr_config.get("max_lr"))
+        end_lr = float(lr_config.get("end_lr"))
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=max_lr,
+            total_steps=len(train_loader) * epochs,
+            final_div_factor=start_lr / end_lr,
+            div_factor=max_lr / start_lr,
+            pct_start=warm_up_percent,
+        )
 
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
@@ -249,7 +250,8 @@ def train(
 
             ema_model.update(model)
 
-            # lr_scheduler.step()
+            if lr_scheduler is not None:
+                lr_scheduler.step()
             lr = optimizer.param_groups[0]["lr"]
 
             if idx % _LOG_INTERVAL == 0 and is_main:
@@ -264,9 +266,9 @@ def train(
                     if isinstance(
                         model, apex.parallel.distributed.DistributedDataParallel
                     ):
-                        utils.save_model(model.module, save_dir / f"min-loss.pt")
+                        utils.save_model(model.module, save_dir / "min-loss.pt")
                     else:
-                        utils.save_model(model, save_dir / f"min-loss.pt")
+                        utils.save_model(model, save_dir / "min-loss.pt")
 
         # Call evaluation function if past eval delay.
         if epoch >= eval_start_epoch and is_main:

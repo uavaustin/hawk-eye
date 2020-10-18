@@ -360,7 +360,7 @@ class VoVNet(torch.nn.Sequential):
         >>> net.delete_classification_head()
         >>> with torch.no_grad():
         ...    out = net.forward_pyramids(torch.randn(1, 3, 512, 512))
-        >>> [level.shape[-1] for level in out.values()]  # Check the height/widths of levels
+        >>> [level.shape[-1] for level in out.values()]  # Check the h/w of levels
         [256, 128, 64, 32, 16]
         >>> [level.shape[1] for level in out.values()]  == net._out_feature_channels
         True

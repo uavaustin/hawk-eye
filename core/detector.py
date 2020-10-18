@@ -3,7 +3,6 @@ head.This allows for easy interchangeability during experimentation and a reliab
 load saved models. """
 
 import collections
-import dataclasses
 from typing import List
 import yaml
 

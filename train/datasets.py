@@ -111,7 +111,7 @@ class TargetDataset(torch.utils.data.Dataset):
         self.images = list(data_dir.glob(f"*{img_ext}"))
 
         self.len = len(self.images)
-        self.transform = feature_extraction_augmentations(100, 100)
+        self.transform = augs.feature_extraction_augmentations(100, 100)
 
     def __len__(self) -> int:
         return self.len

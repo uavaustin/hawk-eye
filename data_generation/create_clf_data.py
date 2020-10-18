@@ -9,14 +9,11 @@ background crops and copy the target crops into one folder, then we'll shuffle t
 and split the data into 80% training and 20% validation. """
 
 import json
-import math
 import pathlib
 import random
 import shutil
 import tempfile
-from typing import Tuple
 
-import numpy as np
 from PIL import Image
 import tqdm
 
@@ -63,8 +60,8 @@ def create_clf_images(
         random.shuffle(imgs)
         for image_path in tqdm.tqdm(imgs):
             if json.loads(image_path.with_suffix(".json").read_text())["bboxes"]:
-                # If there are labels, copy it to the save folder with the proper filename.
-                # Load the image, resize, and save to new folder.
+                # If there are labels, copy it to the save folder with the proper
+                # filename. Load the image, resize, and save to new folder.
                 image = Image.open(image_path).resize(config.PRECLF_SIZE)
                 image.save(tmp_dir / f"target_{idx}{image_path.suffix}")
                 idx += 1

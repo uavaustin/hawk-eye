@@ -70,18 +70,3 @@ unit tests and `flake8` style tests. We'll use bazel to run the test targets:
 To run the style tests:
 
 ```flake8```
-
-# TODO
-
-- [ ] Finish target typer model.
-
-- [ ] Devise a way to be able to create detection, classification, and feature data in
-separate independently.
-
-- [ ] Finalize training pipelines.
-
-- [ ] Finish inference pipeline.
-
-- [ ] Weights & Biases integration once project is granted.
-
-- [ ] unittests

@@ -174,8 +174,8 @@ class Matcher:
         Returns:
             matches (Tensor[int64]): a vector of length N, where matches[i] is a matched
                 ground-truth index in [0, M)
-            match_labels (Tensor[int8]): a vector of length N, where pred_labels[i] indicates
-                whether a prediction is a true or false positive or ignored
+            match_labels (Tensor[int8]): a vector of length N, where pred_labels[i]
+                indicates whether a prediction is a true or false positive or ignored
         """
         assert match_quality_matrix.dim() == 2
         if match_quality_matrix.numel() == 0:
@@ -184,7 +184,8 @@ class Matcher:
             )
             # When no gt boxes exist, we define IOU = 0 and therefore set labels
             # to `self.labels[0]`, which usually defaults to background class 0
-            # To choose to ignore instead, can make labels=[-1,0,-1,1] + set appropriate thresholds
+            # To choose to ignore instead, can make labels=[-1,0,-1,1] + set
+            # appropriate thresholds
             default_match_labels = match_quality_matrix.new_full(
                 (match_quality_matrix.size(1),), self.labels[0], dtype=torch.int8
             )
@@ -342,8 +343,9 @@ def get_ground_truth(
         # See if there are any labels for this image, process them.
         if len(gt_boxes) > 0:
 
-            # Calculate a IoU matrix which compares each original anchor to each ground truth
-            # box. This will allow us to see which predictions match which anchors.
+            # Calculate a IoU matrix which compares each original anchor to each
+            # ground truth box. This will allow us to see which predictions match which
+            # anchors.
             match_quality_matrix = boxes.box_iou(gt_boxes, original_anchors)
             gt_matched_idxs, anchor_labels = matcher(match_quality_matrix)
 

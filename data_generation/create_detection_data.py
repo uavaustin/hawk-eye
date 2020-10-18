@@ -12,7 +12,6 @@ import multiprocessing
 import random
 import json
 import pathlib
-import time
 
 from tqdm import tqdm
 import PIL
@@ -255,7 +254,6 @@ def get_backgrounds() -> List[pathlib.Path]:
 def get_base_shapes(shape):
     """Get the base shape images for a given shapes"""
     # For now just using the first one to prevent bad alpha placement
-    base_path = config.BASE_SHAPES_DIRS[0] / shape / f"{shape}-01.png"
     return [
         Image.open(base_path)
         for base_path in (config.BASE_SHAPES_DIRS[0] / shape).glob("*.png")

@@ -4,11 +4,9 @@ This is useful for seeing how a new model performs on a device. For example, thi
 can be run on the Jetson to see how the models perform. """
 
 import argparse
-import pathlib
 import time
 
 import torch
-import yaml
 
 from core import classifier
 from core import detector
