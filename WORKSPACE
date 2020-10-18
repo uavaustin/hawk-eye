@@ -103,3 +103,8 @@ gcs_file(
     sha256 = "e67fc398c9e9a55071d2d4edd155c691540bf4951383cfa1bed69aacbee02675",
     strip_prefix = "fonts",
 )
+
+load("//docker:models.bzl", "production_models")
+production_models(
+    name = "production_models",
+)

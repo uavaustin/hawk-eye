@@ -32,5 +32,7 @@ container_layer(
         "//inference:find_targets",
         "//inference:types",
         "//third_party",
+        "@production_models",
     ],
 )
+
