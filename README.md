@@ -1,4 +1,4 @@
-# Hawk_Eye
+# hawk_eye
 > Code to find targets in aerial imagery.
 
 
