@@ -9,7 +9,7 @@ _GCS_FILE_BUILD = """
 package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "file",
-    srcs = glob(["**/*"]),
+    srcs = glob(["uav-*/**/*"]),
 )
 """
 
@@ -39,12 +39,13 @@ def _production_model_impl(repository_ctx):
 def _download_model(repository_ctx, model_type, model_timestamp):
     # Add a top-level BUILD file to export all the downloaded files.
     download_path = "%s.tar.gz" % model_timestamp
-    repository_ctx.file((str(repository_ctx.name)), _GCS_FILE_BUILD)
+    download_path = repository_ctx.path(download_path)
+    repository_ctx.file("BUILD", _GCS_FILE_BUILD)
 
     # Create a bash script from a template.
     repository_ctx.template(
         "gsutil_cp_and_validate.sh",
-        Label("@bazel_toolchains//rules:gsutil_cp_and_validate.sh.tpl"),
+        Label("//third_party:gsutil_cp_and_validate.sh.tpl"),
         {
             "%{BUCKET}": _BUCKET,
             "%{DOWNLOAD_PATH}": str(download_path),
@@ -54,9 +55,12 @@ def _download_model(repository_ctx, model_type, model_timestamp):
     )
     gsutil_cp_and_validate_result = repository_ctx.execute(["bash", "gsutil_cp_and_validate.sh"])
     if gsutil_cp_and_validate_result.return_code == 255:
-        fail("SHA")
+        fail("SHA256 of file")
+    elif gsutil_cp_and_validate_result.return_code != 0:
+        fail("gsutil cp command failed: %s" % (gsutil_cp_and_validate_result.stderr))
+
     # Extract the downloaded archive.
-    repository_ctx.extract(download_path)
+    repository_ctx.extract(download_path, "uav-%s/%s" %(model_type, model_timestamp))
     rm_result = repository_ctx.execute(["rm", "gsutil_cp_and_validate.sh"])
 
 

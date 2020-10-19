@@ -32,7 +32,12 @@ container_layer(
         "//inference:find_targets",
         "//inference:types",
         "//third_party",
-        "@production_models",
     ],
 )
 
+container_layer(
+    name = "production_models",
+    files = ["@production_models//:file"],
+    data_path = ".",
+    symlinks = {"/home/runs": "/production_models"}
+)
