@@ -7,9 +7,10 @@ This repository works best with Linux, WSL, and Mac systems.
 The `setup_linux.sh` script in this folder will let up Ubuntu and WSL systems.
 To run the script, execute:
 
-```./docs/setup_linux.sh``` 
+```./docs/setup_linux.sh```
 
-inside the `hawk_eye` repository. This file also takes an optional argument to a python virtual environemnt:
+inside the `hawk_eye` repository. This file also takes an optional argument to a python
+virtual environemnt:
 
 ```./docs/setup_linux.sh ~/path_to_venv```
 

@@ -34,7 +34,7 @@ class Classifier(torch.nn.Module):
         if backbone is None and timestamp is None:
             raise ValueError("Must supply either model timestamp or backbone to load")
 
-        # If a version is given, download from bintray
+        # If a version is given, download it.
         if timestamp is not None:
             # Download the model or find it locally.
             model_path = asset_manager.download_model("classifier", timestamp)
@@ -47,7 +47,7 @@ class Classifier(torch.nn.Module):
             )
             self.image_size = config["image_size"]
         else:
-            # If no version supplied, just load the backbone
+            # If no timestamp supplied, just load the backbone
             self.model = self._load_backbone(backbone)
 
         self.model.eval()

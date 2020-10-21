@@ -201,7 +201,10 @@ def find_all_targets(
 
 @torch.no_grad()
 def find_targets(
-    image: Image.Image, clf_model: torch.nn.Module, det_model: torch.nn.Module,
+    image: Image.Image,
+    clf_model: torch.nn.Module,
+    det_model: torch.nn.Module,
+    clf_confidence: float = 0.9,
 ) -> None:
     """ Tile up image, classify them, then perform object detection where it's needed.
 
@@ -230,7 +233,7 @@ def find_targets(
 
         # Call the pre-clf to find the target tiles.
         # TODO(alex): Pass in the classification confidence from cmdl.
-        preds = clf_model.classify(tiles, probability=True)[:, 1] >= 0.90
+        preds = clf_model.classify(tiles, probability=True)[:, 1] >= clf_confidence
 
         target_tiles += [coords[idx] for idx, val in enumerate(preds) if val]
         if preds.numel():
