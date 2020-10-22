@@ -104,7 +104,7 @@ gcs_file(
     strip_prefix = "fonts",
 )
 
-load("//docker:models.bzl", "production_models")
+load("//hawk_eye/docker:models.bzl", "production_models")
 production_models(
     name = "production_models",
 )

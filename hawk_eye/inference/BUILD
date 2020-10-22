@@ -4,9 +4,9 @@ py_library(
     name = "benchmark_inference",
     srcs = ["benchmark_inference.py"],
     deps = [
-        "//core:classifier",
-        "//core:detector",
-        "//data_generation:generate_config"
+        "//hawk_eye/core:classifier",
+        "//hawk_eye/core:detector",
+        "//hawk_eye/data_generation:generate_config"
     ],
 )
 
@@ -15,9 +15,9 @@ py_library(
     srcs = ["find_targets.py"],
     deps = [
         ":types",
-        "//core:classifier",
-        "//core:detector",
-        "//data_generation:generate_config"
+        "//hawk_eye/core:classifier",
+        "//hawk_eye/core:detector",
+        "//hawk_eye/data_generation:generate_config"
     ],
     data = [":requirements.txt"]
 )

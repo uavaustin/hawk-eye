@@ -12,8 +12,8 @@ container_image(
     name = "hawk_eye_arm_container",
     base = "@amd64_base//image",
     layers = [
-        "//docker:hawk_eye",
-        "//docker:production_models",
+        "//hawk_eye/docker:hawk_eye",
+        "//hawk_eye/docker:production_models",
     ],
     repository = "uavaustin/hawk-eye-arm",
 )
