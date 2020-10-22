@@ -2,6 +2,7 @@
 
 import pathlib
 import logging
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Log:
@@ -35,4 +36,14 @@ class Log:
     def error(self, message: str) -> None:
         logging.error(message)
 
-    # def metric
+    # Method metric
+    # logs the tensorboard information
+    # the the add_scalar args and and passes it to the add_scalar
+    def metric(self, metric_dict, metric_epoch):
+        met = SummaryWriter()
+        met.add_scalars(
+            "new_model_higest_score and model_highest_score vs epoch",
+            metric_dict,
+            metric_epoch,
+        )
+        met.close()

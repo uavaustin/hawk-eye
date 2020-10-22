@@ -13,6 +13,7 @@ import shutil
 import os
 import yaml
 
+
 try:
     import apex
 
@@ -224,6 +225,14 @@ def train(
                 f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
                 f"Best model accuracy: {scores['model_highest_score']:.5f}\n"
                 f"Best EMA accuracy: {scores['ema_highest_score']:.5f} \n"
+            )
+            # BP Updated
+            log.metric(
+                {
+                    "most_recent_score": new_model_highest_score,
+                    "model_highest_score": scores["model_highest_score"],
+                },
+                epoch,
             )
 
 
