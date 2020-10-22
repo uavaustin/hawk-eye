@@ -47,7 +47,7 @@ _SAVE_DIR = pathlib.Path("~/runs/uav-detector").expanduser()
 def detections_to_dict(
     bboxes: list, image_ids: torch.Tensor, image_size: torch.Tensor
 ) -> List[dict]:
-    """ Used to turn raw bounding box detections into a dictionary which can be
+    """Used to turn raw bounding box detections into a dictionary which can be
     serialized for the pycocotools package.
 
     Args:
@@ -88,7 +88,7 @@ def train(
     save_dir: pathlib.Path = None,
     initial_timestamp: pathlib.Path = None,
 ) -> None:
-    """ Main training loop that will also call out to separate evaluation function.
+    """Main training loop that will also call out to separate evaluation function.
 
     Args:
         local_rank: The process's rank. 0 if there is no distributed training.
@@ -312,7 +312,7 @@ def eval(
     previous_best: dict,
     save_dir: pathlib.Path = None,
 ) -> Tuple[dict, List[str]]:
-    """ Evalulate the model against the evaulation set. Save the best weights if
+    """Evalulate the model against the evaulation set. Save the best weights if
     specified. Use the pycocotools package for metrics.
 
     Args:
@@ -368,7 +368,7 @@ def create_data_loader(
     val: bool,
     image_size: int,
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
-    """ Simple function to create the dataloaders for training and evaluation.
+    """Simple function to create the dataloaders for training and evaluation.
 
     Args:
         training_cfg: The parameters related to the training regime.

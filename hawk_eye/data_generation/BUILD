@@ -5,7 +5,7 @@ py_library(
     srcs = ["create_detection_data.py"],
     deps = [
         ":generate_config",
-        "//core:asset_manager",
+        "//hawk_eye/core:asset_manager",
     ],
 )
 

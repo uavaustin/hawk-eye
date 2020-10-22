@@ -122,7 +122,7 @@ class _OSA(torch.nn.Module):
         layer_per_block: int,
         use_depthwise: bool = False,
     ) -> None:
-        """ Implementation of an OSA layer which takes the output of its conv layers and
+        """Implementation of an OSA layer which takes the output of its conv layers and
         concatenates them into one large tensor which is passed to the next layer. The
         goal with this concatenation is to preserve information flow through the model
         layers. This also ends up helping with small object detection.

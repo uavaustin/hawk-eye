@@ -11,7 +11,7 @@ def save_model(model: torch.nn.Module, save_path: pathlib.Path) -> None:
 
 
 def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Optimizer:
-    """ Take in optimizer config and create the optimizer for training.
+    """Take in optimizer config and create the optimizer for training.
 
     Args:
         optim_cfg: The parameters for the optimizer generation.
@@ -53,7 +53,7 @@ def create_optimizer(optim_cfg: dict, model: torch.nn.Module) -> torch.optim.Opt
 def add_weight_decay(
     model: torch.nn.Module, weight_decay: float
 ) -> List[Dict[str, Any]]:
-    """ Add weight decay to only the convolutional kernels. Do not add weight decay
+    """Add weight decay to only the convolutional kernels. Do not add weight decay
     to biases and BN. TensorFlow does this automatically, but for some reason this is
     the PyTorch default.
 

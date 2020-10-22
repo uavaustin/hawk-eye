@@ -84,8 +84,8 @@ def train(model_cfg: dict, train_cfg: dict, save_dir: pathlib.Path):
 
 
 def eval(model: torch.nn.Module, loader: torch.utils.data.DataLoader) -> float:
-    """ Judge the model's % accuracy based on how many times the anchor and
-    positive are within the margin of each other. """
+    """Judge the model's % accuracy based on how many times the anchor and
+    positive are within the margin of each other."""
     num_right, total_num = 0, 0
     with torch.no_grad():
 

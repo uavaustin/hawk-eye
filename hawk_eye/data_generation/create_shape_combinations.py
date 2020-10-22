@@ -11,8 +11,9 @@ import itertools
 from tqdm import tqdm
 import PIL
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
-from data_generation import generate_config as config
-from core import pull_assets
+
+from hawk_eye.data_generation import generate_config as config
+from hawk_eye.core import pull_assets
 
 # Get constants from config
 NUM_GEN = int(config.NUM_IMAGES)

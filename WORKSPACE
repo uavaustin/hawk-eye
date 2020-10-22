@@ -104,7 +104,12 @@ gcs_file(
     strip_prefix = "fonts",
 )
 
-load("//hawk_eye/docker:models.bzl", "production_models")
-production_models(
-    name = "production_models",
+load("//hawk_eye/docker:models.bzl", "production_model")
+production_model(
+    name = "classification_model",
+    type = "classifier",
+)
+production_model(
+    name = "detection_model",
+    type = "detector",
 )

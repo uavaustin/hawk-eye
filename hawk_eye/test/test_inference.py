@@ -5,13 +5,13 @@
 import doctest
 import unittest
 
-from inference import benchmark_inference
-from inference import find_targets
+from hawk_eye.inference import benchmark_inference
+from hawk_eye.inference import find_targets
 
 
 def test_inference_doctests() -> None:
     test_suite = unittest.TestSuite()
-    test_suite.addTests(doctest.DocTestSuite("inference"))
+    test_suite.addTests(doctest.DocTestSuite("hawk_eye.inference"))
     return test_suite
 
 

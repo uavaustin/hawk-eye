@@ -8,8 +8,8 @@ import time
 
 import torch
 
-from core import classifier
-from core import detector
+from hawk_eye.core import classifier
+from hawk_eye.core import detector
 
 
 @torch.no_grad()

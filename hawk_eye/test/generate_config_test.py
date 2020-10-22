@@ -2,7 +2,7 @@
 
 import pathlib
 
-from data_generation.generate_config import *
+from hawk_eye.data_generation.generate_config import *
 
 
 # This is where we are going to store all the assets.

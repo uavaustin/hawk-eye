@@ -65,8 +65,8 @@ class FPN(torch.nn.Module):
     def __call__(
         self, feature_maps: collections.OrderedDict
     ) -> collections.OrderedDict:
-        """ Take the input feature maps and apply the necessary convolutions to build
-        out the num_levels specified. """
+        """Take the input feature maps and apply the necessary convolutions to build
+        out the num_levels specified."""
 
         # First, loop over the incoming layers and proceed as follows: from top to
         # bottom, apply lateral convolution, add with the previous layer (if there is

@@ -45,7 +45,7 @@ def train(
     save_dir: pathlib.Path,
     initial_timestamp: str = None,
 ) -> None:
-    """ Entrypoint for training. This is where most of the logic is executed.
+    """Entrypoint for training. This is where most of the logic is executed.
 
     Args:
         local_rank: Which GPU subprocess rank this is executed in. For CPU and 1 GPU,
@@ -233,7 +233,7 @@ def evaluate(
     eval_loader: torch.utils.data.DataLoader,
     device: torch.device,
 ) -> float:
-    """ Evaluate the model against the evaulation set. Save the best
+    """Evaluate the model against the evaulation set. Save the best
     weights if specified.
 
     Args:
@@ -263,7 +263,7 @@ def evaluate(
 def create_data_loader(
     batch_size: dict, data_dir: pathlib.Path, world_size: int, val: bool, img_size: int
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
-    """ This function acts as a DataLoader factory. Depending on the type of input
+    """This function acts as a DataLoader factory. Depending on the type of input
     data, either train or val, we construct a DataLoader which will be used during
     training. If we are using distributed training, a DistributedSampler is used to
     equally divide up the data between processes.

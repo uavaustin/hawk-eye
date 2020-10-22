@@ -37,7 +37,10 @@ container_layer(
 
 container_layer(
     name = "production_models",
-    files = ["@production_models//:file"],
+    files = [
+        "@classification_model//:file",
+        "@detection_model//:file",
+    ],
     data_path = ".",
     symlinks = {"/home/runs": "/production_models"}
 )

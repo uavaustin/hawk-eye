@@ -5,7 +5,7 @@ import yaml
 
 import torch
 
-from core import asset_manager
+from hawk_eye.core import asset_manager
 from third_party.rexnet import rexnet
 from third_party.vovnet import vovnet
 
@@ -77,8 +77,8 @@ class Classifier(torch.nn.Module):
         return model
 
     def classify(self, x: torch.Tensor, probability: bool = False) -> torch.Tensor:
-        """ Take in an image batch and return the class for each image. If specified,
-        softmax will be applied to the predictions. """
+        """Take in an image batch and return the class for each image. If specified,
+        softmax will be applied to the predictions."""
 
         if self.use_cuda and self.half_precision:
             x = x.half()

@@ -11,7 +11,7 @@ from typing import List, Union
 
 from google.cloud import storage
 
-from data_generation import generate_config as config
+from hawk_eye.data_generation import generate_config as config
 
 _BUCKET = "uav-austin-test"
 

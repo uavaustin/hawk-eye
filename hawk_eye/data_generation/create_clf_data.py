@@ -17,8 +17,8 @@ import tempfile
 from PIL import Image
 import tqdm
 
-from data_generation import generate_config as config
-from data_generation import create_detection_data
+from hawk_eye.data_generation import generate_config as config
+from hawk_eye.data_generation import create_detection_data
 
 # Get constants from config
 CLF_WIDTH, CLF_HEIGHT = config.PRECLF_SIZE
@@ -96,10 +96,10 @@ def single_clf_image(
     save_dir: pathlib.Path,
     num_tiles: int,
 ) -> int:
-    """ Slice out crops from the original background image and save to disk. NOTE: we do
+    """Slice out crops from the original background image and save to disk. NOTE: we do
     not have any overlap between adjacent tiles because we want to avoid having any
     leakage between images. With data leakage, we might end up with two adjacent tiles in
-    both the train and eval set. """
+    both the train and eval set."""
     image = Image.open(image)
     tile_num = 0
     for x in range(0, image.size[0] - config.CROP_SIZE[1], config.CROP_SIZE[0]):

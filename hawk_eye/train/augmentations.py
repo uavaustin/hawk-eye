@@ -7,7 +7,7 @@ import albumentations as albu
 
 
 def clf_train_augs(height: int, width: int) -> albu.Compose:
-    """ Training augmentations for classification. We prefer for this model to be really
+    """Training augmentations for classification. We prefer for this model to be really
     robust. Feel free to tweak these paramters or ad other augmentations.
 
     Usage:

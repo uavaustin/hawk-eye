@@ -10,8 +10,8 @@ py_test(
         "@fonts//:file",
     ],
     deps = [
-        "//data_generation:classification_data_generation",
-        "//data_generation:detection_data_generation",
+        "//hawk_eye/data_generation:classification_data_generation",
+        "//hawk_eye/data_generation:detection_data_generation",
     ],
 )
 
@@ -25,8 +25,8 @@ py_test(
     name = "test_inference",
     srcs = ["test_inference.py"],
     deps = [
-        "//inference:find_targets",
-        "//inference:benchmark_inference"
+        "//hawk_eye/inference:find_targets",
+        "//hawk_eye/inference:benchmark_inference"
     ],
     local = True,
 )

@@ -8,8 +8,8 @@ import yaml
 
 import torch
 
-from core import asset_manager
-from core import fpn
+from hawk_eye.core import asset_manager
+from hawk_eye.core import fpn
 from third_party.vovnet import vovnet
 from third_party.models import postprocess
 from third_party.models import regression

@@ -12,10 +12,10 @@ from PIL import ImageDraw
 import numpy as np
 import torch
 
-from core import classifier
-from core import detector
-from data_generation import generate_config as config
-from inference import types
+from hawk_eye.core import classifier
+from hawk_eye.core import detector
+from hawk_eye.data_generation import generate_config as config
+from hawk_eye.inference import types
 from third_party.models import postprocess
 
 _PROD_MODELS = {"clf": "2020-09-05T15.51.57", "det": "2020-10-10T14.02.09"}
@@ -30,7 +30,7 @@ def normalize(
     std: Tuple[float, float, float] = (0.229, 0.224, 0.225),
     max_pixel_value: float = 255.0,
 ) -> np.ndarray:
-    """ Normalize images based on ImageNet values. This is identical to
+    """Normalize images based on ImageNet values. This is identical to
     albumentations normalization used for training.
 
     Args:
@@ -61,7 +61,7 @@ def normalize(
 def tile_image(
     image: Image.Image, tile_size: Tuple[int, int], overlap: int  # (H, W)
 ) -> Tuple[torch.Tensor, List[Tuple[int, int]]]:
-    """ Take in an image and tile it into smaller tiles for inference.
+    """Take in an image and tile it into smaller tiles for inference.
 
     Args:
         image: The input image to tile.
@@ -110,7 +110,7 @@ def tile_image(
 def create_batches(
     image_tensor: torch.Tensor, coords: List[Tuple[int, int]], batch_size: int
 ) -> Generator[types.BBox, None, None]:
-    """ Creates batches of images based on the supplied params. The whole image
+    """Creates batches of images based on the supplied params. The whole image
     is tiled first, the batches are generated.
 
     Args:
@@ -131,7 +131,7 @@ def create_batches(
 def load_models(
     clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
 ) -> Tuple[torch.nn.Module, torch.nn.Module]:
-    """ Loads the given time stamps for the classification and detector models.
+    """Loads the given time stamps for the classification and detector models.
 
     Args:
         clf_timestamp: Which classification model to load.
@@ -171,7 +171,7 @@ def find_all_targets(
     det_timestamp: str = _PROD_MODELS["det"],
     visualization_dir: pathlib.Path = None,
 ) -> None:
-    """ Entrypoint function if running this script as main.
+    """Entrypoint function if running this script as main.
 
     Args:
         images: A list of all the images to inference.
@@ -206,7 +206,7 @@ def find_targets(
     det_model: torch.nn.Module,
     clf_confidence: float = 0.9,
 ) -> None:
-    """ Tile up image, classify them, then perform object detection where it's needed.
+    """Tile up image, classify them, then perform object detection where it's needed.
 
     Args:
         image: The input image to inference.
@@ -256,7 +256,7 @@ def find_targets(
 def globalize_boxes(
     results: List[postprocess.BoundingBox], img_size: int
 ) -> List[types.Target]:
-    """ Take the normalized detections on a _tile_ and gloabalize them to pixel space of
+    """Take the normalized detections on a _tile_ and gloabalize them to pixel space of
     the original large image.
 
     Args:
@@ -296,7 +296,7 @@ def visualize_image(
     targets: List[types.Target],
     clf_tiles: List[Tuple[int, int]],
 ) -> None:
-    """ Function used to draw boxes and information onto image for visualizing the output
+    """Function used to draw boxes and information onto image for visualizing the output
     of inference.
 
     Args:

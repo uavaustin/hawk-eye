@@ -5,9 +5,9 @@ import pathlib
 import tempfile
 import unittest
 
-from test import generate_config_test
-from data_generation import create_clf_data
-from data_generation import create_detection_data
+from hawk_eye.test import generate_config_test
+from hawk_eye.data_generation import create_clf_data
+from hawk_eye.data_generation import create_detection_data
 
 
 class DetectionDataGeneration(unittest.TestCase):

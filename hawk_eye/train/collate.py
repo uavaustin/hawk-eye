@@ -10,8 +10,8 @@ from third_party.models import losses
 
 
 class CollateVal:
-    """ Simply return only the image tensors and the image ids for model evaluation.
-    The image id's are need for COCO metrics. """
+    """Simply return only the image tensors and the image ids for model evaluation.
+    The image id's are need for COCO metrics."""
 
     def __init__(self) -> None:
         pass

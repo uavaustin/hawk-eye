@@ -18,8 +18,8 @@ import PIL
 from PIL import Image
 from PIL import ImageDraw, ImageFilter, ImageFont, ImageOps
 
-from data_generation import generate_config as config
-from core import asset_manager
+from hawk_eye.data_generation import generate_config as config
+from hawk_eye.core import asset_manager
 
 # Get constants from config
 MAX_SHAPES = int(config.MAX_PER_SHAPE)
@@ -32,7 +32,7 @@ ALPHAS = config.ALPHAS
 
 
 def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -> None:
-    """ Main function which prepares all the relevant information regardining data
+    """Main function which prepares all the relevant information regardining data
     generation. Data will be generated using a multiprocessing pool for efficiency.
 
     Args:

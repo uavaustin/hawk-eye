@@ -4,7 +4,7 @@ import yaml
 
 import torch
 
-from core import pull_assets
+from hawk_eye.core import pull_assets
 from third_party.efficientdet import efficientnet
 from third_party.vovnet import vovnet
 
