@@ -96,7 +96,7 @@ def train(
         log.info(f"Train dataset: {train_loader.dataset}")
         log.info(f"Val dataset: {eval_loader.dataset}")
 
-    scores = {"model_highest_score": 0, "ema_highest_score": 0}
+    scores = {"best_model_score": 0, "best_ema_score": 0}
     best_scores_path = pathlib.Path(save_dir / "best_scores.json")
     best_scores_path.write_text(json.dumps({}))
 
@@ -197,18 +197,18 @@ def train(
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
-            most_recent_model_score = evaluate(clf_model, eval_loader, device)
+            model_score = evaluate(clf_model, eval_loader, device)
             clf_model.train()
 
-            if most_recent_model_score > scores["model_highest_score"]:
-                scores["model_highest_score"] = most_recent_model_score
-                improved_scores.add("model_highest_score")
+            if model_score > scores["best_model_score"]:
+                scores["best_model_score"] = model_score
+                improved_scores.add("best_model_score")
                 # TODO(alex): Fix this .module
                 utils.save_model(clf_model, save_dir / "classifier.pt")
 
-            new_ema_highest_score = evaluate(ema_model, eval_loader, device)
-            if new_ema_highest_score > scores["ema_highest_score"]:
-                scores["ema_highest_score"] = new_ema_highest_score
+            ema_score = evaluate(ema_model, eval_loader, device)
+            if ema_score > scores["best_ema_score"]:
+                scores["best_ema_score"] = ema_score
                 improved_scores.add("ema-acc")
                 utils.save_model(ema_model.ema_model, save_dir / "ema-classifier.pt")
 
@@ -222,11 +222,13 @@ def train(
             log.info(f"Improved metrics: {improved_scores}.")
             log.info(
                 f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
-                f"Best model accuracy: {scores['model_highest_score']:.5f}\n"
-                f"Best EMA accuracy: {scores['ema_highest_score']:.5f} \n"
+                f"Best model accuracy: {scores['best_model_score']:.5f}\n"
+                f"Best EMA accuracy: {scores['best_ema_score']:.5f} \n"
             )
-            log.metric("Model score", most_recent_model_score, epoch)
-            log.metric("Highest model score", scores["model_highest_score"], epoch)
+            log.metric("Model score", model_score, epoch)
+            log.metric("Best model score", scores["best_model_score"], epoch)
+            log.metric("EMA score", ema_score, epoch)
+            log.metric("Best EMA score", scores["best_ema_score"], epoch)
 
 
 @torch.no_grad()
