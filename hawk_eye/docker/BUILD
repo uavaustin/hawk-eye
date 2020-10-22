@@ -20,7 +20,7 @@ container_layer(
     name = "hawk_eye",
     data_path = ".",
     directory = "hawk_eye",
-    env = {"PYTHONPATH": "/"},
+    env = {"PYTHONPATH": "/hawk_eye"},
     files = [
         ":version_file",
         "//hawk_eye/inference:requirements.txt",
@@ -31,6 +31,7 @@ container_layer(
         "//hawk_eye/data_generation:generate_config",
         "//hawk_eye/inference:find_targets",
         "//hawk_eye/inference:types",
+        "//hawk_eye/test:test_inference_lib",
         "//third_party",
     ],
 )

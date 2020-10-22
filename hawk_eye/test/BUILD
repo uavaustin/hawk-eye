@@ -30,3 +30,13 @@ py_test(
     ],
     local = True,
 )
+
+py_library(
+    name = "test_inference_lib",
+    srcs = ["test_inference.py"],
+    deps = [
+        "//hawk_eye/inference:find_targets",
+        "//hawk_eye/inference:benchmark_inference"
+    ],
+    visibility = ["//visibility:public"]
+)

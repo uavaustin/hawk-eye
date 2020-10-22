@@ -48,7 +48,6 @@ load(
     "@io_bazel_rules_docker//repositories:repositories.bzl",
     container_repositories = "repositories",
 )
-
 container_repositories()
 
 # Load the macro that allows you to customize the docker toolchain configuration.
