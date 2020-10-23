@@ -26,6 +26,7 @@ class Log:
         console.setFormatter(formatter)
         # add the handler to the root logger
         logging.getLogger("").addHandler(console)
+        self.met = SummaryWriter()
 
     def info(self, message: str) -> None:
         logging.info(message)
@@ -39,11 +40,7 @@ class Log:
     # Method metric
     # logs the tensorboard information
     # the the add_scalar args and and passes it to the add_scalar
-    def metric(self, metric_dict, metric_epoch):
-        met = SummaryWriter()
-        met.add_scalars(
-            "new_model_higest_score and model_highest_score vs epoch",
-            metric_dict,
-            metric_epoch,
+    def metric(self, metric_tag, metric_value, metric_epoch):
+        self.met.add_scalar(
+            metric_tag, metric_value, metric_epoch,
         )
-        met.close()
