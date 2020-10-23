@@ -4,7 +4,7 @@ images and the corresponding COCO metadata jsons. For most RetinaNet related tra
 can train on images with _and without_ targets. Training on images without any targets
 is valuable so the model sees that not every image will have a target, as this is the
 real life case. """
-
+import math
 import dataclasses
 from typing import List
 from typing import Tuple
@@ -14,7 +14,7 @@ import random
 import json
 import pathlib
 import time
-
+import matplotlib
 from tqdm import tqdm
 import PIL
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
@@ -335,23 +335,41 @@ class alpha_params:
     font_multiplier: Tuple[int, int]
     gaussian_adjuster_x_coordinate: Tuple[int, int]
     gaussian_adjuster_y_coordinate: Tuple[int, int]
+    shape_plot: "typing.Any"
 
 
-def is_valid_letter(x_var, y_var, image_height, image_width, font_width, font_height):
-    upper_bound = 30
-    right_bound = image_width - font_width - 30
-    left_bound = 30
-    bottom_bound = image_height - font_height - 30
+def is_valid_letter(
+    x_var, y_var, image_height, image_width, font_width, font_height, polygon
+):
     new_x_val = (image_width - font_width) / 2 + x_var
     new_y_val = (image_height - font_height) / 2 + y_var
-    if (
-        new_x_val < right_bound
-        and new_x_val > left_bound
-        and new_y_val > upper_bound
-        and new_y_val < bottom_bound
-    ):
-        return True
-    return False
+    x1 = new_x_val - font_width / 2
+    x2 = new_x_val + font_width / 2
+    y1 = new_y_val - font_width / 2
+    y2 = new_y_val + font_width / 2
+    list_elements = polygon.contains_points((x1, y1), (x1, y2), (x2, y1), (x2, y2))
+    val = True
+    for i in list_elements:
+        val = val and i
+    return val
+
+
+def create_circle(image):
+    return matplotlib.patches.Circle(
+        (image.height / 2, image.height / 2), radius=image.height / 2
+    )
+
+
+def create_pentagon(image):
+    return None
+
+
+def create_rectangle(image):
+    return None
+
+
+def create_square(image):
+    return None
 
 
 def add_alphanumeric(
@@ -364,34 +382,46 @@ def add_alphanumeric(
     standard_deviation = 10
     alpha_info = {
         "circle": alpha_params(
-            (0.35, 0.65), (0, standard_deviation), (-10, standard_deviation)
+            (0.35, 0.65),
+            (0, standard_deviation),
+            (-10, standard_deviation),
+            create_circle(image),
         ),
         "cross": alpha_params(
-            (0.35, 0.65), (0, standard_deviation), (-25, standard_deviation)
+            (0.35, 0.65), (0, standard_deviation), (-25, standard_deviation), None
         ),
         "pentagon": alpha_params(
-            (0.35, 0.65), (0, standard_deviation), (0, standard_deviation)
+            (0.35, 0.65),
+            (0, standard_deviation),
+            (0, standard_deviation),
+            crate_pentagon(image),
         ),
         "quarter-circle": alpha_params(
-            (0.35, 0.65), (14, standard_deviation), (-40, standard_deviation)
+            (0.35, 0.65), (14, standard_deviation), (-40, standard_deviation), None
         ),
         "rectangle": alpha_params(
-            (0.35, 0.7), (0, standard_deviation), (0, standard_deviation)
+            (0.35, 0.7),
+            (0, standard_deviation),
+            (0, standard_deviation),
+            create_rectangle(image),
         ),
         "semicircle": alpha_params(
-            (0.35, 0.75), (0, standard_deviation), (0, standard_deviation)
+            (0.35, 0.75), (0, standard_deviation), (0, standard_deviation), None
         ),
         "square": alpha_params(
-            (0.30, 0.8), (0, standard_deviation), (-10, standard_deviation)
+            (0.30, 0.8),
+            (0, standard_deviation),
+            (-10, standard_deviation),
+            create_square(image),
         ),
         "star": alpha_params(
-            (0.25, 0.55), (0, standard_deviation), (0, standard_deviation)
+            (0.25, 0.55), (0, standard_deviation), (0, standard_deviation), None
         ),
         "trapezoid": alpha_params(
-            (0.25, 0.75), (0, standard_deviation), (-20, standard_deviation)
+            (0.25, 0.75), (0, standard_deviation), (-20, standard_deviation), None
         ),
         "triangle": alpha_params(
-            (0.25, 0.6), (-24, standard_deviation), (12, standard_deviation)
+            (0.25, 0.6), (-24, standard_deviation), (12, standard_deviation), None
         ),
     }
     is_valid = False
@@ -413,7 +443,13 @@ def add_alphanumeric(
         x = (image.width - w) / 2 + x_variance
         y = (image.height - h) / 2 + y_variance
         is_valid = is_valid_letter(
-            x_variance, y_variance, image.width, image.height, w, h
+            x_variance,
+            y_variance,
+            image.width,
+            image.height,
+            w,
+            h,
+            alpha_info[shape].shape_plot,
         )
     draw.text((x, y), alpha, alpha_rgb, font=font)
     return image
