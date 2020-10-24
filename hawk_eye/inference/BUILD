@@ -1,5 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
+
 py_library(
     name = "benchmark_inference",
     srcs = ["benchmark_inference.py"],
@@ -27,4 +28,4 @@ py_library(
     srcs = ["types.py"],
 )
 
-exports_files(["requirements.txt"])
+exports_files(["requirements.txt", "production_models.py"])

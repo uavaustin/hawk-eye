@@ -18,6 +18,7 @@ set -e
 
 echo "Downloading %{BUCKET}/%{FILE} to %{DOWNLOAD_PATH}"
 gsutil cp %{BUCKET}/%{FILE} %{DOWNLOAD_PATH}
+
 digest=$(sha256sum %{DOWNLOAD_PATH} | head -c 64)
 if [ $digest != %{SHA256} ]; then
   echo "actual digest: $digest, expected: %{SHA256}"

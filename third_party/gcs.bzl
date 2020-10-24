@@ -37,11 +37,15 @@ def download_gcs_object(
     download_path,
     file,
     sha256,
-    strip_prefix
+    strip_prefix,
+    output_dir,
+    build_file_content
 ):
+    if not build_file_content:
+        build_file_content = _GCS_FILE_BUILD
 
     # Add a top-level BUILD file to export all the downloaded files.
-    ctx.file("BUILD", _GCS_FILE_BUILD.format(download_path))
+    ctx.file("BUILD", build_file_content.format(download_path))
 
     # Create a bash script from a template.
     ctx.template(
@@ -72,7 +76,7 @@ def download_gcs_object(
         fail("Failed to remove temporary file: %s" % rm_result.stderr)
 
     # Extract the downloaded archive.
-    ctx.extract(download_path, stripPrefix = strip_prefix)
+    ctx.extract(download_path, output = output_dir, stripPrefix = strip_prefix)
 
 def _gcs_file_impl(ctx):
     """Implementation of the gcs_file rule."""
@@ -96,6 +100,7 @@ def _gcs_file_impl(ctx):
         ctx.attr.file,
         ctx.attr.sha256,
         ctx.attr.strip_prefix,
+        ctx.attr.output_dir,
     )
 
 
@@ -117,6 +122,7 @@ gcs_file = repository_rule(
             doc = "The expected SHA-256 of the file downloaded.",
         ),
         "strip_prefix": attr.string(doc = "The contents of the build file for the target"),
+        "output_dir": attr.string(doc = "Where to extract to."),
     },
     implementation = _gcs_file_impl,
 )

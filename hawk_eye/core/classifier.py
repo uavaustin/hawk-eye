@@ -1,6 +1,7 @@
 """ A classifier model which wraps around a backbone. This setup allows for easy
 interchangeability during experimentation and a reliable way to load saved models. """
 
+import pathlib
 import yaml
 
 import torch
@@ -36,8 +37,15 @@ class Classifier(torch.nn.Module):
 
         # If a version is given, download it.
         if timestamp is not None:
-            # Download the model or find it locally.
-            model_path = asset_manager.download_model("classifier", timestamp)
+
+            # For the distributed pip package, look inside `production_models`
+            production_models = pathlib.Path(__file__).parent / "production_models"
+            if production_models.is_dir():
+                model_path = production_models / timestamp
+            else:
+                # Download the model or find it locally.
+                model_path = asset_manager.download_model("classifier", timestamp)
+
             config = yaml.safe_load((model_path / "config.yaml").read_text())["model"]
             backbone = config.get("backbone", None)
             # Construct the model, then load the state

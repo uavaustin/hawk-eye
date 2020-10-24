@@ -35,8 +35,8 @@ def _production_model_impl(repository_ctx):
 
 
 def _download_model(repository_ctx, model_type, model_timestamp, sha256,):
-    # Add a top-level BUILD file to export all the downloaded files.
-    download_path = "%s.tar.gz" % model_timestamp
+
+    download_path = "%s/%s.tar.gz" % (model_type, model_timestamp)
     download_path = repository_ctx.path(download_path)
 
     download_gcs_object(
@@ -46,6 +46,14 @@ def _download_model(repository_ctx, model_type, model_timestamp, sha256,):
         "%s/%s.tar.gz" % (model_type, model_timestamp),
         sha256,
         "",
+        model_timestamp,
+        """
+package(default_visibility = ["//visibility:public"])
+filegroup(
+    name = "file",
+    srcs = glob(["%s/*"]),
+)
+""" % model_timestamp
     )
 
 

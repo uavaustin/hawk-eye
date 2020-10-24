@@ -37,8 +37,12 @@ class Detector(torch.nn.Module):
         # If a timestamp is given, download it.
         if timestamp is not None:
 
-            # Download the model. This has the yaml containing the backbone.
-            model_path = asset_manager.download_model("detector", timestamp)
+            if pathlib.Path(timestamp).is_dir():
+                model_path = pathlib.Path(timestamp)
+            else:
+                # Download the model. This has the yaml containing the backbone.
+                model_path = asset_manager.download_model("detector", timestamp)
+
             config = yaml.safe_load((model_path / "config.yaml").read_text())
             model_params = config["model"]
             self._load_params(config["model"])

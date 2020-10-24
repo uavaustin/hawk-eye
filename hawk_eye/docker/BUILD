@@ -5,6 +5,10 @@ load(
     "container_layer",
 )
 
+load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
+
+
+
 # This rule takes the version.txt and makes a version.py for
 # importing in the python package.
 genrule(
@@ -44,4 +48,25 @@ container_layer(
     ],
     data_path = ".",
     symlinks = {"/home/runs": "/production_models"}
+)
+
+pkg_tar(
+    name = "hawk_eye_pkg",
+    strip_prefix = ".",
+    package_dir = "/",
+    srcs = [
+        ":hawk_eye_srcs"
+    ],
+)
+
+filegroup(
+    name = "hawk_eye_srcs",
+    srcs = [
+        "//hawk_eye/inference:find_targets.py",
+        "//hawk_eye/inference:types.py",
+        "//hawk_eye/inference:production_models.py",
+        "//hawk_eye/core:classifier.py",
+        "//hawk_eye/core:detector.py",
+        "@classification_model//:file"
+    ],
 )
