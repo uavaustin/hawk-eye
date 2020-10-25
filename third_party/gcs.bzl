@@ -39,7 +39,7 @@ def download_gcs_object(
     sha256,
     strip_prefix,
     output_dir,
-    build_file_content
+    build_file_content = None
 ):
     if not build_file_content:
         build_file_content = _GCS_FILE_BUILD

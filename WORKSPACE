@@ -21,61 +21,6 @@ http_archive(
     ],
 )
 
-http_archive(
-    name = "io_bazel_rules_docker",
-    sha256 = "4521794f0fba2e20f3bf15846ab5e01d5332e587e9ce81629c7f96c793bb7036",
-    strip_prefix = "rules_docker-0.14.4",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.14.4/rules_docker-v0.14.4.tar.gz"],
-)
-
-load(
-    "@io_bazel_rules_docker//repositories:repositories.bzl",
-    container_repositories = "repositories",
-)
-container_repositories()
-
-load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
-container_deps()
-
-load("@io_bazel_rules_docker//repositories:pip_repositories.bzl", "pip_deps")
-pip_deps()
-
-load(
-    "@io_bazel_rules_docker//container:container.bzl",
-    "container_pull",
-)
-load(
-    "@io_bazel_rules_docker//repositories:repositories.bzl",
-    container_repositories = "repositories",
-)
-container_repositories()
-
-# Load the macro that allows you to customize the docker toolchain configuration.
-load(
-    "@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
-    docker_toolchain_configure = "toolchain_configure",
-)
-
-# Get the Docker Hub credentials.
-docker_toolchain_configure(
-    name = "docker_config",
-    client_config = "~/.docker",
-)
-
-container_pull(
-    name = "ubuntu",
-    digest = "sha256:e1cafd8b0ea424f0b02ab69c3f63580a1cf643ffc1f30bfd6f4946f6d2302acd",
-    registry = "nvcr.io",
-    repository = "nvidia/tensorrt:20.07.1-py3",
-)
-
-container_pull(
-    name = "amd64_base",
-    digest = "sha256:547dc36b81eddb7ca8eadd956c61bd96bf432486830701b3dbb019be7f6c9ce2",
-    registry = "nvcr.io",
-    repository = "nvidia/l4t-base:r32.4.3",
-)
-
 load("//third_party:gcs.bzl", "gcs_file")
 
 gcs_file(
@@ -103,7 +48,7 @@ gcs_file(
     strip_prefix = "fonts",
 )
 
-load("//hawk_eye/docker:models.bzl", "production_model")
+load("//hawk_eye/core:models.bzl", "production_model")
 production_model(
     name = "classification_model",
     type = "classifier",
@@ -112,12 +57,3 @@ production_model(
     name = "detection_model",
     type = "detector",
 )
-
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-http_archive(
-    name = "rules_pkg",
-    url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
-    sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
-)
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-rules_pkg_dependencies()
