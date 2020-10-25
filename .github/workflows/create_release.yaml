@@ -16,6 +16,14 @@ jobs:
       - name: Setup Machine
         run: ./docs/setup_linux.sh
 
+      - name: Authenticate on GCS
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '290.0.1'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
       - name: Create hawk_eye .whl package
         run: ./setup.py bdist_wheel
 
