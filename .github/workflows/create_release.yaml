@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          release_artifact: ${{ format('hawk_eye-{0}-py3-none-any.whl', ${{ github.ref }}) }}
+          release_artifact: ${{ format('{{hawk_eye-{0}-py3-none-any.whl}}', ${{ github.ref }}) }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: format('./dist/{0}', ${{ release_artifact }})
