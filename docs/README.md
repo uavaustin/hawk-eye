@@ -65,6 +65,14 @@ The data will be saved as a COCO formatted archive.
 
 ## Bazel
 
+`Bazel` is an open-sourced Google product used for a variety of build environments. Right
+now, we mainly use it for python testing, but if PyTorch eventually supports building
+itself as an external third party project, we might start using the C++ PyTorch API.
+
+For now, if you're interested,
+[`here`](https://docs.bazel.build/versions/master/user-manual.html)
+is some documentation.
+
 ## Distribution
 
 Once Image Recognition has an inference pipeline we'd like Infrastructure to use, we need
