@@ -12,6 +12,7 @@ This file is meant to encompass some tips, tricks, and general documetation for
 * [`Testing`](#testing)
 * [`Bazel`](#bazel)
 * [`hawk_eye Distibution`](#distribution)
+* [`Style`](#style)
 
 ## Setup
 This projects works best with Linux, WSL, and Mac systems. The `setup_linux.sh` script
@@ -59,9 +60,46 @@ The data will be saved as a COCO formatted archive.
 
 ## Model Training
 
+See example model configurations in `models/configs` for inspiration on a model
+architecture. Check out `torchvision` for more possibilities. An example
+training command is:
+
+```
+PYTHONPATH=. hawk_eye/train/train_clf.py \
+    --model_config configs/vovnet.yaml
+```
+
+Use a detector config with `hawk_eye/train/train_det.py`:
+
+```
+PYTHONPATH=. hawk_eye/train/train_det.py \
+    --model_config configs/vovnet-det.yaml
+```
+
+Most model architectures will be located in `third_party` since we typically implement
+other researchers' models. Each model will save itself to `~/runs/uav-{model_type}`.
+Inside the timestamped archive, you can find the training log, a tensorboard file, and
+the saved weights.
+
 ## Inference
 
 ## Testing
+
+Testing is done with `bazel`, but you can alternatively run each test_*.py as a python
+executable.
+
+Please look inside the `test` folder for more information. In short, there are python
+unit tests and `flake8` style tests. We'll use bazel to run all the test targets:
+
+```
+bazel test //...
+```
+
+To run the style tests:
+
+```
+flake8
+```
 
 ## Bazel
 
@@ -91,3 +129,9 @@ To create the wheel locally, run:
 
 A `.whl` file will be generated inside of `./dist/` and be named in accordance with the
 version inside of `version.txt`.
+
+## Style
+
+All python code will be automatically formatted using `Black` through `pre-commit`.
+`flake8` will be employed to correct any other style errors. Please familiarize yourself
+with the [`Google python style guide`](https://google.github.io/styleguide/pyguide.html).

@@ -59,22 +59,3 @@ PYTHONPATH=$(pwd) inference/find_targets.py \
 ```
 The command above will visualize and save the models' predictions. See
 `inference/find_targets.py` for the full list of available arguments.
-
-
-## Testing
-
-Please look inside the `test` folder for more information. In short, there are python
-unit tests and `flake8` style tests. We'll use bazel to run the test targets:
-
-```bazel test //...```
-
-To run the style tests:
-
-```flake8```
-
-
-## Style
-
-All python code will be automatically formatted using `Black` through `pre-commit`.
-`flake8` will be employed to correct any other style errors. Please familiarize yourself
-with the [`Google python style guide`](https://google.github.io/styleguide/pyguide.html).
