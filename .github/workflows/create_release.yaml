@@ -9,11 +9,14 @@ jobs:
   build:
     name: Create Release
     runs-on: ubuntu-latest
-    env:
-      release_artifact: format('{{hawk_eye-{0}-py3-none-any.whl}}', ${{ github.ref }})
+
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Get tag
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
 
       - name: Setup Machine
         run: ./docs/setup_linux.sh
@@ -47,6 +50,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: format('./dist/{0}', ${{ env.release_artifact }})
-          asset_name: ${{ env.release_artifact }}
+          asset_path: format('./dist/{0}', ${{ env.RELEASE_VERSION }})
+          asset_name: ${{ env.RELEASE_VERSION }}
           asset_content_type: application/zip
