@@ -83,6 +83,19 @@ the saved weights.
 
 ## Inference
 
+Inference on an image will utilize both the classifier and object detector models.
+The inference script can be run as follows:
+
+```
+PYTHONPATH=$(pwd) inference/find_targets.py \
+    --image_path /path/to/image \
+    --visualization_dir /path/to/save
+```
+The command above will visualize and save the models' predictions. See
+`inference/find_targets.py` for the full list of available arguments.
+
+One can also specify the model timestamps if you have a certain model to test.
+
 ## Testing
 
 Testing is done with `bazel`, but you can alternatively run each test_*.py as a python
