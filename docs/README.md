@@ -44,10 +44,10 @@ bazel test //...
 ## Data Generation
 
 Before we can ever train a model we need data. In our project, we create artificial data
-using various python libraries. Inside of `hawk_eye/data_generation` you'll fine the
+using various python libraries. Inside of `hawk_eye/data_generation` you'll find the
 scripts related to data processing.
 
-#### files
+#### Contents
 * `config.yaml`: The file containing many of the tweakable parameters for data
 generation.
 * `create_clf_data.py`: Creates classification data. This is binary data, in other words,
@@ -66,3 +66,20 @@ The data will be saved as a COCO formatted archive.
 ## Bazel
 
 ## Distribution
+
+Once Image Recognition has an inference pipeline we'd like Infrastructure to use, we need
+to create a `pip` package for them to access. We do this using `setuptools` and a
+`setup.py` script.
+
+Any time a new release is created on Github, the `.github/workflows/create_release.yaml`
+workflow will be kicked off and upload a generic python wheel. This `.whl` file contains
+our necessary inference code and the models for inferencing.
+
+To create the wheel locally, run:
+
+```
+./setup.py bdist_wheel
+```
+
+A `.whl` file will be generated inside of `./dist/` and be named in accordance with the
+version inside of `version.txt`.
