@@ -18,13 +18,17 @@ from hawk_eye.inference import production_models
 
 __version__ = pathlib.Path("version.txt").read_text()
 
-_REQUIRED_PACKAGES = [
-    "pillow=8.0.0.dev0",
-]
 _MODELS_DIR = pathlib.Path.cwd() / "hawk_eye/core/production_models"
 
-# if platform.processor() == "x86_64":
-#    _REQUIRED_PACKAGES += [pathlib.Path("requirements-gpu.txt").read_text().splitlines()]
+
+def _get_packages() -> List[str]:
+    all_deps = pathlib.Path("requirements.txt").read_text().splitlines()
+    deps = []
+    for dep in all_deps:
+        if "numpy" in dep or "pillow" in dep:
+            deps.append(dep)
+
+    return deps
 
 
 class Build(build.build):
@@ -35,19 +39,6 @@ class Build(build.build):
         build.build.finalize_options(self)
 
     def run(self) -> None:
-        deps = []
-        cpu_arch = platform.processor()
-        if False:
-            print("Downloading pre-build ARM PyTorch whl.")
-            with tempfile.TemporaryDirectory() as d:
-                tmp_whl = pathlib.Path(d) / "torch-1.6.0-cp36-cp36m-linux_aarch64.whl"
-                r = requests.get(
-                    "https://nvidia.box.com/shared/static/9eptse6jyly1ggt9axbja2yrmj6pbarc.whl",
-                    stream=True,
-                )
-                tmp_whl.write_bytes(r.raw.read())
-                subprocess.check_call([sys.executable, "-m", "pip", "install", tmp_whl])
-
         self.run_command("prepare_models")
         build.build.run(self)
 
@@ -96,8 +87,9 @@ setuptools.setup(
     description=("Find targets"),
     author="UAV Austin Image Recognition",
     packages=setuptools.find_packages(),
-    cmdclass={"build": Build, "prepare_models": PrepareModels,},
+    cmdclass={"build": Build, "prepare_models": PrepareModels},
     include_package_data=True,
+    install_requires=_get_packages(),
 )
 
 shutil.rmtree(_MODELS_DIR)
