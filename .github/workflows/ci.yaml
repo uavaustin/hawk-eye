@@ -54,12 +54,5 @@ jobs:
       run: |
         bazel test --test_output=streamed //...
 
-    - name: Build and push ARM Container
-      run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          bazel run //:push_hawk_eye_arm
-        fi
-      shell: bash
-
     - name: Style Test
       run: flake8
