@@ -2,6 +2,9 @@
 
 import pathlib
 import logging
+import torch
+import torchvision
+from torchvision import datasets, transforms
 
 
 class Log:
@@ -35,4 +38,9 @@ class Log:
     def error(self, message: str) -> None:
         logging.error(message)
 
-    # def metric
+        from torch.utils.tensorboard import SummaryWriter
+
+        writer = SummaryWriter(log_file)
+
+    def metric(self, name, log, position):
+        writer.add_scalar(name, log, position)
