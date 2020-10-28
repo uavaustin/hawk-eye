@@ -5,6 +5,7 @@ import logging
 import torch
 import torchvision
 from torchvision import datasets, transforms
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Log:
@@ -28,6 +29,8 @@ class Log:
         console.setFormatter(formatter)
         # add the handler to the root logger
         logging.getLogger("").addHandler(console)
+        # to save runs for tensorboard
+        self.writer = SummaryWriter(log_dir=log_file.parent)
 
     def info(self, message: str) -> None:
         logging.info(message)
@@ -38,9 +41,5 @@ class Log:
     def error(self, message: str) -> None:
         logging.error(message)
 
-        from torch.utils.tensorboard import SummaryWriter
-
-        writer = SummaryWriter(log_file)
-
     def metric(self, name, log, position):
-        writer.add_scalar(name, log, position)
+        self.writer.add_scalar(name, log, position)

@@ -233,6 +233,8 @@ def train(
 
             log.metric("new model highest score", new_model_highest_score, epoch)
             log.metric("model highest score", scores["model_highest_score"], epoch)
+            log.metric("new ema highest score", new_ema_highest_score, epoch)
+            log.metric("ema highest score", scores["ema_highest_score"], epoch)
 
 
 @torch.no_grad()
