@@ -26,7 +26,7 @@ class Log:
         console.setFormatter(formatter)
         # add the handler to the root logger
         logging.getLogger("").addHandler(console)
-        self.met = SummaryWriter()
+        self.met = SummaryWriter(log_dir=log_file.parent)
 
     def info(self, message: str) -> None:
         logging.info(message)
