@@ -6,7 +6,10 @@ import yaml
 
 import torch
 
-from hawk_eye.core import asset_manager
+try:
+    from hawk_eye.core import asset_manager
+except ModuleNotFoundError:
+    pass
 from third_party.rexnet import rexnet
 from third_party.vovnet import vovnet
 

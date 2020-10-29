@@ -6,9 +6,7 @@ import yaml
 
 ARCHIVE_FILENAME = re.compile("^[^.]*")
 
-config = yaml.safe_load(
-    pathlib.Path("hawk_eye/data_generation/config.yaml").read_text()
-)
+config = yaml.safe_load((pathlib.Path(__file__).parent / "config.yaml").read_text())
 generate_config = config["generate"]
 
 # This is where we are going to store all the assets.

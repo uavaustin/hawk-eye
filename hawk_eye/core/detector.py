@@ -9,7 +9,10 @@ import yaml
 
 import torch
 
-from hawk_eye.core import asset_manager
+try:
+    from hawk_eye.core import asset_manager
+except ModuleNotFoundError:
+    pass
 from hawk_eye.core import fpn
 from third_party.vovnet import vovnet
 from third_party.models import postprocess
