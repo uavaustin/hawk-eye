@@ -1,0 +1,87 @@
+classes:
+  shapes:
+    - circle
+    - cross
+    - pentagon
+    - quarter-circle
+    - rectangle
+    - semicircle
+    - square
+    - star
+    - trapezoid
+    - triangle
+  alphas:
+    - A
+    - B
+    - C
+    - D
+    - E
+    - F
+    - G
+    - H
+    - I
+    - J
+    - K
+    - L
+    - M
+    - N
+    - O
+    - P
+    - Q
+    - R
+    - S
+    - T
+    - U
+    - V
+    - W
+    - X
+    - Y
+    - Z
+    - "1"
+    - "2"
+    - "3"
+    - "4"
+    - "5"
+    - "6"
+    - "7"
+    - "8"
+    - "9"
+  types:
+    - "background"
+    - "target"
+inputs:
+  full_image:
+    width: 1920
+    height: 1072
+  cropping:
+    width: 512
+    height: 512
+    overlap: 100
+  detector:
+    width: 512
+    height: 512
+  preclf:
+    width: 224
+    height: 224
+generate:
+  backgrounds_archives: [
+    "competition-2018.tar.gz",
+    "competition-2019.tar.gz",
+    "test_flight_20190215.tar.gz"
+  ]
+  base_shapes_version: ["v1"]
+  max_shapes_per_image: 2
+  threads: 0
+  delete_on_convert: false
+  img_ext: png
+  detection:
+    # The detectors we use can train on images with no targets.
+    empty_slice_probability: 0.2
+    train_offset: 0
+    train_images: 10
+    val_offset: 0
+    val_images: 0
+  classification:
+    offset: 0
+    images: 50
+    val_fraction: 0.2

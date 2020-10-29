@@ -4,3 +4,10 @@ bazel-*
 
 data_generation/data
 data_generation/assets
+
+build
+dist
+*.egg*
+
+# Maybe left over from ./setup.py
+hawk_eye/core/production_models
