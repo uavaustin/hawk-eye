@@ -24,11 +24,6 @@ except ImportError as e:
 import torch
 import numpy as np
 
-import torch
-import torchvision
-from torch.utils.tensorboard import SummaryWriter
-from torchvision import datasets, transforms
-
 from core import asset_manager
 from core import classifier
 from data_generation import generate_config
@@ -234,11 +229,6 @@ def train(
             log.metric("Best model score", scores["best_model_score"], epoch)
             log.metric("EMA score", ema_score, epoch)
             log.metric("Best EMA score", scores["best_ema_score"], epoch)
-
-            log.metric("new model highest score", new_model_highest_score, epoch)
-            log.metric("model highest score", scores["model_highest_score"], epoch)
-            log.metric("new ema highest score", new_ema_highest_score, epoch)
-            log.metric("ema highest score", scores["ema_highest_score"], epoch)
 
 
 @torch.no_grad()
