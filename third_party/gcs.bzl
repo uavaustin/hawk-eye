@@ -19,7 +19,7 @@ To install gsutil, please refer to:
   https://cloud.google.com/storage/docs/gsutil
 You need to have read access to the GCS bucket.
 
-# Extended by UAV for usability.
+# Extended by UAV for further usability.
 """
 
 _GCS_FILE_BUILD = """
@@ -29,6 +29,54 @@ filegroup(
     srcs = glob(["**/*"]),
 )
 """
+
+
+def download_gcs_object(
+    ctx,
+    bucket,
+    download_path,
+    file,
+    sha256,
+    strip_prefix,
+    output_dir,
+    build_file_content = None
+):
+    if not build_file_content:
+        build_file_content = _GCS_FILE_BUILD
+
+    # Add a top-level BUILD file to export all the downloaded files.
+    ctx.file("BUILD", build_file_content.format(download_path))
+
+    # Create a bash script from a template.
+    ctx.template(
+        "gsutil_cp_and_validate.sh",
+        Label("//third_party:gsutil_cp_and_validate.sh.tpl"),
+        {
+            "%{BUCKET}": bucket,
+            "%{DOWNLOAD_PATH}": download_path,
+            "%{FILE}": file,
+            "%{SHA256}": sha256,
+        },
+    )
+
+    gsutil_cp_and_validate_result = ctx.execute(["bash", "gsutil_cp_and_validate.sh"])
+    if gsutil_cp_and_validate_result.return_code == 255:
+        fail("SHA256 of file {} from bucket {} does not match given SHA256: {} {}".format(
+            file,
+            bucket,
+            gsutil_cp_and_validate_result.stdout,
+            gsutil_cp_and_validate_result.stderr,
+        ))
+    elif gsutil_cp_and_validate_result.return_code != 0:
+        fail("gsutil cp command failed: %s" % (gsutil_cp_and_validate_result.stderr))
+
+    rm_result = ctx.execute(["rm", "gsutil_cp_and_validate.sh"])
+
+    if rm_result.return_code:
+        fail("Failed to remove temporary file: %s" % rm_result.stderr)
+
+    # Extract the downloaded archive.
+    ctx.extract(download_path, output = output_dir, stripPrefix = strip_prefix)
 
 def _gcs_file_impl(ctx):
     """Implementation of the gcs_file rule."""
@@ -45,39 +93,16 @@ def _gcs_file_impl(ctx):
     if download_path in forbidden_files or not str(download_path).startswith(str(repo_root)):
         fail("'%s' cannot be used as downloaded_file_path in gcs_file" % ctx.attr.downloaded_file_path)
 
-    # Add a top-level BUILD file to export all the downloaded files.
-    ctx.file("BUILD", _GCS_FILE_BUILD.format(downloaded_file_path))
-
-    # Create a bash script from a template.
-    ctx.template(
-        "gsutil_cp_and_validate.sh",
-        Label("@bazel_toolchains//rules:gsutil_cp_and_validate.sh.tpl"),
-        {
-            "%{BUCKET}": ctx.attr.bucket,
-            "%{DOWNLOAD_PATH}": str(download_path),
-            "%{FILE}": ctx.attr.file,
-            "%{SHA256}": ctx.attr.sha256,
-        },
+    download_gcs_object(
+        ctx,
+        ctx.attr.bucket,
+        str(download_path),
+        ctx.attr.file,
+        ctx.attr.sha256,
+        ctx.attr.strip_prefix,
+        ctx.attr.output_dir,
     )
 
-    gsutil_cp_and_validate_result = ctx.execute(["bash", "gsutil_cp_and_validate.sh"])
-    if gsutil_cp_and_validate_result.return_code == 255:
-        fail("SHA256 of file {} from bucket {} does not match given SHA256: {} {}".format(
-            ctx.attr.file,
-            ctx.attr.bucket,
-            gsutil_cp_and_validate_result.stdout,
-            gsutil_cp_and_validate_result.stderr,
-        ))
-    elif gsutil_cp_and_validate_result.return_code != 0:
-        fail("gsutil cp command failed: %s" % (gsutil_cp_and_validate_result.stderr))
-
-    rm_result = ctx.execute(["rm", "gsutil_cp_and_validate.sh"])
-
-    if rm_result.return_code:
-        fail("Failed to remove temporary file: %s" % rm_result.stderr)
-
-    # Extract the downloaded archive.
-    ctx.extract(download_path, stripPrefix = ctx.attr.strip_prefix)
 
 gcs_file = repository_rule(
     attrs = {
@@ -97,6 +122,7 @@ gcs_file = repository_rule(
             doc = "The expected SHA-256 of the file downloaded.",
         ),
         "strip_prefix": attr.string(doc = "The contents of the build file for the target"),
+        "output_dir": attr.string(doc = "Where to extract to."),
     },
     implementation = _gcs_file_impl,
 )

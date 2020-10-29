@@ -32,9 +32,9 @@ def conv3x3(in_channels: int, out_channels: int):
 
 
 class RetinaNetHead(torch.nn.Module):
-    """ This model head contains two components: classification and box regression.
+    """This model head contains two components: classification and box regression.
     See the original RetinaNet paper for more details,
-    https://arxiv.org/pdf/1708.02002.pdf. """
+    https://arxiv.org/pdf/1708.02002.pdf."""
 
     def __init__(
         self,
@@ -92,8 +92,8 @@ class RetinaNetHead(torch.nn.Module):
     def __call__(
         self, feature_maps: collections.OrderedDict
     ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
-        """ Applies the regression and classification subnets to each of the
-        incoming feature maps. """
+        """Applies the regression and classification subnets to each of the
+        incoming feature maps."""
 
         bbox_regressions, classifications = [], []
 

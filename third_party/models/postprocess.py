@@ -16,7 +16,7 @@ class BoundingBox:
 
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/modeling/meta_arch/retinanet.py
 def permute_to_N_HWA_K(retina_tensor: torch.Tensor, num_classes: int) -> torch.Tensor:
-    """ Transpose/reshape a tensor from (N, (A x K), H, W) to (N, (HxWxA), K). This is
+    """Transpose/reshape a tensor from (N, (A x K), H, W) to (N, (HxWxA), K). This is
     the tensor outputted from the RetinaNet head per pyramid level.
     Usage:
     >>> permute_to_N_HWA_K(torch.randn(1, 4 * 9, 4, 4), 4).shape
@@ -34,7 +34,7 @@ def permute_to_N_HWA_K(retina_tensor: torch.Tensor, num_classes: int) -> torch.T
 def permute_to_N_HWA_K_and_concat(
     box_cls: List[torch.Tensor], box_delta: List[torch.Tensor], num_classes: int
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """ Rearrange the tensor layout from the network output, i.e.: list[Tensor]: #lvl
+    """Rearrange the tensor layout from the network output, i.e.: list[Tensor]: #lvl
     tensors of shape (N, A x K, Hi, Wi) to per-image predictions, i.e.:
     Tensor: of shape (N x sum(Hi x Wi x A), K)
     Args:
@@ -61,8 +61,8 @@ def permute_to_N_HWA_K_and_concat(
 
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/layers/wrappers.py
 def cat(tensors, dim=0):
-    """ Efficient version of torch.cat that avoids a copy if there
-    is only a single element in a list. """
+    """Efficient version of torch.cat that avoids a copy if there
+    is only a single element in a list."""
     assert isinstance(tensors, (list, tuple))
     if len(tensors) == 1:
         return tensors[0]
@@ -81,7 +81,7 @@ class PostProcessor:
         nms_threshold: float = 0.5,
         topk_candidates: int = 100,
     ) -> None:
-        """ This class will parse the model's class predictions and box
+        """This class will parse the model's class predictions and box
         regressions and return the output boxes.
 
         Args:
@@ -125,7 +125,7 @@ class PostProcessor:
     def inference_batch(
         self, box_cls: torch.Tensor, box_delta: torch.Tensor
     ) -> List[List[BoundingBox]]:
-        """ Single-image inference. Return bounding-box detection results by
+        """Single-image inference. Return bounding-box detection results by
         thresholding on scores and applying non-maximum suppression (NMS).
         Arguments:
             box_cls: list of #feature levels. Each entry contains
