@@ -389,7 +389,7 @@ if __name__ == "__main__":
         help="Optional directory to save visualization to.",
     )
     parser.add_argument(
-        "--save_json_data", action="store_true", help="Optional to not save JSON data",
+        "--save_json_data", action="store_true", help="Save JSON data if specified.",
     )
     args = parser.parse_args()
 
