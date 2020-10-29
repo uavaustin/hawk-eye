@@ -226,11 +226,10 @@ def train(
                 f"Best model accuracy: {scores['best_model_score']:.5f}\n"
                 f"Best EMA accuracy: {scores['best_ema_score']:.5f} \n"
             )
-            # BP Updated
-            log.metric("model_score", model_score, epoch)
-            log.metric("best_model_score", scores["best_model_score"], epoch)
-            log.metric("ema_score", ema_score, epoch)
-            log.metric("best_ema_score", scores["best_ema_score"], epoch)
+            log.metric("Model score", model_score, epoch)
+            log.metric("Best model score", scores["best_model_score"], epoch)
+            log.metric("EMA score", ema_score, epoch)
+            log.metric("Best EMA score", scores["best_ema_score"], epoch)
 
 
 @torch.no_grad()
@@ -252,7 +251,6 @@ def evaluate(
     """
     num_correct = total_num = 0
 
-    print(eval_loader)
     for data, labels in eval_loader:
         data = data.permute(0, 3, 1, 2)
         data = data.to(device, non_blocking=True)

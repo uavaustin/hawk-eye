@@ -26,7 +26,7 @@ class Log:
         console.setFormatter(formatter)
         # add the handler to the root logger
         logging.getLogger("").addHandler(console)
-        self.met = SummaryWriter(log_dir=log_file.parent)
+        self.tensorboard_writer = SummaryWriter(log_dir=log_file.parent)
 
     def info(self, message: str) -> None:
         logging.info(message)
@@ -37,10 +37,6 @@ class Log:
     def error(self, message: str) -> None:
         logging.error(message)
 
-    # Method metric
-    # logs the tensorboard information
-    # the the add_scalar args and and passes it to the add_scalar
-    def metric(self, metric_tag, metric_value, metric_epoch):
-        self.met.add_scalar(
-            metric_tag, metric_value, metric_epoch,
-        )
+    # logs metric to tensorboard
+    def metric(self, tag, value, epoch):
+        self.tensorboard_writer.add_scalar(tag, value, epoch)
