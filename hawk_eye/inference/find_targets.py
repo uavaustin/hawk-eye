@@ -328,23 +328,22 @@ def save_target_meta(
     filename_meta: pathlib.Path, filename_image: str, targets: List[types.Target]
 ) -> None:
     """ Save target metadata to a file. """
-    with open(filename_meta, "w") as f:
-        meta = {}
-        for idx, target in enumerate(targets):
-            meta[f"target-{idx}"] = {
-                "x": target.x,
-                "y": target.y,
-                "width": target.width,
-                "height": target.height,
-                "orientation": target.orientation,
-                "shape": target.shape.name.lower(),
-                "background_color": target.background_color.name.lower(),
-                "alphanumeric": target.alphanumeric,
-                "alphanumeric_color": target.alphanumeric_color.name.lower(),
-                "image": filename_image,
-                "confidence": target.confidence,
-            }
-        filename_meta.write_text(json.dumps(meta, indent=2))
+    meta = {}
+    for idx, target in enumerate(targets):
+        meta[f"target-{idx}"] = {
+            "x": target.x,
+            "y": target.y,
+            "width": target.width,
+            "height": target.height,
+            "orientation": target.orientation,
+            "shape": target.shape.name.lower(),
+            "background_color": target.background_color.name.lower(),
+            "alphanumeric": target.alphanumeric,
+            "alphanumeric_color": target.alphanumeric_color.name.lower(),
+            "image": filename_image,
+            "confidence": target.confidence,
+        }
+    filename_meta.write_text(json.dumps(meta, indent=2))
 
 
 if __name__ == "__main__":
