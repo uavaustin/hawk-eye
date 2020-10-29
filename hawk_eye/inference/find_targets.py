@@ -217,8 +217,6 @@ def find_targets(
     # visualization.
     target_tiles, retval = [], []
 
-    start = time.perf_counter()
-
     # Get the image slices.
     for tiles_batch, coords in create_batches(image_tensor, coords, 200):
 
