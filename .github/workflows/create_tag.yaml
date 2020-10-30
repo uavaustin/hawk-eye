@@ -5,6 +5,8 @@ on:
     branches:
       - test-version
 
+name: Create Tag
+
 jobs:
 
   create_tag:
@@ -19,6 +21,7 @@ jobs:
       - name: Get current version
         run: |
           echo "name=RELEASE_VERSION" >> `cat version.txt`
+          echo $RELEASE_VERSION
 
       - name: See if version exists
         run: |
