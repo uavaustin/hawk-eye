@@ -76,8 +76,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{format('v{0}', needs.create_tag.steps.release_version)}}
-          release_name: ${{format('v{0}', needs.create_tag.steps.release_version)}}
+          tag_name: ${{ format('v{0}', ${{ needs.create_tag.steps.create_release }}) }}
+          release_name: ${{ format('v{0}', ${{ needs.create_tag.steps.create_release }}) }}
           draft: false
           prerelease: false
 
@@ -88,6 +88,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{format('./dist/hawk_eye-{0}-py3-none-any.whl', needs.create_tag.steps.release_version)}}
-          asset_name: ${{format('hawk_eye-{0}-py3-none-any.whl', needs.create_tag.steps.release_version)}}
+          asset_path: ${{format('./dist/hawk_eye-{0}-py3-none-any.whl', ${{ needs.create_tag.steps.create_release }})}}
+          asset_name: ${{format('hawk_eye-{0}-py3-none-any.whl', ${{ needs.create_tag.steps.create_release }})}}
           asset_content_type: application/zip
