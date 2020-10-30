@@ -28,9 +28,9 @@ jobs:
         run: |
           if [[ $(git tag -l v$release_version) ]]; then
             echo Version v$release_version already exists.;
-            echo "::set-output name=create_release::'False'"
+            echo "::set-output name=create_release::False"
           else
-            echo "::set-output name=create_release::'True'"
+            echo "::set-output name=create_release::True"
             git tag v$release_version;
             git push origin v$release_version;
           fi
