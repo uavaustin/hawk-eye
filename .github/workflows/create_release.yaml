@@ -51,6 +51,17 @@ jobs:
       - name: Set Tag
         run:  echo release_version="$(cat version.txt)" >> $GITHUB_ENV
 
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: 'v$release_version'
+          release_name: 'v$release_version'
+          draft: false
+          prerelease: false
+
       - name: Setup Machine
         run: ./docs/setup_linux.sh
 
@@ -73,16 +84,7 @@ jobs:
       - name: Create hawk_eye .whl package
         run: ./setup.py bdist_wheel
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: 'v$release_version'
-          release_name: 'v$release_version'
-          draft: false
-          prerelease: false
+
 
       - name: Upload Release Python Wheel
         id: upload-release-asset
