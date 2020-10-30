@@ -25,10 +25,9 @@ jobs:
         run: |
           echo release_version="$(cat version.txt)" >> $GITHUB_ENV
 
-
       - name: See if version exists
         run: |
-          if [ $(git tag -l v$release_version) ]; then
+          if [[ $(git tag -l v$release_version) ]]; then
             echo Version v$release_version already exists.;
           else
             git tag v$release_version;
