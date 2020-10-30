@@ -12,4 +12,6 @@ else
     sudo apt-get update -y && sudo apt-get install -y google-cloud-sdk
 fi
 gcloud init
-gcloud auth login
+gcloud auth application-default login
+
+export GOOGLE_APPLICATION_CREDENTIALS="~/zeta-time-285220-29e924f9a463.json"

@@ -20,9 +20,9 @@ jobs:
 
       - name: Get current version
         run: |
-          echo "$(cat version.txt)" > RELEASE_VERSION
-          echo RELEASE_VERSION
+          echo release_version="$(cat version.txt)" >> $GITHUB_ENV
+          echo $release_version
 
       - name: See if version exists
         run: |
-          if [ $(git tag -l "RELEASE_VERSION") ]; then     echo yes; else     echo no; f
+          if [ $(git tag -l $release_version) ]; then     echo yes; else     echo no; f
