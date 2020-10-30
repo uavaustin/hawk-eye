@@ -41,7 +41,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-    if: github_env.create_release == "True"
+    if: jobs.create_tag.env.create_release == "True"
 
     steps:
 
