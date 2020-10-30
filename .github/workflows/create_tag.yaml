@@ -3,13 +3,13 @@ on:
   # but only for the main branch
   push:
     branches:
-      - master
+      - test-version
 
 jobs:
 
   create_tag:
     name: Create Release
-    runs-on: ubuntu-latest'
+    runs-on: ubuntu-latest
 
     steps:
 
