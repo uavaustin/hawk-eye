@@ -1,6 +1,6 @@
 on:
-  # Trigger the workflow on push,
-  # but only for the main branch
+  # Trigger the workflow on push to master to create version.
+  # This will also trigger the release workflow.
   push:
     branches:
       - test-version
@@ -20,7 +20,7 @@ jobs:
 
       - name: Get current version
         run: |
-          echo $(cat version.txt) > RELEASE_VERSION
+          echo "$(cat version.txt)" > RELEASE_VERSION
           echo RELEASE_VERSION
 
       - name: See if version exists
