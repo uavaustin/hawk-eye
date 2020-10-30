@@ -36,7 +36,7 @@ jobs:
 
   # Conditional on if we have a new tag
   create_release:
-    if: create_release == "True"
+    if: $create_release == "True"
 
     name: Create Release
     runs-on: ubuntu-latest
