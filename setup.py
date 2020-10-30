@@ -80,16 +80,17 @@ class PrepareModels(build.build):
                 _MODELS_DIR / production_models._DETECTOR["timestamp"],
             )
 
+        shutil.rmtree(_MODELS_DIR)
+
 
 setuptools.setup(
     name="hawk_eye",
     version=__version__,
     description=("Find targets"),
     author="UAV Austin Image Recognition",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["hawk_eye.core.asset_manager"]),
     cmdclass={"build": Build, "prepare_models": PrepareModels},
     include_package_data=True,
     install_requires=_get_packages(),
+    test_suite="hawk_eye.test.test_inference",
 )
-
-shutil.rmtree(_MODELS_DIR)

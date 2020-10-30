@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ Functions to pull in data from the cloud.
 This relies on Google Cloud Storage python API. Please see the Image Recognition lead
 to recieve the proper credentials for access to the bucket. """

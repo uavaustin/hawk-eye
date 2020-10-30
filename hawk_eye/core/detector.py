@@ -41,8 +41,10 @@ class Detector(torch.nn.Module):
         # If a timestamp is given, download it.
         if timestamp is not None:
 
-            if pathlib.Path(timestamp).is_dir():
-                model_path = pathlib.Path(timestamp)
+            # For the distributed pip package, look inside `production_models`
+            production_models = pathlib.Path(__file__).parent / "production_models"
+            if production_models.is_dir():
+                model_path = production_models / timestamp
             else:
                 # Download the model. This has the yaml containing the backbone.
                 model_path = asset_manager.download_model("detector", timestamp)
