@@ -230,6 +230,7 @@ def train(
             log.metric("Best model score", scores["best_model_score"], epoch)
             log.metric("EMA score", ema_score, epoch)
             log.metric("Best EMA score", scores["best_ema_score"], epoch)
+            log.metric("Training loss", sum(all_losses) / len(all_losses), epoch)
 
 
 @torch.no_grad()
