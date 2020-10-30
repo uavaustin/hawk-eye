@@ -12,7 +12,6 @@ import tempfile
 from typing import List
 import os
 
-import requests
 from setuptools.command import test
 
 from hawk_eye.inference import production_models
