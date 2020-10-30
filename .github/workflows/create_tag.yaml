@@ -3,7 +3,7 @@ on:
   # but only for the main branch
   push:
     branches:
-      - main
+      - master
 
 jobs:
 
