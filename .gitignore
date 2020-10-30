@@ -12,4 +12,4 @@ dist
 # Maybe left over from ./setup.py
 hawk_eye/core/production_models
 
-*.DS_Store
+.DS_Store
