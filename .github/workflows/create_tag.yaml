@@ -1,15 +1,17 @@
 on:
-  # Trigger the workflow on push,
-  # but only for the main branch
+  # Trigger the workflow on push to master to create version.
+  # This will also trigger the release workflow.
   push:
     branches:
       - master
+
+name: Create Tag
 
 jobs:
 
   create_tag:
     name: Create Release
-    runs-on: ubuntu-latest'
+    runs-on: ubuntu-latest
 
     steps:
 
@@ -18,4 +20,14 @@ jobs:
 
       - name: Get current version
         run: |
-          echo ::set-env name=RELEASE_VERSION::`cat version.txt`
+          echo release_version="$(cat version.txt)" >> $GITHUB_ENV
+
+      - name: See if version exists
+        run: |
+          git fetch
+          if [ $(git tag -l v$release_version) ]; then
+            echo Version v$release_version already exists.;
+          else
+            git tag v$release_version;
+            git push origin v$release_version;
+          fi
