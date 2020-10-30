@@ -1,0 +1,21 @@
+on:
+  # Trigger the workflow on push,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+
+jobs:
+
+  create_tag:
+    name: Create Release
+    runs-on: ubuntu-latest'
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get current version
+        run: |
+          echo ::set-env name=RELEASE_VERSION::`cat version.txt`
