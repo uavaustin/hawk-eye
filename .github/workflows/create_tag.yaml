@@ -25,4 +25,4 @@ jobs:
 
       - name: See if version exists
         run: |
-          if [ $(git tag -l $release_version) ]; then     echo yes; else     echo no; f
+          if [ $(git tag -l $release_version) ]; then     echo yes; else     echo no; fi
