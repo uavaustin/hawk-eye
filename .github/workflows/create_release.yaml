@@ -8,7 +8,7 @@ name: Create Tag
 jobs:
 
   create_tag:
-    name: Create Release
+    name: Create Tag
     runs-on: ubuntu-latest
 
     steps:
