@@ -36,10 +36,12 @@ jobs:
 
   # Conditional on if we have a new tag
   create_release:
-    if: $create_release == "True"
+    needs: create_tag
 
     name: Create Release
     runs-on: ubuntu-latest
+
+    if: $create_release == "True"
 
     steps:
 
