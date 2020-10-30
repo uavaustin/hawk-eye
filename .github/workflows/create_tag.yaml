@@ -3,7 +3,7 @@ on:
   # This will also trigger the release workflow.
   push:
     branches:
-      - test-version
+      - master
 
 name: Create Tag
 
