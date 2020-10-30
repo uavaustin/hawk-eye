@@ -41,7 +41,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-    if: jobs.create_tag.steps.create_release == "True"
+    if: create_tag.steps.create_release == "True"
 
     steps:
 
