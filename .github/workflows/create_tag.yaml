@@ -21,3 +21,5 @@ jobs:
           echo "name=RELEASE_VERSION" >> `cat version.txt`
 
       - name: See if version exists
+        run: |
+          if [ $(git tag -l "$version") ]; then     echo yes; else     echo no; f
