@@ -1,0 +1,9 @@
+global-exclude .git*
+global-exclude *_test.py
+
+include LICENSE
+include MANIFEST.in
+include version.txt
+
+recursive-include hawk_eye/core/production_models *.yaml *.pt
+include hawk_eye/data_generation/config.yaml

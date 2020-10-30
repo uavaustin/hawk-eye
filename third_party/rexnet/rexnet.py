@@ -61,8 +61,8 @@ def get_activation(name: str) -> torch.nn.Module:
 
 
 class SE(torch.nn.Module):
-    """ Squeeze-excitation level heavly used in efficientnets for learning
-    channel interdependence. """
+    """Squeeze-excitation level heavly used in efficientnets for learning
+    channel interdependence."""
 
     def __init__(self, channels: int, se_ratio: int) -> None:
         super().__init__()

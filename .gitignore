@@ -2,5 +2,14 @@ __pycache__
 
 bazel-*
 
-data_generation/data
-data_generation/assets
+hawk_eye/data_generation/data
+hawk_eye/data_generation/assets
+
+build
+dist
+*.egg*
+
+# Maybe left over from ./setup.py
+hawk_eye/core/production_models
+
+.DS_Store

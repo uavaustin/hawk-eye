@@ -16,7 +16,7 @@ class AnchorGenerator:
         sizes: List[int],
         anchor_scales: List[float],
     ) -> None:
-        """ This class will hold the models anchor information. Important
+        """This class will hold the models anchor information. Important
         items are the anchors per feature map and the entire tensor of anchors.
 
         Args:
@@ -74,7 +74,7 @@ class AnchorGenerator:
         aspect_ratios: List[int],
         anchor_scales: List[int],
     ) -> List[torch.Tensor]:
-        """ Generate a tensor storing anchor boxes, which are all anchor boxes of
+        """Generate a tensor storing anchor boxes, which are all anchor boxes of
         different sizes, aspect_ratios, and scales centered at (0, 0). We can later
         build the set of anchors for a full feature map by shifting and tiling these
         tensors (see `meth:_grid_anchors`).
@@ -118,7 +118,7 @@ class AnchorGenerator:
         return anchors
 
     def _grid_anchors(self, grid_sizes: np.ndarray) -> List[torch.Tensor]:
-        """ This function casts the anchor combinations across the feature planes.
+        """This function casts the anchor combinations across the feature planes.
         Remember, anchors_per_cell is only the number of combinations of aspect ratios
         and scales, over each anchor size. We need to now replicate this cell over a
         grid that spans the original image size for each feature level.
@@ -148,7 +148,7 @@ class AnchorGenerator:
     def _create_grid_offsets(
         self, grid_size: List[int], stride: int, offset: float = 0.5
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """ Function to create x, y positions for the anchor offsets on the original
+        """Function to create x, y positions for the anchor offsets on the original
         image.
         Args:
             size: The height, width of the grid to create (in pixels).

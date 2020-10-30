@@ -5,27 +5,33 @@ on: ["push", "pull_request"]
 
 jobs:
 
-  test:
-    runs-on: ubuntu-latest
+  python:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04, macos-latest]
+        python-version: [3.6, 3.7, 3.8]
+
     steps:
+    - uses: actions/checkout@v2
 
     - name: docker login
-      run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
+        fi
+      shell: bash
       env:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
-    - uses: actions/checkout@v2
-
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: '3.6'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install Cython==0.29.21 numpy==1.19.1
-        pip install -r requirements.txt -r requirements-cpu.txt
+        python-version: ${{ matrix.python-version }}
+
+    - name: Setup Machine
+      run: ./docs/setup_linux.sh
 
     - name: Authenticate on GCS
       uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
@@ -35,23 +41,18 @@ jobs:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
 
-    - name: Mount bazel cache
-      uses: actions/cache@v1
+    - name: Cache Bazel Deps
+      id: cache
+      uses: actions/cache@v2
       with:
-        path: "/home/runner/.cache/bazel"
-        key: bazel
-
-    - name: Install bazelisk
-      run: |
-        curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.6.1/bazelisk-linux-amd64"
-        mkdir -p "${GITHUB_WORKSPACE}/bin/"
-        mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
-        chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+        path: |
+          ~/.cache/bazel
+          ~/runs
+        key: ${{ runner.os }}-bazel
 
     - name: Test
       run: |
-        "${GITHUB_WORKSPACE}/bin/bazel" test --test_output=streamed //...
+        bazel test --test_output=streamed //...
 
-    - name: Build and push ARM Container
-      run: |
-        "${GITHUB_WORKSPACE}/bin/bazel" run //:push_hawk_eye_arm
+    - name: Style Test
+      run: flake8
