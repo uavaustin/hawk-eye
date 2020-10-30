@@ -29,10 +29,10 @@ jobs:
             echo Version v$release_version already exists.;
             echo create_release='False' >> $GITHUB_ENV
           else
-            git tag v$release_version;
-            git push origin v$release_version;
             echo create_release='True' >> $GITHUB_ENV
             echo $create_release
+            git tag v$release_version;
+            git push origin v$release_version;
           fi
 
   # Conditional on if we have a new tag
