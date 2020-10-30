@@ -21,8 +21,8 @@ jobs:
       - name: Get current version
         run: |
           echo "name=RELEASE_VERSION" >> `cat version.txt`
-          echo $RELEASE_VERSION
+          echo $env.RELEASE_VERSION
 
       - name: See if version exists
         run: |
-          if [ $(git tag -l "$version") ]; then     echo yes; else     echo no; f
+          if [ $(git tag -l "$env.version") ]; then     echo yes; else     echo no; f
