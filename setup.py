@@ -13,6 +13,7 @@ from typing import List
 import os
 
 import requests
+from setuptools.command import test
 
 from hawk_eye.inference import production_models
 
@@ -41,6 +42,12 @@ class Build(build.build):
     def run(self) -> None:
         self.run_command("prepare_models")
         build.build.run(self)
+
+
+class Test(test.test):
+    def run(self):
+        self.run_command("prepare_models")
+        test.test.run(self)
 
 
 class PrepareModels(build.build):
@@ -80,17 +87,18 @@ class PrepareModels(build.build):
                 _MODELS_DIR / production_models._DETECTOR["timestamp"],
             )
 
-        shutil.rmtree(_MODELS_DIR)
 
-
-setuptools.setup(
-    name="hawk_eye",
-    version=__version__,
-    description=("Find targets"),
-    author="UAV Austin Image Recognition",
-    packages=setuptools.find_packages(),
-    cmdclass={"build": Build, "prepare_models": PrepareModels},
-    include_package_data=True,
-    install_requires=_get_packages(),
-    test_suite="hawk_eye.test.test_inference",
-)
+try:
+    setuptools.setup(
+        name="hawk_eye",
+        version=__version__,
+        description=("Find targets"),
+        author="UAV Austin Image Recognition",
+        packages=setuptools.find_packages(),
+        cmdclass={"build": Build, "prepare_models": PrepareModels, "test": Test},
+        include_package_data=True,
+        install_requires=_get_packages(),
+        test_suite="hawk_eye.test.test_inference",
+    )
+finally:
+    shutil.rmtree(_MODELS_DIR)
