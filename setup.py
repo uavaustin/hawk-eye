@@ -88,7 +88,7 @@ setuptools.setup(
     version=__version__,
     description=("Find targets"),
     author="UAV Austin Image Recognition",
-    packages=setuptools.find_packages(exclude=["hawk_eye.core.asset_manager"]),
+    packages=setuptools.find_packages(),
     cmdclass={"build": Build, "prepare_models": PrepareModels},
     include_package_data=True,
     install_requires=_get_packages(),
