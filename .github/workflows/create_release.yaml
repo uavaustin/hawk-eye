@@ -3,7 +3,7 @@ on:
     branches:
       - alw-test-tag
 
-name: Create Release
+name: Create Tag
 
 jobs:
 
@@ -41,7 +41,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-    if: github.event_name == 'push'
+    if: jobs.create_tag.steps.create_release == "True"
 
     steps:
 
