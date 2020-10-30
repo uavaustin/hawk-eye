@@ -18,13 +18,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Fetch tags
+        run: git fetch
+
       - name: Get current version
         run: |
           echo release_version="$(cat version.txt)" >> $GITHUB_ENV
 
+
       - name: See if version exists
         run: |
-          git fetch
           if [ $(git tag -l v$release_version) ]; then
             echo Version v$release_version already exists.;
           else
