@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
 
 
-    if: needs.create_tag.steps.create_release == 'True'
+    if: needs.create_tag.steps.create_release
 
     steps:
 
