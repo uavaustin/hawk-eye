@@ -24,6 +24,7 @@ jobs:
           echo release_version="$(cat version.txt)" >> $GITHUB_ENV
 
       - name: See if version exists
+        id: create_release
         run: |
           if [[ $(git tag -l v$release_version) ]]; then
             echo Version v$release_version already exists.;
@@ -41,8 +42,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-
-    if: needs.create_tag.steps.create_release == 'True'
+    if: needs.create_tag.steps.create_release.outputs.create_release == 'True'
 
     steps:
 
