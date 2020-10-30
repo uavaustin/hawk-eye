@@ -51,17 +51,6 @@ jobs:
       - name: Set Tag
         run:  echo release_version="$(cat version.txt)" >> $GITHUB_ENV
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ env.release_version}}
-          release_name: v${{ env.release_version}}
-          draft: false
-          prerelease: false
-
       - name: Setup Machine
         run: ./docs/setup_linux.sh
 
@@ -84,7 +73,16 @@ jobs:
       - name: Create hawk_eye .whl package
         run: ./setup.py bdist_wheel
 
-
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.release_version}}
+          release_name: Release v${{ env.release_version}}
+          draft: false
+          prerelease: false
 
       - name: Upload Release Python Wheel
         id: upload-release-asset
@@ -93,6 +91,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: './dist/hawk_eye-$release_version-py3-none-any.whl'
-          asset_name: 'hawk_eye-$release_version-py3-none-any.whl'
+          asset_path: './dist/hawk_eye-${{ release_version }}-py3-none-any.whl'
+          asset_name: 'hawk_eye-${{ release_version }}-py3-none-any.whl'
           asset_content_type: application/zip
