@@ -30,6 +30,9 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
+      - name: Ensure Tests Run
+        run: ./setup.py test
+
       - name: Create hawk_eye .whl package
         run: ./setup.py bdist_wheel
 

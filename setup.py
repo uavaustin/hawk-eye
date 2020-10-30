@@ -80,6 +80,8 @@ class PrepareModels(build.build):
                 _MODELS_DIR / production_models._DETECTOR["timestamp"],
             )
 
+        shutil.rmtree(_MODELS_DIR)
+
 
 setuptools.setup(
     name="hawk_eye",
@@ -90,6 +92,5 @@ setuptools.setup(
     cmdclass={"build": Build, "prepare_models": PrepareModels},
     include_package_data=True,
     install_requires=_get_packages(),
+    test_suite="hawk_eye.test.test_inference",
 )
-
-shutil.rmtree(_MODELS_DIR)
