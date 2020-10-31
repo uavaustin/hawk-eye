@@ -35,6 +35,9 @@ jobs:
             git push origin v$release_version;
           fi
 
+      - name: Check value
+        run: echo ${{ steps.create_release.output.create_release }}
+
   # Conditional on if we have a new tag
   create_release:
     needs: create_tag
