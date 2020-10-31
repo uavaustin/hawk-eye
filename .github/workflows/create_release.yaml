@@ -11,6 +11,9 @@ jobs:
     name: Create Tag
     runs-on: ubuntu-latest
 
+    outputs:
+      output1: ${{ steps.check_tag_exist.create_release }}
+
     steps:
 
       - name: Checkout code
@@ -42,7 +45,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-    if: ${{ needs.create_tag.outputs.create_release == 'true' }}
+    if: ${{ needs.create_tag.outputs.output1 == 'true' }}
 
     steps:
 
