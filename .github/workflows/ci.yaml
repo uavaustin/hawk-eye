@@ -1,9 +1,7 @@
 
 name: Python3 CI
-on:
-  push:
-    branches:
-      - master
+
+on: ["push", "pull_request"]
 
 jobs:
 
