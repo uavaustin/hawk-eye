@@ -25,14 +25,14 @@ except ImportError as e:
 import torch
 import numpy as np
 
-from core import asset_manager
-from core import classifier
-from data_generation import generate_config
-from train import datasets
-from train import augmentations
-from train.train_utils import ema
-from train.train_utils import logger
-from train.train_utils import utils
+from hawk_eye.core import asset_manager
+from hawk_eye.core import classifier
+from hawk_eye.data_generation import generate_config
+from hawk_eye.train import datasets
+from hawk_eye.train import augmentations
+from hawk_eye.train.train_utils import ema
+from hawk_eye.train.train_utils import logger
+from hawk_eye.train.train_utils import utils
 
 _LOG_INTERVAL = 10
 _SAVE_DIR = pathlib.Path("~/runs/uav-classifier").expanduser()

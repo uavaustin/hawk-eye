@@ -9,7 +9,7 @@ import albumentations
 import cv2
 import torch
 
-from train import augmentations as augs
+from hawk_eye.train import augmentations as augs
 
 
 class ClfDataset(torch.utils.data.Dataset):
