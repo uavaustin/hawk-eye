@@ -13,7 +13,6 @@ import shutil
 import os
 import yaml
 
-
 try:
     import apex
 
@@ -183,7 +182,7 @@ def train(
             if lr_scheduler is not None:
                 lr_scheduler.step()
 
-            # ema_model.update(clf_model)
+            ema_model.update(clf_model)
 
             if idx % _LOG_INTERVAL == 0 and is_main:
                 lr = optimizer.param_groups[0]["lr"]
@@ -310,7 +309,7 @@ def create_data_loader(
         batch_size=batch_size,
         pin_memory=True,
         sampler=sampler,
-        drop_last=False,
+        drop_last=True,
     )
     return loader, sampler
 
