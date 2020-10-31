@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      output1: ${{ steps.check_tag_exist.create_release }}
+      create_release: ${{ steps.create_release_check.outputs.create_release }}
 
     steps:
 
@@ -27,7 +27,7 @@ jobs:
           echo release_version="$(cat version.txt)" >> $GITHUB_ENV
 
       - name: See if version exists
-        id: check_tag_exist
+        id: create_release_check
         run: |
           if [[ $(git tag -l v$release_version) ]]; then
             echo Version v$release_version already exists.;
@@ -45,7 +45,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-    if: ${{ needs.create_tag.outputs.output1 == 'true' }}
+    if: ${{ needs.create_tag.outputs.create_release == 'true' }}
 
     steps:
 
