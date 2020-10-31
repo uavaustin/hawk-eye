@@ -42,7 +42,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
 
-    if: ${{ need.create_tag.outputs.create_release == 'true' }}
+    if: ${{ needs.create_tag.outputs.create_release == 'true' }}
 
     steps:
 
