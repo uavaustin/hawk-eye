@@ -11,3 +11,7 @@ See the `docs` page for installation. The supported opperating systems are:
 * WSL1
 * WSL2
 * MacOS
+
+## Documentation
+
+Please refer to the `docs` folder for information on how to get started!
