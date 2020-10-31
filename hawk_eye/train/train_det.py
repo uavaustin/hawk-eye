@@ -17,27 +17,19 @@ import sys
 import os
 import yaml
 
-try:
-    import apex
-
-    _USE_APEX = True
-except ImportError as e:
-    _USE_APEX = False
-    print(f"{e}. Apex will not be used.")
-
 import torch
 import numpy as np
 
-from train import datasets
-from train import collate
-from train.train_utils import ema
-from train.train_utils import logger
-from train.train_utils import utils
-from data_generation import generate_config
+from hawk_eye.core import detector
+from hawk_eye.core import asset_manager
+from hawk_eye.train import datasets
+from hawk_eye.train import collate
+from hawk_eye.train.train_utils import ema
+from hawk_eye.train.train_utils import logger
+from hawk_eye.train.train_utils import utils
+from hawk_eye.data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
-from core import detector
-from core import asset_manager
 
 _LOG_INTERVAL = 10
 _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
@@ -160,17 +152,14 @@ def train(
     # Construct the optimizer and wrap with Apex if available.
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
 
-    if _USE_APEX:
-        model, optimizer = apex.amp.initialize(
-            model, optimizer, opt_level="O1", verbosity=is_main
-        )
-
     # Adjust the model for distributed training. If we are using apex, wrap the model
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
-        model = apex.parallel.DistributedDataParallel(model, delay_allreduce=True)
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[local_rank], find_unused_parameters=True
+        )
         if is_main:
-            log.info("Using APEX DistributedDataParallel.")
+            log.info("Using DistributedDataParallel.")
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
@@ -179,7 +168,8 @@ def train(
     eval_results, ema_eval_results = {}, {}
 
     lr_scheduler = None
-    if train_cfg["optimizer"].lower() == "sgd":
+    optimizer_cfg = train_cfg.get("optimizer", {})
+    if optimizer_cfg.get("type", "SGD").lower() == "sgd":
         # Create the learning rate scheduler.
         lr_config = train_cfg.get("lr_schedule", {})
         warm_up_percent = lr_config.get("warmup_fraction", 0)
@@ -194,6 +184,8 @@ def train(
             div_factor=max_lr / start_lr,
             pct_start=warm_up_percent,
         )
+
+    scaler = torch.cuda.amp.GradScaler()
 
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
@@ -214,19 +206,21 @@ def train(
             gt_regressions = gt_regressions.to(device, non_blocking=True)
             gt_classes = gt_classes.to(device, non_blocking=True)
 
-            # Forward pass through detector
-            cls_per_level, reg_per_level = model(images)
+            with torch.cuda.amp.autocast():
+                # Forward pass through detector
+                cls_per_level, reg_per_level = model(images)
 
-            # Compute the losses
-            cls_loss, reg_loss = losses.compute_losses(
-                gt_classes=gt_classes,
-                gt_anchors_deltas=gt_regressions,
-                cls_per_level=cls_per_level,
-                reg_per_level=reg_per_level,
-                num_classes=model.module.num_classes,
-            )
+                # Compute the losses
+                cls_loss, reg_loss = losses.compute_losses(
+                    gt_classes=gt_classes,
+                    gt_anchors_deltas=gt_regressions,
+                    cls_per_level=cls_per_level,
+                    reg_per_level=reg_per_level,
+                    num_classes=model.module.num_classes,
+                )
 
-            total_loss = cls_loss + reg_loss
+                total_loss = cls_loss + reg_loss
+
             clf_losses.append(cls_loss)
             reg_losses.append(reg_loss)
 
@@ -236,18 +230,15 @@ def train(
             if previous_loss is None:
                 previous_loss = total_loss
 
-            if _USE_APEX:
-                # Propogate the gradients back through the model.
-                with apex.amp.scale_loss(total_loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
+            if world_size > 1:
+                scaler.scale(total_loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
             else:
                 total_loss.backward()
+                optimizer.step()
 
             all_losses.append(total_loss.item())
-
-            # Perform the parameter updates
-            optimizer.step()
-
             ema_model.update(model)
 
             if lr_scheduler is not None:
@@ -264,7 +255,7 @@ def train(
 
                 if total_loss < previous_loss:
                     if isinstance(
-                        model, apex.parallel.distributed.DistributedDataParallel
+                        model, torch.nn.parallel.distributed.DistributedDataParallel
                     ):
                         utils.save_model(model.module, save_dir / "min-loss.pt")
                     else:
@@ -312,7 +303,7 @@ def eval(
     previous_best: dict,
     save_dir: pathlib.Path = None,
 ) -> Tuple[dict, List[str]]:
-    """Evalulate the model against the evaulation set. Save the best weights if
+    """ Evalulate the model against the evaulation set. Save the best weights if
     specified. Use the pycocotools package for metrics.
 
     Args:
@@ -330,7 +321,7 @@ def eval(
             images = images.cuda()
         detections = model(images)
 
-        if isinstance(model, apex.parallel.distributed.DistributedDataParallel):
+        if isinstance(model, torch.nn.parallel.distributed.DistributedDataParallel):
             model = model.module
 
         detections_dict.extend(
@@ -417,7 +408,7 @@ def create_data_loader(
         pin_memory=True,
         sampler=sampler,
         collate_fn=collate_fn,
-        num_workers=torch.multiprocessing.cpu_count() // world_size,
+        num_workers=max(torch.multiprocessing.cpu_count() // world_size, 6),
     )
     return loader, sampler
 
