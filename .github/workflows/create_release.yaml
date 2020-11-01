@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - alw-test-tag
+      - master
 
 name: Create Tag
 
