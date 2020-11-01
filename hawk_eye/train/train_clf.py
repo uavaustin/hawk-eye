@@ -24,14 +24,14 @@ except ImportError as e:
 import torch
 import numpy as np
 
-from core import asset_manager
-from core import classifier
-from data_generation import generate_config
-from train import datasets
-from train import augmentations
-from train.train_utils import ema
-from train.train_utils import logger
-from train.train_utils import utils
+from hawk_eye.core import asset_manager
+from hawk_eye.core import classifier
+from hawk_eye.data_generation import generate_config
+from hawk_eye.train import datasets
+from hawk_eye.train import augmentations
+from hawk_eye.train.train_utils import ema
+from hawk_eye.train.train_utils import logger
+from hawk_eye.train.train_utils import utils
 
 _LOG_INTERVAL = 10
 _SAVE_DIR = pathlib.Path("~/runs/uav-classifier").expanduser()
@@ -96,7 +96,7 @@ def train(
         log.info(f"Train dataset: {train_loader.dataset}")
         log.info(f"Val dataset: {eval_loader.dataset}")
 
-    scores = {"model_highest_score": 0, "ema_highest_score": 0}
+    scores = {"best_model_score": 0, "best_ema_score": 0}
     best_scores_path = pathlib.Path(save_dir / "best_scores.json")
     best_scores_path.write_text(json.dumps({}))
 
@@ -197,18 +197,18 @@ def train(
             log.info("Starting eval.")
             start_val = time.perf_counter()
             clf_model.eval()
-            new_model_score = evaluate(clf_model, eval_loader, device)
+            model_score = evaluate(clf_model, eval_loader, device)
             clf_model.train()
 
-            if new_model_score > scores["model_highest_score"]:
-                scores["model_highest_score"] = new_model_score
-                improved_scores.add("model_highest_score")
+            if model_score > scores["best_model_score"]:
+                scores["best_model_score"] = model_score
+                improved_scores.add("best_model_score")
                 # TODO(alex): Fix this .module
-                utils.save_model(clf_model.module, save_dir / "classifier.pt")
+                utils.save_model(clf_model, save_dir / "classifier.pt")
 
-            new_ema_highest_score = evaluate(ema_model, eval_loader, device)
-            if new_ema_highest_score > scores["ema_highest_score"]:
-                scores["ema_highest_score"] = new_ema_highest_score
+            ema_score = evaluate(ema_model, eval_loader, device)
+            if ema_score > scores["best_ema_score"]:
+                scores["best_ema_score"] = ema_score
                 improved_scores.add("ema-acc")
                 utils.save_model(ema_model.ema_model, save_dir / "ema-classifier.pt")
 
@@ -222,9 +222,14 @@ def train(
             log.info(f"Improved metrics: {improved_scores}.")
             log.info(
                 f"Epoch {epoch}, Training loss {sum(all_losses) / len(all_losses):.5f}\n"
-                f"Best model accuracy: {scores['model_highest_score']:.5f}\n"
-                f"Best EMA accuracy: {scores['ema_highest_score']:.5f} \n"
+                f"Best model accuracy: {scores['best_model_score']:.5f}\n"
+                f"Best EMA accuracy: {scores['best_ema_score']:.5f} \n"
             )
+            log.metric("Model score", model_score, epoch)
+            log.metric("Best model score", scores["best_model_score"], epoch)
+            log.metric("EMA score", ema_score, epoch)
+            log.metric("Best EMA score", scores["best_ema_score"], epoch)
+            log.metric("Training loss", sum(all_losses) / len(all_losses), epoch)
 
 
 @torch.no_grad()
@@ -300,7 +305,11 @@ def create_data_loader(
             sampler = torch.utils.data.SequentialSampler(dataset)
 
     loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, pin_memory=True, sampler=sampler, drop_last=True
+        dataset,
+        batch_size=batch_size,
+        pin_memory=True,
+        sampler=sampler,
+        drop_last=True,
     )
     return loader, sampler
 

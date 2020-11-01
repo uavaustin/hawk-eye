@@ -12,4 +12,5 @@ numpy==1.17.4
 requests==2.24.0
 flake8==3.8.3
 pre-commit==2.7.1
+tensorboard==2.3.0
 google-cloud-storage==1.31.2
