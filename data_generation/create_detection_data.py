@@ -351,7 +351,7 @@ def add_alphanumeric(
     alpha_rgb: Tuple[int, int, int],
     font_file,
 ) -> PIL.Image.Image:
-    standard_deviation = 1000
+    standard_deviation = 10
     alpha_info = {
         "circle": alpha_params(
             (0.35, 0.65), (0, standard_deviation), (-10, standard_deviation),
