@@ -6,6 +6,7 @@ is valuable so the model sees that not every image will have a target, as this i
 real life case. """
 import math
 import dataclasses
+import typing
 from typing import List
 from typing import Tuple
 import numpy as np
@@ -18,7 +19,7 @@ import matplotlib
 from tqdm import tqdm
 import PIL
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
-
+from matplotlib.patches import Polygon
 from data_generation import generate_config as config
 from core import asset_manager
 
@@ -335,41 +336,12 @@ class alpha_params:
     font_multiplier: Tuple[int, int]
     gaussian_adjuster_x_coordinate: Tuple[int, int]
     gaussian_adjuster_y_coordinate: Tuple[int, int]
-    shape_plot: "typing.Any"
 
 
-def is_valid_letter(
-    x_var, y_var, image_height, image_width, font_width, font_height, polygon
-):
-    new_x_val = (image_width - font_width) / 2 + x_var
-    new_y_val = (image_height - font_height) / 2 + y_var
-    x1 = new_x_val - font_width / 2
-    x2 = new_x_val + font_width / 2
-    y1 = new_y_val - font_width / 2
-    y2 = new_y_val + font_width / 2
-    list_elements = polygon.contains_points((x1, y1), (x1, y2), (x2, y1), (x2, y2))
-    val = True
-    for i in list_elements:
-        val = val and i
-    return val
-
-
-def create_circle(image):
-    return matplotlib.patches.Circle(
-        (image.height / 2, image.height / 2), radius=image.height / 2
-    )
-
-
-def create_pentagon(image):
-    return None
-
-
-def create_rectangle(image):
-    return None
-
-
-def create_square(image):
-    return None
+def is_valid_letter(x_var, y_var, image_height, image_width):
+    if x_var >= image_width / 4 or y_var >= image_height / 4:
+        return false
+    return True
 
 
 def add_alphanumeric(
@@ -379,51 +351,40 @@ def add_alphanumeric(
     alpha_rgb: Tuple[int, int, int],
     font_file,
 ) -> PIL.Image.Image:
-    standard_deviation = 10
+    standard_deviation = 1000
     alpha_info = {
         "circle": alpha_params(
-            (0.35, 0.65),
-            (0, standard_deviation),
-            (-10, standard_deviation),
-            create_circle(image),
+            (0.35, 0.65), (0, standard_deviation), (-10, standard_deviation),
         ),
         "cross": alpha_params(
-            (0.35, 0.65), (0, standard_deviation), (-25, standard_deviation), None
+            (0.35, 0.65), (0, standard_deviation), (-25, standard_deviation)
         ),
         "pentagon": alpha_params(
-            (0.35, 0.65),
-            (0, standard_deviation),
-            (0, standard_deviation),
-            crate_pentagon(image),
+            (0.35, 0.65), (0, standard_deviation), (0, standard_deviation),
         ),
         "quarter-circle": alpha_params(
-            (0.35, 0.65), (14, standard_deviation), (-40, standard_deviation), None
+            (0.35, 0.65), (14, standard_deviation), (-40, standard_deviation),
         ),
         "rectangle": alpha_params(
-            (0.35, 0.7),
-            (0, standard_deviation),
-            (0, standard_deviation),
-            create_rectangle(image),
+            (0.35, 0.7), (0, standard_deviation), (0, standard_deviation),
         ),
         "semicircle": alpha_params(
-            (0.35, 0.75), (0, standard_deviation), (0, standard_deviation), None
+            (0.35, 0.75), (0, standard_deviation), (0, standard_deviation),
         ),
         "square": alpha_params(
-            (0.30, 0.8),
-            (0, standard_deviation),
-            (-10, standard_deviation),
-            create_square(image),
+            (0.30, 0.8), (0, standard_deviation), (-10, standard_deviation),
         ),
         "star": alpha_params(
-            (0.25, 0.55), (0, standard_deviation), (0, standard_deviation), None
+            (0.25, 0.55), (0, standard_deviation), (0, standard_deviation),
         ),
         "trapezoid": alpha_params(
-            (0.25, 0.75), (0, standard_deviation), (-20, standard_deviation), None
+            (0.25, 0.75), (0, standard_deviation), (-20, standard_deviation),
         ),
         "triangle": alpha_params(
-            (0.25, 0.6), (-24, standard_deviation), (12, standard_deviation), None
+            (0.25, 0.6), (-24, standard_deviation), (12, standard_deviation),
         ),
     }
+
     is_valid = False
     x = y = 0
     while not is_valid:
@@ -442,15 +403,7 @@ def add_alphanumeric(
         w, h = draw.textsize(alpha, font=font)
         x = (image.width - w) / 2 + x_variance
         y = (image.height - h) / 2 + y_variance
-        is_valid = is_valid_letter(
-            x_variance,
-            y_variance,
-            image.width,
-            image.height,
-            w,
-            h,
-            alpha_info[shape].shape_plot,
-        )
+        is_valid = is_valid_letter(x_variance, y_variance, image.width, image.height,)
     draw.text((x, y), alpha, alpha_rgb, font=font)
     return image
 
