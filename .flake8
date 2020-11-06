@@ -6,4 +6,7 @@ exclude =
     bazel-*,
     __pycache__,
     *.yaml,
-    *.txt
+    *.txt,
+    .eggs,
+    build,
+    dist
