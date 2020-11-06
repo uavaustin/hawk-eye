@@ -79,13 +79,15 @@ def tile_image(
     tiles, coords = [], []
     width, height = image.size
 
-    for x in range(0, width, tile_size[0] - overlap):
+    x_step = width if width == tile_size[0] else tile_size[0] - overlap
+    y_step = height if height == tile_size[1] else tile_size[1] - overlap
 
+    for x in range(0, width, x_step):
         # Shift back to extract tiles on the image
         if x + tile_size[0] >= width and x != 0:
             x = width - tile_size[0]
 
-        for y in range(0, height, tile_size[1] - overlap):
+        for y in range(0, height, y_step):
             if y + tile_size[1] >= height and y != 0:
                 y = height - tile_size[1]
 
@@ -161,7 +163,7 @@ def find_all_targets(
     clf_timestamp: str = _PROD_MODELS["clf"],
     det_timestamp: str = _PROD_MODELS["det"],
     visualization_dir: pathlib.Path = None,
-    save_json_data: bool = True,
+    save_json_data: bool = False,
 ) -> None:
     """ Entrypoint function if running this script as main.
     Args:
@@ -405,4 +407,6 @@ if __name__ == "__main__":
         viz_dir = args.visualization_dir.expanduser()
         viz_dir.mkdir(exist_ok=True, parents=True)
 
-    find_all_targets(imgs, args.clf_timestamp, args.det_timestamp, viz_dir)
+    find_all_targets(
+        imgs, args.clf_timestamp, args.det_timestamp, viz_dir, args.save_json_data
+    )
