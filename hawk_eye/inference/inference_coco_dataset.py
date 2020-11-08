@@ -1,4 +1,8 @@
+#!/usr/bin/env python3
 import argparse
+import pathlib
+import json
+
 import torch
 
 """
@@ -27,6 +31,12 @@ def inference_dataset(model_timestamp, model_type, dataset):
     ...
 
 
+def prepare_dataset(dataset: pathlib.Path):
+    coco_json_data = json.loads((dataset / "val_coco.json").read_text())
+    all_images = coco_json_data.get("images", [])
+    print(all_images)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inference COCO dataset.")
 
@@ -45,4 +55,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    inference_dataset(args.model_timestamp, args.model_type, args.dataset)
+    prepare_dataset(args.dataset.expanduser())
+
+    # inference_dataset(args.model_timestamp, args.model_type, args.dataset)
