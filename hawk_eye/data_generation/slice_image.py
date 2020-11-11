@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ Contains code to slice up an image into smaller tiles. """
 
+# COMBAK: check import order
 from PIL import Image
 import sys
 import pdb
@@ -10,7 +11,7 @@ from typing import Tuple
 
 # COMBAK: how do I typecheck lists?
 def slice_image(
-    image: Image.Image, tile_size: Tuple[int, int], overlap: int  # (H, W)
+    img_path: str, tile_size: Tuple[int, int], overlap: int  # (H, W)
 ) -> Image.Image:
     """ Take in an image and tile it into smaller tiles for inference.
     Args:
@@ -23,8 +24,12 @@ def slice_image(
         >>> tiles = slice_image(Image.new("RGB", (1000, 1000)), (512, 512), 50)
         >>> len(tiles)
         9
+        >>> tiles[0].show()
+        <Displays image> # COMBAK: is this the right way to say this?
     """
-    tiles = []
+    # COMBAK: change the docstring
+    pdb.set_trace()
+    image = Image.open(img_path)
     width, height = image.size
 
     # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
@@ -38,18 +43,15 @@ def slice_image(
             if y + tile_size[1] >= height and y != 0:
                 y = height - tile_size[1]
 
-            tile = np.array(image.crop((x, y, x + tile_size[0], y + tile_size[1])))
-            tile = Image.fromarray(tile)
-
-            tiles.append(tile)
-
-    return tiles
+            tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
+            # TODO: save as originalimagename-x-y
+            img_name = img_path.split("/")[-1][:-4]
+            tile.save(f"{img_name}-{x}-{y}.JPG")
 
 
 if __name__ == "__main__":
-    img_path = "hawk_eye/data_generation/data/test_flight_targets_20190215/EYED6011.JPG"
-    img = Image.open(img_path)
-
-    slices = slice_image(image=img, tile_size=(512, 512), overlap=50)
-    for i, slice in enumerate(slices, 1):
-        slice.save(f"{i}.JPG")
+    slice_image(
+        img_path="hawk_eye/data_generation/data/test_flight_targets_20190215/EYED6009.JPG",
+        tile_size=(512, 512),
+        overlap=50,
+    )
