@@ -7,7 +7,7 @@ import sys
 import pdb
 import numpy as np
 from typing import Tuple
-import os
+import pathlib
 import argparse
 from hawk_eye.data_generation import generate_config as config
 
@@ -31,13 +31,11 @@ def slice_image(
     """
     # COMBAK: update docstring
     # pdb.set_trace() # COMBAK: debugging
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    pathlib.Path(save_dir).mkdir(parents=True, exist_ok=True)
 
-    for filename in os.listdir(img_dir):
-
-        if filename.upper().endswith(".JPG"):
-            image = Image.open(os.path.join(img_dir, filename))
+    for filename in pathlib.Path.iterdir(pathlib.Path(img_dir)):
+        if filename.suffix.upper().endswith(".JPG"):
+            image = Image.open(filename)
             width, height = image.size
 
             # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
@@ -54,13 +52,13 @@ def slice_image(
 
                     tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
-                    tile.save(f"{os.path.join(save_dir, filename[:-4])}-{x}-{y}.JPG")
+                    tile.save(
+                        f"{pathlib.Path(save_dir).joinpath(filename.stem)}-{x}-{y}.JPG"
+                    )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Slice an image up into smaller images."
-    )
+    parser = argparse.ArgumentParser(description="Slice an image into smaller images.")
     parser.add_argument(
         "--image_dir",
         type=str,
