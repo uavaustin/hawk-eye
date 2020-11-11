@@ -1,36 +1,32 @@
 #!/usr/bin/env python3
 """ Contains code to slice up an image into smaller tiles. """
 
-# COMBAK: check import order
-from PIL import Image
-import sys
-import pdb
-import numpy as np
-from typing import Tuple
-import pathlib
 import argparse
+import pathlib
+import pdb
+import sys
+from typing import Tuple
+
+import numpy as np
+from PIL import Image
+
 from hawk_eye.data_generation import generate_config as config
 
 
 def slice_image(
     img_dir: str, tile_size: Tuple[int, int], overlap: int, save_dir: str
 ) -> None:
-    """ Take in an image and tile it into smaller tiles for inference.
+    """ Take in an image and slice it into smaller images.
     Args:
-        image: The input image to tile.
+        img_dir: The path to the directory with images to be sliced.
         tile_size: The (width, height) of the tiles.
         overlap: The overlap between adjacent tiles.
+        save_dir: The path to the directory within which to save slices.
     Returns:
-        A list of PIL tiles.
+        None.
     Usage:
-        >>> tiles = slice_image(Image.new("RGB", (1000, 1000)), (512, 512), 50)
-        >>> len(tiles)
-        9
-        >>> tiles[0].show()
-        <Displays image> # COMBAK: is this the right way to say this?
+        >>> slice_image('hawk-eye/hawk_eye/data_generation/data/test_flight_targets_20190215', (512, 512), 50, 'hawk_eye/data_generation/data/slices')
     """
-    # COMBAK: update docstring
-    # pdb.set_trace() # COMBAK: debugging
     pathlib.Path(save_dir).mkdir(parents=True, exist_ok=True)
 
     for filename in pathlib.Path.iterdir(pathlib.Path(img_dir)):
