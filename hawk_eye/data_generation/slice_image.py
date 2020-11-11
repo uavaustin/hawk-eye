@@ -12,7 +12,7 @@ import os
 
 # COMBAK: how do I typecheck lists?
 def slice_image(
-    img_dir: str, tile_size: Tuple[int, int], overlap: int  # (H, W)
+    img_dir: str, tile_size: Tuple[int, int], overlap: int, out_dir: str
 ) -> None:
     """ Take in an image and tile it into smaller tiles for inference.
     Args:
@@ -28,10 +28,13 @@ def slice_image(
         >>> tiles[0].show()
         <Displays image> # COMBAK: is this the right way to say this?
     """
-    # COMBAK: change the docstring
+    # COMBAK: update docstring
     # pdb.set_trace() # COMBAK: debugging
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
     for filename in os.listdir(img_dir):
+
         if filename.upper().endswith(".JPG"):
             image = Image.open(os.path.join(img_dir, filename))
             width, height = image.size
@@ -44,12 +47,13 @@ def slice_image(
                     x = width - tile_size[0]
 
                 for y in range(0, height, tile_size[1] - overlap):
+
                     if y + tile_size[1] >= height and y != 0:
                         y = height - tile_size[1]
 
                     tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
-                    tile.save(f"{filename[:-4]}-{x}-{y}.JPG")
+                    tile.save(f"{os.path.join(out_dir, filename[:-4])}-{x}-{y}.JPG")
 
 
 if __name__ == "__main__":
@@ -57,4 +61,5 @@ if __name__ == "__main__":
         img_dir="hawk_eye/data_generation/data/test_flight_targets_20190215/",
         tile_size=(512, 512),
         overlap=50,
+        out_dir="hawk_eye/data_generation/data/slices/",
     )
