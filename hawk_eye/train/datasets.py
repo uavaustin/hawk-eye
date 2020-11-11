@@ -33,7 +33,7 @@ class ClfDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))
-        assert image is not None, f"Trouble readining {self.images[idx]}."
+        assert image is not None, f"Trouble reading {self.images[idx]}."
 
         image = torch.Tensor(self.transform(image=image)["image"])
         class_id = 0 if "background" in self.images[idx].stem else 1

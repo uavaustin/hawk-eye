@@ -4,6 +4,7 @@ import dataclasses
 import pathlib
 import json
 
+import cv2
 import torch
 
 from hawk_eye.core import classifier
@@ -66,7 +67,7 @@ def inference_dataset(model_timestamp, model_type, dataset):
         # Read label.image_path into memory
         # predictions = model(image)
         # compare predictions vs label.image_class
-        pass
+        image = cv2.imread(str(label.image_path))
 
 
 def prepare_dataset(dataset: pathlib.Path):
