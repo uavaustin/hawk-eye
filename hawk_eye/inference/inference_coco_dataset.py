@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import argparse
+import dataclasses
 import pathlib
 import json
 
 import torch
+
+from hawk_eye.core import classifier
+from hawk_eye.core import detector
 
 """
 
@@ -27,34 +31,73 @@ import torch
 """
 
 
+@dataclasses.dataclass
+class ClassificationObject:
+    image_path: pathlib.Path
+    image_class: int
+    image_id: int
+
+
+def load_model(model_timestamp, model_type):
+
+    if model_type == "classifier":
+        model = classifier.Classifier(
+            timestamp=model_timestamp, half_precision=torch.cuda.is_available()
+        )
+        model.eval()
+    elif model_type == "detector":
+        # TODO(alex): Pass in the confidence for the detector.
+        model = detector.Detector(
+            timestamp=model_timestamp,
+            confidence=0.2,
+            half_precision=torch.cuda.is_available(),
+        )
+        model.eval()
+
+    return model
+
+
 def inference_dataset(model_timestamp, model_type, dataset):
-    ...
+    labels = prepare_dataset(dataset)
+
+    model = load_model(model_timestamp, model_type)
+
+    for label in labels:
+        # Read label.image_path into memory
+        # predictions = model(image)
+        # compare predictions vs label.image_class
+        pass
 
 
 def prepare_dataset(dataset: pathlib.Path):
     coco_json_data = json.loads((dataset / "val_coco.json").read_text())
     all_images = coco_json_data.get("images", [])
-    print(all_images)
+    annotations = coco_json_data.get("annotations", [])
+    images_with_objects = set([annotation["image_id"] for annotation in annotations])
+
+    labels = []
+    for image in all_images:
+        image_path = dataset / "images" / image["file_name"]
+
+        # If it is a target, class_id = 1
+        if image["id"] in images_with_objects:
+            labels.append(ClassificationObject(image_path, 1, image["id"]))
+        else:
+            # If not a target, background
+            labels.append(ClassificationObject(image_path, 0, image["id"]))
+
+    return labels
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inference COCO dataset.")
-
-    # create arg parser that can take in a variable w/model type
-    # build argument parser and try to take in the argument for the model timestamp
-
     parser.add_argument(
         "--model_type", type=str, help="Path to an image to inference.",
     )
-
     parser.add_argument("--model_timestamp", type=str, help="Timestamp of model used.")
-
     parser.add_argument(
         "--dataset", type=pathlib.Path, help="Path to dataset to perform inference on."
     )
-
     args = parser.parse_args()
 
-    prepare_dataset(args.dataset.expanduser())
-
-    # inference_dataset(args.model_timestamp, args.model_type, args.dataset)
+    inference_dataset(args.model_timestamp, args.model_type, args.dataset)
