@@ -3,6 +3,7 @@ import argparse
 import dataclasses
 import pathlib
 import json
+from typing import List
 
 import cv2
 import torch
@@ -40,7 +41,7 @@ class ClassificationObject:
     image_id: int
 
 
-def load_model(model_timestamp, model_type):
+def load_model(model_timestamp: str, model_type: str) -> torch.nn.Module:
 
     if model_type == "classifier":
         model = classifier.Classifier(
@@ -59,13 +60,11 @@ def load_model(model_timestamp, model_type):
     return model
 
 
-@torch.no_grad()
-def inference_dataset(model_timestamp, model_type, dataset):
-    labels = prepare_dataset(dataset)
+def inference_clf_dataset(
+    model: classifier.Classifier, labels: List[ClassificationObject]
+) -> float:
 
-    model = load_model(model_timestamp, model_type)
     augs = augmentations.clf_eval_augs(model.image_size, model.image_size)
-
     num_correct = 0
     for label in labels:
         image = cv2.imread(str(label.image_path))
@@ -79,7 +78,23 @@ def inference_dataset(model_timestamp, model_type, dataset):
     return num_correct / len(labels)
 
 
-def prepare_dataset(dataset: pathlib.Path):
+def inference_det_dataset(model: detector.Detector):
+    ...
+
+
+@torch.no_grad()
+def inference_dataset(model_timestamp: str, model_type: str, dataset: pathlib.Path):
+
+    model = load_model(model_timestamp, model_type)
+
+    if model_type == "classifier":
+        labels = prepare_clf_dataset(dataset)
+        metrics = inference_clf_dataset(model, labels)
+
+    return metrics
+
+
+def prepare_clf_dataset(dataset: pathlib.Path):
     coco_json_data = json.loads((dataset / "val_coco.json").read_text())
     all_images = coco_json_data.get("images", [])
     annotations = coco_json_data.get("annotations", [])
