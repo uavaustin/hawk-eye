@@ -7,12 +7,13 @@ import sys
 import pdb
 import numpy as np
 from typing import Tuple
+import os
 
 
 # COMBAK: how do I typecheck lists?
 def slice_image(
-    img_path: str, tile_size: Tuple[int, int], overlap: int  # (H, W)
-) -> Image.Image:
+    img_dir: str, tile_size: Tuple[int, int], overlap: int  # (H, W)
+) -> None:
     """ Take in an image and tile it into smaller tiles for inference.
     Args:
         image: The input image to tile.
@@ -28,30 +29,32 @@ def slice_image(
         <Displays image> # COMBAK: is this the right way to say this?
     """
     # COMBAK: change the docstring
-    pdb.set_trace()
-    image = Image.open(img_path)
-    width, height = image.size
+    # pdb.set_trace() # COMBAK: debugging
 
-    # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
-    for x in range(0, width, tile_size[0] - overlap):
+    for filename in os.listdir(img_dir):
+        if filename.upper().endswith(".JPG"):
+            image = Image.open(os.path.join(img_dir, filename))
+            width, height = image.size
 
-        # Shift back to extract tiles on the image
-        if x + tile_size[0] >= width and x != 0:
-            x = width - tile_size[0]
+            # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
+            for x in range(0, width, tile_size[0] - overlap):
 
-        for y in range(0, height, tile_size[1] - overlap):
-            if y + tile_size[1] >= height and y != 0:
-                y = height - tile_size[1]
+                # Shift back to extract tiles on the image
+                if x + tile_size[0] >= width and x != 0:
+                    x = width - tile_size[0]
 
-            tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
-            # TODO: save as originalimagename-x-y
-            img_name = img_path.split("/")[-1][:-4]
-            tile.save(f"{img_name}-{x}-{y}.JPG")
+                for y in range(0, height, tile_size[1] - overlap):
+                    if y + tile_size[1] >= height and y != 0:
+                        y = height - tile_size[1]
+
+                    tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
+
+                    tile.save(f"{filename[:-4]}-{x}-{y}.JPG")
 
 
 if __name__ == "__main__":
     slice_image(
-        img_path="hawk_eye/data_generation/data/test_flight_targets_20190215/EYED6009.JPG",
+        img_dir="hawk_eye/data_generation/data/test_flight_targets_20190215/",
         tile_size=(512, 512),
         overlap=50,
     )
