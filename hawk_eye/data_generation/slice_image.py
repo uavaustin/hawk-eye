@@ -8,11 +8,12 @@ import pdb
 import numpy as np
 from typing import Tuple
 import os
+import argparse
+from hawk_eye.data_generation import generate_config as config
 
 
-# COMBAK: how do I typecheck lists?
 def slice_image(
-    img_dir: str, tile_size: Tuple[int, int], overlap: int, out_dir: str
+    img_dir: str, tile_size: Tuple[int, int], overlap: int, save_dir: str
 ) -> None:
     """ Take in an image and tile it into smaller tiles for inference.
     Args:
@@ -30,8 +31,8 @@ def slice_image(
     """
     # COMBAK: update docstring
     # pdb.set_trace() # COMBAK: debugging
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     for filename in os.listdir(img_dir):
 
@@ -53,13 +54,37 @@ def slice_image(
 
                     tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
-                    tile.save(f"{os.path.join(out_dir, filename[:-4])}-{x}-{y}.JPG")
+                    tile.save(f"{os.path.join(save_dir, filename[:-4])}-{x}-{y}.JPG")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Slice an image up into smaller images."
+    )
+    parser.add_argument(
+        "--image_dir",
+        type=str,
+        required=True,
+        help="Path to directory with images to be sliced.",
+    )
+    parser.add_argument(
+        "--save_dir",
+        type=str,
+        required=True,
+        help="Path to directory in which to store sliced images.",
+    )
+    parser.add_argument(
+        "--overlap",
+        type=int,
+        required=True,
+        default=config.CROP_OVERLAP,
+        help="Number of pixels of overlap between adjacent slices.",
+    )
+    args = parser.parse_args()
+
     slice_image(
-        img_dir="hawk_eye/data_generation/data/test_flight_targets_20190215/",
-        tile_size=(512, 512),
-        overlap=50,
-        out_dir="hawk_eye/data_generation/data/slices/",
+        img_dir=args.image_dir,
+        tile_size=config.CROP_SIZE,
+        overlap=args.overlap,
+        save_dir=args.save_dir,
     )
