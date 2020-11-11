@@ -9,6 +9,7 @@ import torch
 
 from hawk_eye.core import classifier
 from hawk_eye.core import detector
+from hawk_eye.train import augmentations
 
 """
 
@@ -58,16 +59,24 @@ def load_model(model_timestamp, model_type):
     return model
 
 
+@torch.no_grad()
 def inference_dataset(model_timestamp, model_type, dataset):
     labels = prepare_dataset(dataset)
 
     model = load_model(model_timestamp, model_type)
+    augs = augmentations.clf_eval_augs(model.image_size, model.image_size)
 
+    num_correct = 0
     for label in labels:
-        # Read label.image_path into memory
-        # predictions = model(image)
-        # compare predictions vs label.image_class
         image = cv2.imread(str(label.image_path))
+        image = torch.Tensor(augs(image=image)["image"])
+        image = image.unsqueeze(0).permute(0, 3, 1, 2)
+
+        results = model.classify(image, probability=True)
+        _, predicted = torch.max(results.data, 1)
+        num_correct += (predicted == label.image_class).sum().item()
+
+    return num_correct / len(labels)
 
 
 def prepare_dataset(dataset: pathlib.Path):
@@ -101,4 +110,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    inference_dataset(args.model_timestamp, args.model_type, args.dataset)
+    metrics = inference_dataset(args.model_timestamp, args.model_type, args.dataset)
+    print(metrics)
