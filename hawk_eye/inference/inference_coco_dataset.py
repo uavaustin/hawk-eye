@@ -41,6 +41,11 @@ class ClassificationObject:
     image_id: int
 
 
+@dataclasses.dataclass
+class DetectionObject:
+    image_path: pathlib.Path
+
+
 def load_model(model_timestamp: str, model_type: str) -> torch.nn.Module:
 
     if model_type == "classifier":
@@ -91,7 +96,8 @@ def inference_dataset(model_timestamp: str, model_type: str, dataset: pathlib.Pa
     if model_type == "classifier":
         labels = prepare_clf_dataset(dataset)
         metrics = inference_clf_dataset(model, labels)
-
+    elif model_type == "detector":
+        pass
     return metrics
 
 
@@ -113,6 +119,12 @@ def prepare_clf_dataset(dataset: pathlib.Path):
             labels.append(ClassificationObject(image_path, 0, image["id"]))
 
     return labels
+
+
+def prepare_det_dataset(dataset: pathlib.Path) -> List[DetectionObject]:
+    # Return bounding boxes in a un normalized size.
+    # List of the images.
+    ...
 
 
 if __name__ == "__main__":
