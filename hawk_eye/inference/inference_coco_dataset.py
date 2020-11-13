@@ -69,11 +69,12 @@ def inference_clf_dataset(
     for label in labels:
         image = cv2.imread(str(label.image_path))
         image = torch.Tensor(augs(image=image)["image"])
+        # HWC -> BHWC -> BCHW
         image = image.unsqueeze(0).permute(0, 3, 1, 2)
 
         results = model.classify(image, probability=True)
         _, predicted = torch.max(results.data, 1)
-        num_correct += (predicted == label.image_class).sum().item()
+        num_correct += (predicted == label.image_class).item()
 
     return num_correct / len(labels)
 
