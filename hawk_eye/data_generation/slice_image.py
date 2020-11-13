@@ -60,6 +60,13 @@ if __name__ == "__main__":
         help="Path to an image to be sliced.",
     )
     parser.add_argument(
+        "--image_extension",
+        type=str,
+        required=False,
+        default=".JPG",
+        help="Extension of images to slice.",
+    )
+    parser.add_argument(
         "--save_dir",
         type=pathlib.Path,
         required=True,
@@ -77,17 +84,23 @@ if __name__ == "__main__":
     # Raises an error if none of image arguments are provided
     if args.image_path is None and args.image_dir is None:
         raise ValueError("Please supply either an image or directory of images.")
+
+    # If the input image extension doesn't start with '.', a '.' is added
+    if args.image_extension[0] != ".":
+        image_ext = "." + args.image_extension
+    else:
+        image_ext = args.image_extension
+
     if args.image_path is not None:
-        # TODO: add an image_extension argument
-        if args.image_path.suffix.upper() == ".JPG":
+        if args.image_path.suffix.upper() == image_ext.upper():
             images = [args.image_path.expanduser()]
     elif args.image_dir is not None:
         # If image_dir points to a directory, paths to all the images with the correct
         # extension are put in a list
         if args.image_dir.is_dir():
-            images = list(args.image_dir.expanduser().glob("*.jpg")) + list(
-                args.image_dir.expanduser().glob("*.JPG")
-            )
+            images = list(
+                args.image_dir.expanduser().glob(f"*{image_ext.lower()}")
+            ) + list(args.image_dir.expanduser().glob(f"*{image_ext.upper()}"))
         else:
             raise ValueError("Please supply a valid path to a directory.")
 
