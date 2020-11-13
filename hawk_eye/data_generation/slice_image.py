@@ -3,9 +3,7 @@
 
 import argparse
 import pathlib
-import pdb
-import sys
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 from PIL import Image
@@ -14,56 +12,56 @@ from hawk_eye.data_generation import generate_config as config
 
 
 def slice_image(
-    img_dir: str, tile_size: Tuple[int, int], overlap: int, save_dir: str
+    images: List, tile_size: Tuple[int, int], overlap: int, save_dir: pathlib.Path
 ) -> None:
     """ Take in an image and slice it into smaller images.
     Args:
-        img_dir: The path to the directory with images to be sliced.
+        images: A list of paths to images to be sliced.
         tile_size: The (width, height) of the tiles.
         overlap: The overlap between adjacent tiles.
         save_dir: The path to the directory within which to save slices.
     Returns:
         None.
-    Usage:
-        >>> slice_image('hawk-eye/hawk_eye/data_generation/data/test_flight_targets_20190215', (512, 512), 50, 'hawk_eye/data_generation/data/slices')
     """
-    pathlib.Path(save_dir).mkdir(parents=True, exist_ok=True)
+    # TODO: implement tqdm
+    for filename in images:
+        image = Image.open(filename)
+        width, height = image.size
 
-    for filename in pathlib.Path.iterdir(pathlib.Path(img_dir)):
-        if filename.suffix.upper().endswith(".JPG"):
-            image = Image.open(filename)
-            width, height = image.size
+        # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
+        for x in range(0, width, tile_size[0] - overlap):
 
-            # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
-            for x in range(0, width, tile_size[0] - overlap):
+            # Shift back to extract tiles on the image
+            if x + tile_size[0] >= width and x != 0:
+                x = width - tile_size[0]
 
-                # Shift back to extract tiles on the image
-                if x + tile_size[0] >= width and x != 0:
-                    x = width - tile_size[0]
+            for y in range(0, height, tile_size[1] - overlap):
 
-                for y in range(0, height, tile_size[1] - overlap):
+                if y + tile_size[1] >= height and y != 0:
+                    y = height - tile_size[1]
 
-                    if y + tile_size[1] >= height and y != 0:
-                        y = height - tile_size[1]
+                tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
-                    tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
-
-                    tile.save(
-                        f"{pathlib.Path(save_dir).joinpath(filename.stem)}-{x}-{y}.JPG"
-                    )
+                tile.save(save_dir / f"{filename.stem}-{x}-{y}.JPG")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Slice an image into smaller images.")
     parser.add_argument(
         "--image_dir",
-        type=str,
-        required=True,
-        help="Path to directory with images to be sliced.",
+        type=pathlib.Path,
+        required=False,
+        help="Path to directory of images to be sliced.",
+    )
+    parser.add_argument(
+        "--image_path",
+        type=pathlib.Path,
+        required=False,
+        help="Path to an image to be sliced.",
     )
     parser.add_argument(
         "--save_dir",
-        type=str,
+        type=pathlib.Path,
         required=True,
         help="Path to directory in which to store sliced images.",
     )
@@ -76,9 +74,30 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Raises an error if none of image arguments are provided
+    if args.image_path is None and args.image_dir is None:
+        raise ValueError("Please supply either an image or directory of images.")
+    if args.image_path is not None:
+        # TODO: add an image_extension argument
+        if args.image_path.suffix.upper() == ".JPG":
+            images = [args.image_path.expanduser()]
+    elif args.image_dir is not None:
+        # If image_dir points to a directory, paths to all the images with the correct
+        # extension are put in a list
+        if args.image_dir.is_dir():
+            images = list(args.image_dir.expanduser().glob("*.jpg")) + list(
+                args.image_dir.expanduser().glob("*.JPG")
+            )
+        else:
+            raise ValueError("Please supply a valid path to a directory.")
+
+    # Makes a directory to save slices in
+    save_dir = args.save_dir.expanduser()
+    save_dir.mkdir(exist_ok=True, parents=True)
+
     slice_image(
-        img_dir=args.image_dir,
+        images=images,
         tile_size=config.CROP_SIZE,
         overlap=args.overlap,
-        save_dir=args.save_dir,
+        save_dir=save_dir,
     )
