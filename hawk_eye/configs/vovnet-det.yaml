@@ -9,7 +9,7 @@ model:
     use_dw: true
     levels: [3, 4, 5]
   retinanet_head:
-    num_levels: 4
+    num_levels: 3
     use_dw: true
   anchors:
     aspect_ratios: [0.5, 1, 2]  # H / W
@@ -27,6 +27,6 @@ training:
     end_lr: 1.0e-7
     warmup_fraction: 0.2
   epochs: 30
-  train_batch_size: 30
-  eval_batch_size: 30
-  eval_start_epoch: 10
+  train_batch_size: 40
+  eval_batch_size: 40
+  eval_start_epoch: 2
