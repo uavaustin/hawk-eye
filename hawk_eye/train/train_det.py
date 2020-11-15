@@ -273,8 +273,8 @@ def train(
                 utils.save_model(model, save_dir / f"{metric}.pt")
 
             # Call for EMA model.
-            ema_eval_results, ema_improved_metrics = eval(
-                ema_model.ema_model, eval_loader, ema_eval_results, save_dir
+            ema_eval_results, ema_improved_metrics = eval_model(
+                ema_model.ema_model, eval_loader, ema_eval_results
             )
             for metric in ema_improved_metrics:
                 utils.save_model(model, save_dir / f"ema-{metric}.pt")

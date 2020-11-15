@@ -333,6 +333,8 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
 @dataclasses.dataclass
 class alpha_params:
     font_multiplier: Tuple[int, int]
+    x_shift: Tuple[int, int]
+    y_shift: Tuple[int, int]
 
 
 def add_alphanumeric(
@@ -344,16 +346,16 @@ def add_alphanumeric(
 ) -> PIL.Image.Image:
 
     alpha_info = {
-        "circle": alpha_params((0.35, 0.65)),
-        "cross": alpha_params((0.35, 0.65)),
-        "pentagon": alpha_params((0.35, 0.65)),
-        "quarter-circle": alpha_params((0.35, 0.65)),
-        "rectangle": alpha_params((0.35, 0.7)),
-        "semicircle": alpha_params((0.35, 0.75)),
-        "square": alpha_params((0.30, 0.8)),
-        "star": alpha_params((0.25, 0.55)),
-        "trapezoid": alpha_params((0.25, 0.75)),
-        "triangle": alpha_params((0.25, 0.6)),
+        "circle": alpha_params((0.35, 0.65), (-10, 10), (-50, 0)),
+        "cross": alpha_params((0.35, 0.55), (-5, 5), (-40, -40)),
+        "pentagon": alpha_params((0.65, 0.65), (-5, 5), (-30, 20)),
+        "quarter-circle": alpha_params((0.65, 0.65), (-5, 5), (-45, -20)),
+        "rectangle": alpha_params((0.35, 0.7), (-40, 40), (-10, 10)),
+        "semicircle": alpha_params((0.35, 0.75), (-5, 5), (-5, 5)),
+        "square": alpha_params((0.30, 0.8), (-5, 5), (-15, -5)),
+        "star": alpha_params((0.25, 0.55), (-5, 5), (-5, 5)),
+        "trapezoid": alpha_params((0.25, 0.75), (-5, 5), (-25, -15)),
+        "triangle": alpha_params((0.25, 0.6), (-30, -20), (10, 15)),
     }
     font_multiplier = random.uniform(*alpha_info[shape].font_multiplier)
 
@@ -367,31 +369,11 @@ def add_alphanumeric(
     x = (image.width - w) / 2
     y = (image.height - h) / 2
 
-    # Adjust centering of alphanumerics on shapes
-    if shape == "pentagon":
-        pass
-    elif shape == "semicircle":
-        pass
-    elif shape == "rectangle":
-        pass
-    elif shape == "trapezoid":
-        y -= 20
-    elif shape == "star":
-        pass
-    elif shape == "triangle":
-        x -= 24
-        y += 12
-    elif shape == "quarter-circle":
-        y -= 40
-        x += 14
-    elif shape == "cross":
-        y -= 25
-    elif shape == "square":
-        y -= 10
-    elif shape == "circle":
-        y -= 50
-    else:
-        pass
+    x_shift = random.uniform(*alpha_info[shape].x_shift)
+    y_shift = random.uniform(*alpha_info[shape].y_shift)
+
+    x = int(x + x_shift)
+    y = int(y + y_shift)
 
     draw.text((x, y), alpha, alpha_rgb, font=font)
 

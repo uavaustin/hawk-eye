@@ -72,16 +72,17 @@ def det_train_augs(height: int, width: int) -> albu.Compose:
                     albu.HueSaturationValue(p=1.0),
                     albu.IAAAdditiveGaussianNoise(p=1.0),
                     albu.IAASharpen(p=1.0),
-                    albu.RandomBrightnessContrast(
-                        brightness_limit=0.1, contrast_limit=0.1, p=1.0
-                    ),
+                    albu.RandomBrightnessContrast(p=1.0),
                     albu.RandomGamma(p=1.0),
                 ],
                 p=1.0,
             ),
             albu.OneOf(
-                [albu.Blur(blur_limit=3, p=1.0), albu.MotionBlur(blur_limit=3, p=1.0)],
-                p=1.0,
+                [
+                    albu.Blur(blur_limit=(3, 7), p=1.0),
+                    albu.MotionBlur(blur_limit=(3, 7), p=1.0),
+                ],
+                p=0.5,
             ),
             albu.Normalize(),
         ]
