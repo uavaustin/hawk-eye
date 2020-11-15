@@ -3,6 +3,7 @@ import argparse
 import dataclasses
 import pathlib
 import json
+import tempfile
 from typing import List
 
 import cv2
@@ -11,27 +12,10 @@ import torch
 from hawk_eye.core import classifier
 from hawk_eye.core import detector
 from hawk_eye.train import augmentations
-
-"""
-
-    * Metrics generated will differ for detection vs classification.
-    * Focus on classification (it's easier)
-
-    * What are scoring the models on?
-        - classification: accuracy (TP / (TP + FN))
-
-    1 How to load COCO dataset.
-        - read *.json file and process the images/labels
-        - you can associate labels with images (target vs background)
-
-    2 Loading the models
-        - take in user timestamp and load the model (on gpu? cpu?)
-
-    3 Combine the loaded dataset with model to get predictions
-
-    4 Do something with the predictions. Generate the accuracy
-
-"""
+from hawk_eye.train import collate
+from hawk_eye.train import datasets
+from hawk_eye.train import train_det
+from third_party import coco_eval
 
 
 @dataclasses.dataclass
@@ -39,12 +23,6 @@ class ClassificationObject:
     image_path: pathlib.Path
     image_class: int
     image_id: int
-
-
-@dataclasses.dataclass
-class DetectionObject:
-    image_path: pathlib.Path
-    image_annotations: List[dict]
 
 
 def load_model(model_timestamp: str, model_type: str) -> torch.nn.Module:
@@ -66,6 +44,7 @@ def load_model(model_timestamp: str, model_type: str) -> torch.nn.Module:
     return model
 
 
+@torch.no_grad()
 def inference_clf_dataset(
     model: classifier.Classifier, labels: List[ClassificationObject]
 ) -> float:
@@ -85,11 +64,32 @@ def inference_clf_dataset(
     return num_correct / len(labels)
 
 
-def inference_det_dataset(model: detector.Detector):
-    ...
-
-
 @torch.no_grad()
+def inference_det_dataset(
+    model: detector.Detector,
+    eval_loader: torch.utils.data.DataLoader,
+    coco_json: pathlib.Path,
+):
+    detections_dict: List[dict] = []
+    for images, image_ids in eval_loader:
+        if torch.cuda.is_available():
+            images = images.cuda()
+        detections = model(images)
+
+        detections_dict.extend(
+            train_det.detections_to_dict(detections, image_ids, model.image_size)
+        )
+    results = {}
+    if detections_dict:
+
+        with tempfile.TemporaryDirectory() as d:
+            tmp_json = pathlib.Path(d) / "det.json"
+            tmp_json.write_text(json.dumps(detections_dict))
+            results = coco_eval.get_metrics(coco_json, tmp_json)
+
+    return results
+
+
 def inference_dataset(model_timestamp: str, model_type: str, dataset: pathlib.Path):
 
     model = load_model(model_timestamp, model_type)
@@ -98,7 +98,9 @@ def inference_dataset(model_timestamp: str, model_type: str, dataset: pathlib.Pa
         labels = prepare_clf_dataset(dataset)
         metrics = inference_clf_dataset(model, labels)
     elif model_type == "detector":
-        pass
+        loader = prepare_det_dataset(dataset)
+        metrics = inference_det_dataset(model, loader, dataset / "val_coco.json")
+
     return metrics
 
 
@@ -122,10 +124,19 @@ def prepare_clf_dataset(dataset: pathlib.Path):
     return labels
 
 
-def prepare_det_dataset(dataset: pathlib.Path) -> List[DetectionObject]:
-    # Return bounding boxes in a un normalized size.
-    # List of the images.
-    image = list((dataset / "images").glob("*.jpg"))
+def prepare_det_dataset(dataset: pathlib.Path):
+    dataset = datasets.DetDataset(
+        dataset / "images", dataset / "val_coco.json", validation=True
+    )
+    loader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=4,
+        pin_memory=True,
+        shuffle=False,
+        collate_fn=collate.CollateVal(),
+        num_workers=max(torch.multiprocessing.cpu_count(), 4),
+    )
+    return loader
 
 
 if __name__ == "__main__":
