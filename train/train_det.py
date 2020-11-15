@@ -301,6 +301,18 @@ def train(
                 f"{eval_results} \n"
                 f"ema results: {ema_eval_results}"
             )
+            ## BP UPDATED:
+            log.metric(
+                "Training Loss", round((sum(all_losses) / len(all_losses)), 5), epoch
+            )
+            log.metric(
+                "Classification Loss",
+                round((sum(clf_losses) / len(clf_losses)), 5),
+                epoch,
+            )
+            log.metric(
+                "Regression Loss", round((sum(reg_losses) / len(reg_losses)), 5), epoch
+            )
 
 
 @torch.no_grad()
