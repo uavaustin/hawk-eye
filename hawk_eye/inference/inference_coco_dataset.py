@@ -44,6 +44,7 @@ class ClassificationObject:
 @dataclasses.dataclass
 class DetectionObject:
     image_path: pathlib.Path
+    image_annotations: List[dict]
 
 
 def load_model(model_timestamp: str, model_type: str) -> torch.nn.Module:
@@ -124,7 +125,7 @@ def prepare_clf_dataset(dataset: pathlib.Path):
 def prepare_det_dataset(dataset: pathlib.Path) -> List[DetectionObject]:
     # Return bounding boxes in a un normalized size.
     # List of the images.
-    ...
+    image = list((dataset / "images").glob("*.jpg"))
 
 
 if __name__ == "__main__":

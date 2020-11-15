@@ -36,6 +36,9 @@ IS_MAC=$(uname -a)
 
 if [[ $IS_MAC =~ "Darwin" ]]; then
     echo "No GPU found."
+    xcode-select --install
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    brew install geos
     python3 -m pip install -U torch torchvision
 else
     if lspci -vnnn | perl -lne 'print if /^\d+\:.+(\[\S+\:\S+\])/' | grep -q NVIDIA;
