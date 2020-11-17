@@ -7,7 +7,7 @@ from typing import List, Tuple
 
 import numpy as np
 from PIL import Image
-from tqdm import tqdm
+import tqdm
 
 from hawk_eye.data_generation import generate_config as config
 
@@ -24,7 +24,7 @@ def slice_image(
     Returns:
         None.
     """
-    for filename in tqdm(images, desc="Slicing images", total=len(images)):
+    for filename in tqdm.tqdm(images, desc="Slicing images", total=len(images)):
         image = Image.open(filename)
         width, height = image.size
 
