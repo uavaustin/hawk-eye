@@ -94,14 +94,17 @@ if __name__ == "__main__":
     if args.image_path is not None:
         if args.image_path.suffix in exts:
             images = [args.image_path.expanduser()]
+
     elif args.image_dir is not None:
+
         # If image_dir points to a directory, paths to all the images with the correct
         # extension are put in a list
         image_dir = args.image_dir.expanduser()
+
         if image_dir.is_dir():
             images = []
-            for ext in exts:
 
+            for ext in exts:
                 images.extend(list(image_dir.glob(f"*{ext}")))
         else:
             raise ValueError("Please supply a valid path to a directory.")
