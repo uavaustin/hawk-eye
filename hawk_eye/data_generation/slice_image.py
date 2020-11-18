@@ -25,6 +25,7 @@ def slice_image(
         None.
     """
     for filename in tqdm.tqdm(images, desc="Slicing images", total=len(images)):
+
         image = Image.open(filename)
         width, height = image.size
 
@@ -42,11 +43,11 @@ def slice_image(
 
                 tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
-                tile.save(save_dir / f"{filename.stem}-{x}-{y}.JPG")
+                tile.save(save_dir / f"{filename.stem}-{x}-{y}{filename.suffix}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Slice an image into smaller images.")
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--image_dir",
         type=pathlib.Path,
@@ -60,11 +61,11 @@ if __name__ == "__main__":
         help="Path to an image to be sliced.",
     )
     parser.add_argument(
-        "--image_extension",
+        "--image_extensions",
         type=str,
         required=False,
-        default=".JPG",
-        help="Extension of images to slice.",
+        default=".JPG,.jpg",
+        help="A comma-separated list of extensions of images to slice.",
     )
     parser.add_argument(
         "--save_dir",
@@ -85,22 +86,23 @@ if __name__ == "__main__":
     if args.image_path is None and args.image_dir is None:
         raise ValueError("Please supply either an image or directory of images.")
 
-    # If the input image extension doesn't start with '.', a '.' is added
-    if args.image_extension[0] != ".":
-        image_ext = "." + args.image_extension
-    else:
-        image_ext = args.image_extension
+    # Extracts extensions from the input argument
+    exts = [
+        f".{ext}" if "." not in ext else ext for ext in args.image_extensions.split(",")
+    ]
 
     if args.image_path is not None:
-        if args.image_path.suffix.upper() == image_ext.upper():
+        if args.image_path.suffix in exts:
             images = [args.image_path.expanduser()]
     elif args.image_dir is not None:
         # If image_dir points to a directory, paths to all the images with the correct
         # extension are put in a list
-        if args.image_dir.is_dir():
-            images = list(
-                args.image_dir.expanduser().glob(f"*{image_ext.lower()}")
-            ) + list(args.image_dir.expanduser().glob(f"*{image_ext.upper()}"))
+        image_dir = args.image_dir.expanduser()
+        if image_dir.is_dir():
+            images = []
+            for ext in exts:
+
+                images.extend(list(image_dir.glob(f"*{ext}")))
         else:
             raise ValueError("Please supply a valid path to a directory.")
 
