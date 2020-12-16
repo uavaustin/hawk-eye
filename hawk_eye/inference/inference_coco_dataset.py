@@ -3,33 +3,19 @@ import argparse
 import dataclasses
 import pathlib
 import json
+import tempfile
+from typing import List
 
 import cv2
 import torch
 
 from hawk_eye.core import classifier
 from hawk_eye.core import detector
-
-"""
-
-    * Metrics generated will differ for detection vs classification.
-    * Focus on classification (it's easier)
-
-    * What are scoring the models on?
-        - classification: accuracy (TP / (TP + FN))
-
-    1 How to load COCO dataset.
-        - read *.json file and process the images/labels
-        - you can associate labels with images (target vs background)
-
-    2 Loading the models
-        - take in user timestamp and load the model (on gpu? cpu?)
-
-    3 Combine the loaded dataset with model to get predictions
-
-    4 Do something with the predictions. Generate the accuracy
-
-"""
+from hawk_eye.train import augmentations
+from hawk_eye.train import collate
+from hawk_eye.train import datasets
+from hawk_eye.train import train_det
+from third_party import coco_eval
 
 
 @dataclasses.dataclass
@@ -39,7 +25,7 @@ class ClassificationObject:
     image_id: int
 
 
-def load_model(model_timestamp, model_type):
+def load_model(model_timestamp: str, model_type: str) -> torch.nn.Module:
 
     if model_type == "classifier":
         model = classifier.Classifier(
@@ -50,7 +36,7 @@ def load_model(model_timestamp, model_type):
         # TODO(alex): Pass in the confidence for the detector.
         model = detector.Detector(
             timestamp=model_timestamp,
-            confidence=0.2,
+            confidence=0.0,
             half_precision=torch.cuda.is_available(),
         )
         model.eval()
@@ -58,19 +44,67 @@ def load_model(model_timestamp, model_type):
     return model
 
 
-def inference_dataset(model_timestamp, model_type, dataset):
-    labels = prepare_dataset(dataset)
+@torch.no_grad()
+def inference_clf_dataset(
+    model: classifier.Classifier, labels: List[ClassificationObject]
+) -> float:
+
+    augs = augmentations.clf_eval_augs(model.image_size, model.image_size)
+    num_correct = 0
+    for label in labels:
+        image = cv2.imread(str(label.image_path))
+        image = torch.Tensor(augs(image=image)["image"])
+        # HWC -> BHWC -> BCHW
+        image = image.unsqueeze(0).permute(0, 3, 1, 2)
+
+        results = model.classify(image, probability=True)
+        _, predicted = torch.max(results.data, 1)
+        num_correct += (predicted == label.image_class).item()
+
+    return num_correct / len(labels)
+
+
+@torch.no_grad()
+def inference_det_dataset(
+    model: detector.Detector,
+    eval_loader: torch.utils.data.DataLoader,
+    coco_json: pathlib.Path,
+):
+    detections_dict: List[dict] = []
+    for images, image_ids in eval_loader:
+        if torch.cuda.is_available():
+            images = images.cuda()
+        detections = model(images)
+
+        detections_dict.extend(
+            train_det.detections_to_dict(detections, image_ids, model.image_size)
+        )
+    results = {}
+    if detections_dict:
+
+        with tempfile.TemporaryDirectory() as d:
+            tmp_json = pathlib.Path(d) / "det.json"
+            tmp_json.write_text(json.dumps(detections_dict))
+            results = coco_eval.get_metrics(coco_json, tmp_json)
+
+    return results
+
+
+def inference_dataset(model_timestamp: str, model_type: str, dataset: pathlib.Path):
 
     model = load_model(model_timestamp, model_type)
 
-    for label in labels:
-        # Read label.image_path into memory
-        # predictions = model(image)
-        # compare predictions vs label.image_class
-        image = cv2.imread(str(label.image_path))
+    if model_type == "classifier":
+        labels = prepare_clf_dataset(dataset)
+        metrics = inference_clf_dataset(model, labels)
+    elif model_type == "detector":
+        loader = prepare_det_dataset(dataset)
+        metrics = inference_det_dataset(model, loader, dataset / "val_coco.json")
+
+    return metrics
 
 
-def prepare_dataset(dataset: pathlib.Path):
+def prepare_clf_dataset(dataset: pathlib.Path):
     coco_json_data = json.loads((dataset / "val_coco.json").read_text())
     all_images = coco_json_data.get("images", [])
     annotations = coco_json_data.get("annotations", [])
@@ -90,6 +124,21 @@ def prepare_dataset(dataset: pathlib.Path):
     return labels
 
 
+def prepare_det_dataset(dataset: pathlib.Path):
+    dataset = datasets.DetDataset(
+        dataset / "images", dataset / "val_coco.json", validation=True, img_ext=".JPG"
+    )
+    loader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=4,
+        pin_memory=True,
+        shuffle=False,
+        collate_fn=collate.CollateVal(),
+        num_workers=max(torch.multiprocessing.cpu_count(), 4),
+    )
+    return loader
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inference COCO dataset.")
     parser.add_argument(
@@ -101,4 +150,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    inference_dataset(args.model_timestamp, args.model_type, args.dataset)
+    metrics = inference_dataset(args.model_timestamp, args.model_type, args.dataset)
+    print(metrics)

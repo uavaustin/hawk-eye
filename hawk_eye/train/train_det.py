@@ -28,16 +28,16 @@ except ImportError as e:
 import torch
 import numpy as np
 
-from train import datasets
-from train import collate
-from train.train_utils import ema
-from train.train_utils import logger
-from train.train_utils import utils
-from data_generation import generate_config
+from hawk_eye.train import datasets
+from hawk_eye.train import collate
+from hawk_eye.train.train_utils import ema
+from hawk_eye.train.train_utils import logger
+from hawk_eye.train.train_utils import utils
+from hawk_eye.data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
-from core import detector
-from core import asset_manager
+from hawk_eye.core import detector
+from hawk_eye.core import asset_manager
 
 _LOG_INTERVAL = 10
 _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
