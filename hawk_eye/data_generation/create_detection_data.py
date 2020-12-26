@@ -6,17 +6,21 @@ is valuable so the model sees that not every image will have a target, as this i
 real life case. """
 
 import dataclasses
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 import multiprocessing
 import random
 import json
 import pathlib
 
-from tqdm import tqdm
+import albumentations as alb
+import numpy as np
 import PIL
 from PIL import Image
-from PIL import ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import ImageDraw
+from PIL import ImageFilter
+from PIL import ImageFont
+from PIL import ImageOps
+from tqdm import tqdm
 
 from hawk_eye.data_generation import generate_config as config
 from hawk_eye.core import asset_manager
@@ -131,7 +135,6 @@ def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -
 
     with multiprocessing.Pool(None) as pool:
         processes = pool.imap_unordered(generate_single_example, data)
-
         for _ in tqdm(processes, total=num_gen):
             pass
 
@@ -165,10 +168,20 @@ def generate_single_example(data) -> None:
         (crop_x, crop_y, crop_x + config.CROP_SIZE[0], crop_y + config.CROP_SIZE[1])
     )
 
-    if flip_bg:
-        background = ImageOps.flip(background)
-    if mirror_bg:
-        background = ImageOps.mirror(background)
+    # Create our augmentations for the background tile
+    augs = alb.Compose(
+        [
+            alb.RandomGamma(),
+            alb.RandomBrightnessContrast(),
+            alb.HueSaturationValue(30, 30, 30),
+            alb.GaussianBlur(),
+            alb.GaussNoise(),
+            alb.Transpose(),
+            alb.Flip(),
+            alb.ShiftScaleRotate(0.1, 0.1, 0.2),
+        ]
+    )
+    background = Image.fromarray(augs(image=np.array(background))["image"])
 
     if random.randint(0, 100) / 100 >= config.EMPTY_TILE_PROB:
         shape_imgs = [create_shape(*shape_param) for shape_param in shape_params]
@@ -285,7 +298,7 @@ def create_shape(
     image = strip_image(image)
 
     image = add_alphanumeric(image, shape, alpha, alpha_rgb, font_file)
-
+    image = add_augmentation(image)
     w, h = image.size
     ratio = min(size / w, size / h)
     image = image.resize((int(w * ratio), int(h * ratio)), 1)
@@ -313,6 +326,61 @@ def get_base(base, target_rgb, size):
                 image.putpixel((x, y), (r, g, b, 255))
 
     return image
+
+
+def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
+    """Add random augmentations to the target shape. This is needed to make
+    our model more robust against random changes in color, lighting, etc. """
+
+    # Extract a mask of the target. Some of our augmentations might add
+    # noise to region outside the target, so we want to remove this after to
+    # keep the target clean.
+    image_array = np.array(image.convert("RGB"))
+    target_mask = np.array(image_array > 0, dtype=np.uint8)
+    bkg_mask = np.ones_like(image_mask) - image_mask
+
+    # Create our augmentations
+    augs = alb.Compose(
+        [
+            alb.RandomGamma(),
+            alb.GaussNoise(),
+            alb.RandomBrightnessContrast(),
+            alb.HueSaturationValue(25, 25, 25),
+            alb.GaussianBlur((1, 7)),
+        ]
+    )
+
+    width, height = image.size
+    min_crop_w, min_crop_h = int(0.1 * width), int(0.1 * height)
+
+    # To add even more variance to the data, we apply these augmentations to
+    # random crops within the target itself.
+    for _ in range(4):
+        if random.uniform(0.0, 1.0) < 0.75:
+            x0 = random.randint(0, width - min_crop_w)
+            y0 = random.randint(0, height - min_crop_h)
+            w = random.randint(min_crop_w, width)
+            h = random.randint(min_crop_h, height)
+            x1 = x0 + w
+            y1 = y0 + h
+            image_array[y0:y1, x0:x1] = augs(image=image_array[y0:y1, x0:x1])["image"]
+
+    image_array *= image_mask
+
+    # It's possible the augmenations brought the color down to complete black, so
+    # here we make sure to only set the backgroud to black & transparent.
+
+    image_array += np.array(image.convert("RGB"))
+    image_array = image_array // 2
+
+    image_new = Image.fromarray(image_array).convert("RGBA")
+    for x in range(image_new.width):
+        for y in range(image_new.height):
+            r, g, b, _ = image_new.getpixel((x, y))
+            if r == 0 and g == 0 and b == 0:
+                image_new.putpixel((x, y), (0, 0, 0, 0))
+
+    return image_new
 
 
 def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
