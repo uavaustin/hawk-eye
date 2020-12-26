@@ -1,14 +1,5 @@
 classes:
   shapes:
-    - circle
-    - cross
-    - pentagon
-    - quarter-circle
-    - rectangle
-    - semicircle
-    - square
-    - star
-    - trapezoid
     - triangle
   alphas:
     - A
@@ -78,9 +69,9 @@ generate:
     # The detectors we use can train on images with no targets.
     empty_slice_probability: 0.2
     train_offset: 0
-    train_images: 10000
+    train_images: 2
     val_offset: 0
-    val_images: 1000
+    val_images: 0
   classification:
     offset: 0
     images: 50

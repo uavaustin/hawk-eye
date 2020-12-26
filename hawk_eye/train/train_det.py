@@ -17,17 +17,11 @@ import sys
 import os
 import yaml
 
-try:
-    import apex
-
-    _USE_APEX = True
-except ImportError as e:
-    _USE_APEX = False
-    print(f"{e}. Apex will not be used.")
-
 import torch
 import numpy as np
 
+from hawk_eye.core import detector
+from hawk_eye.core import asset_manager
 from hawk_eye.train import datasets
 from hawk_eye.train import collate
 from hawk_eye.train.train_utils import ema
@@ -36,8 +30,6 @@ from hawk_eye.train.train_utils import utils
 from hawk_eye.data_generation import generate_config
 from third_party.models import losses
 from third_party import coco_eval
-from hawk_eye.core import detector
-from hawk_eye.core import asset_manager
 
 _LOG_INTERVAL = 10
 _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
@@ -134,43 +126,48 @@ def train(
         log.info(f"Model architecture: \n {model}")
 
     # TODO(alex) these paths should be in the generate config
+    data_dirs = [generate_config.DATA_DIR / "detector_train"] + [
+        generate_config.DATA_DIR / pathlib.Path(data_dir)
+        for data_dir in train_cfg.get("real-data-val", [])
+    ]
     train_batch_size = train_cfg.get("train_batch_size")
     train_loader, train_sampler = create_data_loader(
         train_cfg,
-        generate_config.DATA_DIR / "detector_train/images",
-        generate_config.DATA_DIR / "detector_train/train_coco.json",
+        data_dirs,
         model.anchors.all_anchors,
         train_batch_size,
         world_size,
         val=False,
         image_size=model_cfg.get("image_size", 512),
+        img_ext=".png",
     )
     eval_batch_size = train_cfg.get("eval_batch_size")
+    eval_dirs = [
+        generate_config.DATA_DIR / pathlib.Path(data_dir)
+        for data_dir in train_cfg.get("real-data-val", [])
+    ]
     eval_loader, _ = create_data_loader(
         train_cfg,
-        generate_config.DATA_DIR / "detector_val/images",
-        generate_config.DATA_DIR / "detector_val/val_coco.json",
+        eval_dirs,
         model.anchors.all_anchors,
         eval_batch_size,
         world_size,
         val=True,
         image_size=model_cfg.get("image_size", 512),
+        img_ext=".JPG",
     )
 
     # Construct the optimizer and wrap with Apex if available.
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
 
-    if _USE_APEX:
-        model, optimizer = apex.amp.initialize(
-            model, optimizer, opt_level="O1", verbosity=is_main
-        )
-
     # Adjust the model for distributed training. If we are using apex, wrap the model
     # with Apex's utilies, else PyTorch.
     if world_size > 1:
-        model = apex.parallel.DistributedDataParallel(model, delay_allreduce=True)
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[local_rank], find_unused_parameters=True
+        )
         if is_main:
-            log.info("Using APEX DistributedDataParallel.")
+            log.info("Using DistributedDataParallel.")
 
     epochs = train_cfg.get("epochs", 0)
     assert epochs > 0, "Please supply epoch > 0"
@@ -179,7 +176,8 @@ def train(
     eval_results, ema_eval_results = {}, {}
 
     lr_scheduler = None
-    if train_cfg["optimizer"].lower() == "sgd":
+    optimizer_cfg = train_cfg.get("optimizer", {})
+    if optimizer_cfg.get("type", "SGD").lower() == "sgd":
         # Create the learning rate scheduler.
         lr_config = train_cfg.get("lr_schedule", {})
         warm_up_percent = lr_config.get("warmup_fraction", 0)
@@ -195,6 +193,8 @@ def train(
             pct_start=warm_up_percent,
         )
 
+    scaler = torch.cuda.amp.GradScaler()
+
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
     for epoch in range(epochs):
@@ -206,6 +206,7 @@ def train(
             train_sampler.set_epoch(epoch)
 
         previous_loss = None
+
         for idx, (images, gt_regressions, gt_classes) in enumerate(train_loader):
 
             optimizer.zero_grad()
@@ -214,19 +215,21 @@ def train(
             gt_regressions = gt_regressions.to(device, non_blocking=True)
             gt_classes = gt_classes.to(device, non_blocking=True)
 
-            # Forward pass through detector
-            cls_per_level, reg_per_level = model(images)
+            with torch.cuda.amp.autocast():
+                # Forward pass through detector
+                cls_per_level, reg_per_level = model(images)
 
-            # Compute the losses
-            cls_loss, reg_loss = losses.compute_losses(
-                gt_classes=gt_classes,
-                gt_anchors_deltas=gt_regressions,
-                cls_per_level=cls_per_level,
-                reg_per_level=reg_per_level,
-                num_classes=model.module.num_classes,
-            )
+                # Compute the losses
+                cls_loss, reg_loss = losses.compute_losses(
+                    gt_classes=gt_classes,
+                    gt_anchors_deltas=gt_regressions,
+                    cls_per_level=cls_per_level,
+                    reg_per_level=reg_per_level,
+                    num_classes=model.module.num_classes,
+                )
 
-            total_loss = cls_loss + reg_loss
+                total_loss = cls_loss + reg_loss
+
             clf_losses.append(cls_loss)
             reg_losses.append(reg_loss)
 
@@ -236,18 +239,15 @@ def train(
             if previous_loss is None:
                 previous_loss = total_loss
 
-            if _USE_APEX:
-                # Propogate the gradients back through the model.
-                with apex.amp.scale_loss(total_loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
+            if world_size > 1:
+                scaler.scale(total_loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
             else:
                 total_loss.backward()
+                optimizer.step()
 
             all_losses.append(total_loss.item())
-
-            # Perform the parameter updates
-            optimizer.step()
-
             ema_model.update(model)
 
             if lr_scheduler is not None:
@@ -264,7 +264,7 @@ def train(
 
                 if total_loss < previous_loss:
                     if isinstance(
-                        model, apex.parallel.distributed.DistributedDataParallel
+                        model, torch.nn.parallel.distributed.DistributedDataParallel
                     ):
                         utils.save_model(model.module, save_dir / "min-loss.pt")
                     else:
@@ -312,7 +312,7 @@ def eval(
     previous_best: dict,
     save_dir: pathlib.Path = None,
 ) -> Tuple[dict, List[str]]:
-    """Evalulate the model against the evaulation set. Save the best weights if
+    """ Evalulate the model against the evaulation set. Save the best weights if
     specified. Use the pycocotools package for metrics.
 
     Args:
@@ -330,7 +330,7 @@ def eval(
             images = images.cuda()
         detections = model(images)
 
-        if isinstance(model, apex.parallel.distributed.DistributedDataParallel):
+        if isinstance(model, torch.nn.parallel.distributed.DistributedDataParallel):
             model = model.module
 
         detections_dict.extend(
@@ -343,7 +343,9 @@ def eval(
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
             results = coco_eval.get_metrics(
-                generate_config.DATA_DIR / "detector_val/val_coco.json", tmp_json
+                generate_config.DATA_DIR
+                / "test_flight_targets_20190215_dataset/val_coco.json",
+                tmp_json,
             )
 
         # If there are the first results, set the previous to the current.
@@ -360,20 +362,19 @@ def eval(
 
 def create_data_loader(
     train_cfg: dict,
-    data_dir: pathlib.Path,
-    metadata_path: pathlib.Path,
+    data_dirs: List[pathlib.Path],
     anchors: torch.tensor,
     batch_size: int,
     world_size: int,
     val: bool,
     image_size: int,
+    img_ext: str,
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
     """Simple function to create the dataloaders for training and evaluation.
 
     Args:
         training_cfg: The parameters related to the training regime.
-        data_dir: The directory where the images are located.
-        metadata_path: The path to the COCO metadata json.
+        data_dirs: The directories where the images are located.
         anchors: The tensor of anchors in the model.
         batch_size: The loader's batch size.
         world_size: World size is needed to determine if a distributed sampler is needed.
@@ -385,12 +386,9 @@ def create_data_loader(
         sampler's epoch to reshuffle.
     """
 
-    assert data_dir.is_dir(), data_dir
-
-    dataset = datasets.DetDataset(
-        data_dir,
-        metadata_path=metadata_path,
-        img_ext=generate_config.IMAGE_EXT,
+    dataset = datasets.DetectionComposite(
+        data_dirs,
+        img_ext=img_ext,
         img_width=image_size,
         img_height=image_size,
         validation=val,
@@ -417,7 +415,7 @@ def create_data_loader(
         pin_memory=True,
         sampler=sampler,
         collate_fn=collate_fn,
-        num_workers=torch.multiprocessing.cpu_count() // world_size,
+        num_workers=max(torch.multiprocessing.cpu_count() // world_size, 6),
     )
     return loader, sampler
 

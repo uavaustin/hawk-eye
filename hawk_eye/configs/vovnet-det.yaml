@@ -29,4 +29,7 @@ training:
   epochs: 30
   train_batch_size: 30
   eval_batch_size: 30
-  eval_start_epoch: 10
+  eval_start_epoch: 0
+  real-data-val: [
+    "test_flight_targets_20190215_dataset"
+  ]
