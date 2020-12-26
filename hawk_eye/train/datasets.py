@@ -1,6 +1,6 @@
 """ Datasets for loading data for our various training regimes. """
 
-from typing import Tuple
+from typing import List, Tuple
 import pathlib
 import json
 import random
@@ -33,7 +33,7 @@ class ClfDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image = cv2.imread(str(self.images[idx]))
-        assert image is not None, f"Trouble readining {self.images[idx]}."
+        assert image is not None, f"Trouble reading {self.images[idx]}."
 
         image = torch.Tensor(self.transform(image=image)["image"])
         class_id = 0 if "background" in self.images[idx].stem else 1
@@ -59,7 +59,9 @@ class DetDataset(torch.utils.data.Dataset):
     ) -> None:
         super().__init__()
         self.meta_data = json.loads(metadata_path.read_text())
-        self.images = list(data_dir.glob(f"*{img_ext}"))
+        self.images = [
+            data_dir / image["file_name"] for image in self.meta_data["images"]
+        ]
         assert self.images, f"No images found in {data_dir}."
 
         self.img_height = img_height
@@ -71,7 +73,7 @@ class DetDataset(torch.utils.data.Dataset):
             else augs.det_train_augs(img_height, img_width)
         )
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx: int) -> dict:
         image = cv2.imread(str(self.images[idx]))
         assert image is not None, f"Trouble reading {self.images[idx]}."
         labels = json.loads(self.images[idx].with_suffix(".json").read_text())
@@ -97,6 +99,41 @@ class DetDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return self.len
+
+
+class DetectionComposite(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        data_dirs: List[pathlib.Path],
+        img_ext: str = ".png",
+        img_width: int = 512,
+        img_height: int = 512,
+        validation: bool = False,
+    ) -> None:
+        self.datasets = [
+            DetDataset(
+                data_dir / "images",
+                data_dir / ("train_coco.json" if not validation else "val_coco.json"),
+                img_ext,
+                img_width,
+                img_height,
+                validation,
+            )
+            for data_dir in data_dirs
+        ]
+
+        self.len = sum(len(dataset) for dataset in self.datasets)
+
+    def __len__(self) -> int:
+        return self.len
+
+    def __getitem__(self, idx: int) -> dict:
+
+        for dataset in self.datasets:
+            if idx < len(dataset):
+                return dataset[idx]
+            else:
+                idx -= len(dataset)
 
 
 class TargetDataset(torch.utils.data.Dataset):

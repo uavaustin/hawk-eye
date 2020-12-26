@@ -15,8 +15,10 @@ import random
 import json
 import pathlib
 
-import albumentations as alb
+import albumentations as albu
 import numpy as np
+import cv2
+from tqdm import tqdm
 import PIL
 from PIL import Image
 from PIL import ImageDraw
@@ -170,16 +172,16 @@ def generate_single_example(data) -> None:
     )
 
     # Create our augmentations for the background tile
-    augs = alb.Compose(
+    augs = albu.Compose(
         [
-            alb.RandomGamma(),
-            alb.RandomBrightnessContrast(),
-            alb.HueSaturationValue(30, 30, 30),
-            alb.GaussianBlur(),
-            alb.GaussNoise(),
-            alb.Transpose(),
-            alb.Flip(),
-            alb.ShiftScaleRotate(0.1, 0.1, 0.2),
+            albu.RandomGamma(),
+            albu.RandomBrightnessContrast(),
+            albu.HueSaturationValue(30, 30, 30),
+            albu.GaussianBlur(),
+            albu.GaussNoise(),
+            albu.Transpose(),
+            albu.Flip(),
+            albu.ShiftScaleRotate(0.1, 0.1, 0.2),
         ]
     )
     background = Image.fromarray(augs(image=np.array(background))["image"])
@@ -223,18 +225,33 @@ def add_shapes(
         x = shape_param[-2]
         y = shape_param[-1]
         shape_img = shape_imgs[i]
-        x1, y1, x2, y2 = shape_img.getbbox()
-        bg_at_shape = background.crop((x1 + x, y1 + y, x2 + x, y2 + y))
+        *_, x2, y2 = shape_img.getbbox()
+        bg_at_shape = copy.deepcopy(background.crop((x, y, x2 + x, y2 + y)))
+        bg_at_shape_real = background.crop((x, y, x2 + x, y2 + y))
+        image_array = np.array(shape_img.convert("RGB"))
+        mask = np.array(image_array > 0, dtype=np.uint8)
         bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        bg_at_shape = bg_at_shape.filter(ImageFilter.MedianFilter(3))
-        background.paste(bg_at_shape, (x, y))
+        # bg_at_shape = bg_at_shape.filter(ImageFilter.UnsharpMask(2))
+        bg_at_shape = np.array(bg_at_shape.convert("RGB"))
+        bg_at_shape = bg_at_shape * mask
+        bg_at_shape[bg_at_shape == 0] = 255
+        bg_at_shape = PIL.Image.fromarray(bg_at_shape).convert("RGBA")
 
+        for x_ in range(bg_at_shape.width):
+            for y_ in range(bg_at_shape.height):
+                pr, pg, pb, _ = bg_at_shape.getpixel((x_, y_))
+                if pr != 255 or pg != 255 or pb != 255:
+                    bg_at_shape.putpixel((x_, y_), (pr, pg, pb, 255))
+
+        bg_at_shape = strip_image(bg_at_shape)
+        bg_at_shape_real.paste(bg_at_shape, (0, 0), bg_at_shape)
+        background.paste(bg_at_shape_real, (x, y))
         im_w, im_h = background.size
         x /= im_w
         y /= im_h
 
-        w = (x2 - x1) / im_w
-        h = (y2 - y1) / im_h
+        w = x2 / im_w
+        h = y2 / im_h
 
         shape_bboxes.append((CLASSES.index(shape_param[0]), x, y, w, h))
         """
@@ -294,7 +311,6 @@ def create_shape(
     y,
 ) -> PIL.Image.Image:
     """Create a shape given all the input parameters"""
-
     image = get_base(base, target_rgb, size)
     image = strip_image(image)
 
@@ -304,7 +320,7 @@ def create_shape(
     ratio = min(size / w, size / h)
     image = image.resize((int(w * ratio), int(h * ratio)), 1)
 
-    image = rotate_shape(image, angle)
+    # image = rotate_shape(image, angle)
     image = strip_image(image)
 
     return image
@@ -313,18 +329,16 @@ def create_shape(
 def get_base(base, target_rgb, size):
     """Copy and recolor the base shape"""
     image = base.copy()
-    image = image.resize((256, 256), 1)
-    image = image.convert("RGBA")
-
     r, g, b = target_rgb
 
+    image = image.resize((256, 256)).convert("RGBA")
     for x in range(image.width):
         for y in range(image.height):
-
             pr, pg, pb, _ = image.getpixel((x, y))
-
-            if pr != 255 or pg != 255 or pb != 255:
+            if pr != 255 and pg != 255 and pb != 255:
                 image.putpixel((x, y), (r, g, b, 255))
+            else:
+                image.putpixel((x, y), (255, 255, 255, 255))
 
     return image
 
@@ -341,13 +355,13 @@ def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
     bkg_mask = np.ones_like(target_mask) - target_mask
 
     # Create our augmentations
-    augs = alb.Compose(
+    augs = albu.Compose(
         [
-            alb.RandomGamma(),
-            alb.GaussNoise(),
-            alb.RandomBrightnessContrast(),
-            alb.HueSaturationValue(25, 25, 25),
-            alb.GaussianBlur((1, 7)),
+            albu.RandomGamma(),
+            albu.GaussNoise(),
+            albu.RandomBrightnessContrast(),
+            albu.HueSaturationValue(25, 25, 25),
+            albu.GaussianBlur((1, 7)),
         ]
     )
 
@@ -383,10 +397,8 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
     """Remove white and black edges"""
     for x in range(image.width):
         for y in range(image.height):
-
             r, g, b, _ = image.getpixel((x, y))
-
-            if r > 247 and g > 247 and b > 247:
+            if r > 254 and g > 254 and b > 254:
                 image.putpixel((x, y), (0, 0, 0, 0))
 
     image = image.crop(image.getbbox())
@@ -413,7 +425,7 @@ def add_alphanumeric(
         "pentagon": alpha_params((0.35, 0.65)),
         "quarter-circle": alpha_params((0.35, 0.65)),
         "rectangle": alpha_params((0.35, 0.7)),
-        "semicircle": alpha_params((0.35, 0.75)),
+        "semicircle": alpha_params((0.35, 0.5)),
         "square": alpha_params((0.30, 0.8)),
         "star": alpha_params((0.25, 0.55)),
         "trapezoid": alpha_params((0.25, 0.75)),
@@ -466,7 +478,9 @@ def rotate_shape(image, angle):
     return image.rotate(angle, expand=1)
 
 
-def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None:
+def create_coco_metadata(
+    data_dir: pathlib.Path, out_path: pathlib.Path, img_ext: str = config.IMAGE_EXT
+) -> None:
     images = []
     annotations = []
     categories = []
@@ -474,11 +488,12 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
         categories.append({"supercategory": "none", "name": name, "id": idx})
 
     jsons = sorted(list(data_dir.glob("*.json")))
-    for label_file in jsons:
+    images_files = sorted(list(data_dir.glob(f"*{img_ext}")))
+    for label_file, image_file in zip(jsons, images_files):
         labels = json.loads(label_file.read_text())
         images.append(
             {
-                "file_name": label_file.with_suffix(f"{config.IMAGE_EXT}").name,
+                "file_name": image_file.name,
                 "width": config.DETECTOR_SIZE[0],
                 "height": config.DETECTOR_SIZE[1],
                 "id": labels["image_id"],

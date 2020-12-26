@@ -129,7 +129,7 @@ TARGET_COMBINATIONS = [
 
 # Dataset images and splits
 detection = generate_config.get("detection", {})
-EMPTY_TILE_PROB = generate_config.get("empty_slice_probability", 0.0)
+EMPTY_TILE_PROB = detection.get("empty_slice_probability", 0.0)
 DET_TRAIN_OFFSET = detection.get("train_offset", 0)
 DET_TRAIN_IMAGES = detection.get("train_images", 10)
 DET_VAL_OFFSET = detection.get("val_offset", 0)

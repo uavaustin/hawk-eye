@@ -126,27 +126,35 @@ def train(
         log.info(f"Model architecture: \n {model}")
 
     # TODO(alex) these paths should be in the generate config
+    data_dirs = [generate_config.DATA_DIR / "detector_train"] + [
+        generate_config.DATA_DIR / pathlib.Path(data_dir)
+        for data_dir in train_cfg.get("real-data-val", [])
+    ]
     train_batch_size = train_cfg.get("train_batch_size")
     train_loader, train_sampler = create_data_loader(
         train_cfg,
-        generate_config.DATA_DIR / "detector_train/images",
-        generate_config.DATA_DIR / "detector_train/train_coco.json",
+        data_dirs,
         model.anchors.all_anchors,
         train_batch_size,
         world_size,
         val=False,
         image_size=model_cfg.get("image_size", 512),
+        img_ext=".png",
     )
     eval_batch_size = train_cfg.get("eval_batch_size")
+    eval_dirs = [
+        generate_config.DATA_DIR / pathlib.Path(data_dir)
+        for data_dir in train_cfg.get("real-data-val", [])
+    ]
     eval_loader, _ = create_data_loader(
         train_cfg,
-        generate_config.DATA_DIR / "detector_val/images",
-        generate_config.DATA_DIR / "detector_val/val_coco.json",
+        eval_dirs,
         model.anchors.all_anchors,
         eval_batch_size,
         world_size,
         val=True,
         image_size=model_cfg.get("image_size", 512),
+        img_ext=".JPG",
     )
 
     # Construct the optimizer and wrap with Apex if available.
@@ -198,6 +206,7 @@ def train(
             train_sampler.set_epoch(epoch)
 
         previous_loss = None
+
         for idx, (images, gt_regressions, gt_classes) in enumerate(train_loader):
 
             optimizer.zero_grad()
@@ -334,7 +343,9 @@ def eval(
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
             results = coco_eval.get_metrics(
-                generate_config.DATA_DIR / "detector_val/val_coco.json", tmp_json
+                generate_config.DATA_DIR
+                / "test_flight_targets_20190215_dataset/val_coco.json",
+                tmp_json,
             )
 
         # If there are the first results, set the previous to the current.
@@ -351,20 +362,19 @@ def eval(
 
 def create_data_loader(
     train_cfg: dict,
-    data_dir: pathlib.Path,
-    metadata_path: pathlib.Path,
+    data_dirs: List[pathlib.Path],
     anchors: torch.tensor,
     batch_size: int,
     world_size: int,
     val: bool,
     image_size: int,
+    img_ext: str,
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
     """Simple function to create the dataloaders for training and evaluation.
 
     Args:
         training_cfg: The parameters related to the training regime.
-        data_dir: The directory where the images are located.
-        metadata_path: The path to the COCO metadata json.
+        data_dirs: The directories where the images are located.
         anchors: The tensor of anchors in the model.
         batch_size: The loader's batch size.
         world_size: World size is needed to determine if a distributed sampler is needed.
@@ -376,12 +386,9 @@ def create_data_loader(
         sampler's epoch to reshuffle.
     """
 
-    assert data_dir.is_dir(), data_dir
-
-    dataset = datasets.DetDataset(
-        data_dir,
-        metadata_path=metadata_path,
-        img_ext=generate_config.IMAGE_EXT,
+    dataset = datasets.DetectionComposite(
+        data_dirs,
+        img_ext=img_ext,
         img_width=image_size,
         img_height=image_size,
         validation=val,
