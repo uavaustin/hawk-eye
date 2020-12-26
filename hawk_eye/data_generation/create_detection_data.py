@@ -3,7 +3,10 @@
 images and the corresponding COCO metadata jsons. For most RetinaNet related training we
 can train on images with _and without_ targets. Training on images without any targets
 is valuable so the model sees that not every image will have a target, as this is the
-real life case. """
+real life case.
+
+We also apply a lot of augmentations during the creation of data. We prefer to do this
+during generation instead of training to prevent augmentation bottlenecks. """
 
 import dataclasses
 from typing import List, Tuple
@@ -54,9 +57,7 @@ def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -
     # All the random selection is generated ahead of time, that way
     # the process can be resumed without the shapes changing on each
     # run.
-
     base_shapes = {shape: get_base_shapes(shape) for shape in config.SHAPE_TYPES}
-
     numbers = list(range(offset, num_gen + offset))
 
     # Create a random list of the background files.
@@ -337,7 +338,7 @@ def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
     # keep the target clean.
     image_array = np.array(image.convert("RGB"))
     target_mask = np.array(image_array > 0, dtype=np.uint8)
-    bkg_mask = np.ones_like(image_mask) - image_mask
+    bkg_mask = np.ones_like(target_mask) - target_mask
 
     # Create our augmentations
     augs = alb.Compose(
@@ -365,19 +366,14 @@ def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
             y1 = y0 + h
             image_array[y0:y1, x0:x1] = augs(image=image_array[y0:y1, x0:x1])["image"]
 
-    image_array *= image_mask
+    image_array *= target_mask
 
     # It's possible the augmenations brought the color down to complete black, so
-    # here we make sure to only set the backgroud to black & transparent.
-
-    image_array += np.array(image.convert("RGB"))
-    image_array = image_array // 2
-
+    # here we make sure to only set the background to black & transparent.
     image_new = Image.fromarray(image_array).convert("RGBA")
     for x in range(image_new.width):
         for y in range(image_new.height):
-            r, g, b, _ = image_new.getpixel((x, y))
-            if r == 0 and g == 0 and b == 0:
+            if bkg_mask[y, x].all() == 1:
                 image_new.putpixel((x, y), (0, 0, 0, 0))
 
     return image_new

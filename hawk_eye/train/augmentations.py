@@ -6,8 +6,9 @@ https://albumentations.readthedocs.io/en/latest/index.html """
 import albumentations as albu
 
 
+"""
 def clf_train_augs(height: int, width: int) -> albu.Compose:
-    """Training augmentations for classification. We prefer for this model to be really
+    \"""Training augmentations for classification. We prefer for this model to be really
     robust. Feel free to tweak these paramters or ad other augmentations.
 
     Usage:
@@ -15,7 +16,7 @@ def clf_train_augs(height: int, width: int) -> albu.Compose:
         >>> img = np.zeros(1, 512, 512, 3)
         >>> augs = clf_train_augs(224, 224)
         >>> out = augs(image=img)["image"].shape
-    """
+    \"""
     return albu.Compose(
         [
             albu.Resize(height=height, width=width),
@@ -53,12 +54,18 @@ def clf_train_augs(height: int, width: int) -> albu.Compose:
             albu.Normalize(),
         ]
     )
+"""
+
+
+def clf_train_augs(height: int, width: int) -> albu.Compose:
+    return albu.Compose([albu.Resize(height=height, width=width), albu.Normalize()])
 
 
 def clf_eval_augs(height: int, width: int) -> albu.Compose:
     return albu.Compose([albu.Resize(height=height, width=width), albu.Normalize()])
 
 
+"""
 # TODO(alex): Add some more augumentations here.
 def det_train_augs(height: int, width: int) -> albu.Compose:
     return albu.Compose(
@@ -86,6 +93,11 @@ def det_train_augs(height: int, width: int) -> albu.Compose:
             albu.Normalize(),
         ]
     )
+"""
+
+
+def det_train_augs(height: int, width: int) -> albu.Compose:
+    return albu.Compose([albu.Resize(height=height, width=width), albu.Normalize(),])
 
 
 def det_val_augs(height: int, width: int) -> albu.Compose:
