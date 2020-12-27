@@ -40,20 +40,10 @@ SHAPE_TYPES = config["classes"]["shapes"]
 CLF_TYPES = ["background", "target"]
 
 TARGET_COLORS = [
-    "white",
-    "black",
-    "gray",
-    "red",
-    "blue",
-    "green",
-    "yellow",
-    "purple",
     "orange",
 ]
 
 ALPHA_COLORS = [
-    "white",
-    "black",
     "gray",
     "red",
     "blue",
@@ -64,8 +54,8 @@ ALPHA_COLORS = [
 ]
 
 COLORS = {
-    "white": [(240, 240, 235)],
-    "black": [(5, 5, 5)],
+    "white": [(235, 235, 235)],
+    "black": [(10, 5, 10)],
     "gray": [(128, 128, 128)],
     "red": [(188, 60, 60), (255, 80, 80), (255, 0, 0), (154, 0, 0)],
     "blue": [(0, 0, 255), (0, 0, 135)],

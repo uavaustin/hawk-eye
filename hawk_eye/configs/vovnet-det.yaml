@@ -27,9 +27,10 @@ training:
     end_lr: 1.0e-7
     warmup_fraction: 0.2
   epochs: 30
-  train_batch_size: 30
-  eval_batch_size: 30
+  train_batch_size: 35
+  eval_batch_size: 35
   eval_start_epoch: 0
   real-data-val: [
-    "test_flight_targets_20190215_dataset"
+    "test_flight_targets_20190215_dataset",
+    "competition_2018_dataset"
   ]

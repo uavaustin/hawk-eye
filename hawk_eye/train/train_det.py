@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """ Generalized object detection training script. This script will use as many gpus as
-PyTorch can find. If Nvidia's Apex is available, that will be used for mixed precision
-training to speed the process up. """
+PyTorch can find. PyTorch's mixed precision training will automatially be used. """
 
 import argparse
 import pathlib
@@ -57,7 +56,7 @@ def detections_to_dict(
     for image_boxes, image_id in zip(bboxes, image_ids):
         for bbox in image_boxes:
             box = bbox.box
-            # XYXY -> XYWH
+            # XYXY -> XYWH and unnormalize
             box[2:] -= box[:2]
             box *= image_size
             detections.append(
@@ -95,6 +94,7 @@ def train(
     # to be set before loading the model.
     is_main = local_rank == 0
     use_cuda = torch.cuda.is_available()
+    mixed_preicison = use_cuda
     device = torch.device(f"cuda:{local_rank}" if use_cuda else "cpu")
     if use_cuda:
         torch.cuda.set_device(device)
@@ -126,10 +126,7 @@ def train(
         log.info(f"Model architecture: \n {model}")
 
     # TODO(alex) these paths should be in the generate config
-    data_dirs = [generate_config.DATA_DIR / "detector_train"] + [
-        generate_config.DATA_DIR / pathlib.Path(data_dir)
-        for data_dir in train_cfg.get("real-data-val", [])
-    ]
+    data_dirs = [generate_config.DATA_DIR / "detector_train"]
     train_batch_size = train_cfg.get("train_batch_size")
     train_loader, train_sampler = create_data_loader(
         train_cfg,
@@ -139,7 +136,6 @@ def train(
         world_size,
         val=False,
         image_size=model_cfg.get("image_size", 512),
-        img_ext=".png",
     )
     eval_batch_size = train_cfg.get("eval_batch_size")
     eval_dirs = [
@@ -154,14 +150,12 @@ def train(
         world_size,
         val=True,
         image_size=model_cfg.get("image_size", 512),
-        img_ext=".JPG",
     )
 
     # Construct the optimizer and wrap with Apex if available.
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
 
-    # Adjust the model for distributed training. If we are using apex, wrap the model
-    # with Apex's utilies, else PyTorch.
+    # Adjust the model for distributed training.
     if world_size > 1:
         model = torch.nn.parallel.DistributedDataParallel(
             model, device_ids=[local_rank], find_unused_parameters=True
@@ -194,7 +188,7 @@ def train(
         )
 
     scaler = torch.cuda.amp.GradScaler()
-
+    global_step = 0
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
     for epoch in range(epochs):
@@ -209,13 +203,13 @@ def train(
 
         for idx, (images, gt_regressions, gt_classes) in enumerate(train_loader):
 
-            optimizer.zero_grad()
+            optimizer.zero_grad(True)
 
             images = images.to(device, non_blocking=True)
             gt_regressions = gt_regressions.to(device, non_blocking=True)
             gt_classes = gt_classes.to(device, non_blocking=True)
 
-            with torch.cuda.amp.autocast():
+            with torch.cuda.amp.autocast(enabled=mixed_preicison):
                 # Forward pass through detector
                 cls_per_level, reg_per_level = model(images)
 
@@ -225,7 +219,7 @@ def train(
                     gt_anchors_deltas=gt_regressions,
                     cls_per_level=cls_per_level,
                     reg_per_level=reg_per_level,
-                    num_classes=model.module.num_classes,
+                    num_classes=model_cfg.get("num_classes"),
                 )
 
                 total_loss = cls_loss + reg_loss
@@ -239,7 +233,7 @@ def train(
             if previous_loss is None:
                 previous_loss = total_loss
 
-            if world_size > 1:
+            if mixed_preicison:
                 scaler.scale(total_loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
@@ -255,12 +249,17 @@ def train(
             lr = optimizer.param_groups[0]["lr"]
 
             if idx % _LOG_INTERVAL == 0 and is_main:
+                clf_loss = sum(clf_losses) / len(clf_losses)
+                det_loss = sum(reg_losses) / len(reg_losses)
                 log.info(
                     f"Epoch: {epoch} step {idx}, "
-                    f"clf loss {sum(clf_losses) / len(clf_losses):.5}, "
-                    f"reg loss {sum(reg_losses) / len(reg_losses):.5}, "
+                    f"clf loss {clf_loss:.5}, "
+                    f"reg loss {det_loss:.5}, "
                     f"lr {lr:.5}"
                 )
+                log.metric("clf_loss", clf_loss, global_step)
+                log.metric("reg_loss", det_loss, global_step)
+                log.metric("lr", lr, global_step)
 
                 if total_loss < previous_loss:
                     if isinstance(
@@ -269,6 +268,8 @@ def train(
                         utils.save_model(model.module, save_dir / "min-loss.pt")
                     else:
                         utils.save_model(model, save_dir / "min-loss.pt")
+
+            global_step += 1
 
         # Call evaluation function if past eval delay.
         if epoch >= eval_start_epoch and is_main:
@@ -342,11 +343,7 @@ def eval(
         with tempfile.TemporaryDirectory() as d:
             tmp_json = pathlib.Path(d) / "det.json"
             tmp_json.write_text(json.dumps(detections_dict))
-            results = coco_eval.get_metrics(
-                generate_config.DATA_DIR
-                / "test_flight_targets_20190215_dataset/val_coco.json",
-                tmp_json,
-            )
+            results = coco_eval.get_metrics(eval_loader.dataset.json_file, tmp_json,)
 
         # If there are the first results, set the previous to the current.
         previous_best = results if not previous_best else previous_best
@@ -368,7 +365,6 @@ def create_data_loader(
     world_size: int,
     val: bool,
     image_size: int,
-    img_ext: str,
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
     """Simple function to create the dataloaders for training and evaluation.
 
@@ -386,9 +382,10 @@ def create_data_loader(
         sampler's epoch to reshuffle.
     """
 
-    dataset = datasets.DetectionComposite(
-        data_dirs,
-        img_ext=img_ext,
+    json_name = "val_coco.json" if val else "train_coco.json"
+    dataset = datasets.DetDataset(
+        [data_dir / "images" for data_dir in data_dirs],
+        metadata_paths=[data_dir / json_name for data_dir in data_dirs],
         img_width=image_size,
         img_height=image_size,
         validation=val,
@@ -396,6 +393,7 @@ def create_data_loader(
 
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.
+    sampler = None
     if world_size > 1:
         if not val:
             sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
@@ -416,7 +414,9 @@ def create_data_loader(
         sampler=sampler,
         collate_fn=collate_fn,
         num_workers=max(torch.multiprocessing.cpu_count() // world_size, 6),
+        drop_last=True,
     )
+
     return loader, sampler
 
 
@@ -427,9 +427,7 @@ if __name__ == "__main__":
     torch.random.manual_seed(42)
     np.random.seed(42)
 
-    parser = argparse.ArgumentParser(
-        description="Trainer code for RetinaNet-based detection models."
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--config",
         required=True,

@@ -40,5 +40,5 @@ class Log:
         logging.error(message)
 
     # logs metric to TensorBoard
-    def metric(self, tag: str, value: float, epoch: int) -> None:
-        self.writer.add_scalar(tag, value, epoch)
+    def metric(self, tag: str, value: float, global_step: int) -> None:
+        self.writer.add_scalar(tag, value, global_step)

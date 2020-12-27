@@ -24,3 +24,10 @@ is https://www.makesense.ai/.
 "Actions" -> "Export Annotations" -> "Single CSV file."
 
 4. Call `hawk_eye/data_generation/process_labels.py` with the labels and tiles.
+
+5. Once the dataset is created, compress it and upload it to Google Storage:
+
+```
+tar -czvf your_dataset.tar.gz your_dataset_folder
+gsutil cp your_dataset.tar.gz gs://uav-austin/datasets/your_dataset.tar.gz
+```

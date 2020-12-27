@@ -16,12 +16,13 @@ def parse_labels(
     save_dir: pathlib.Path,
     csv_path: pathlib.Path,
     val_percent: int,
-):
+) -> None:
     save_dir = save_dir / "images"
     save_dir.mkdir(exist_ok=True, parents=True)
+
+    # First get a list of all the images
     with open(csv_path, newline="") as csvfile:
         spamreader = csv.reader(csvfile, delimiter=" ", quotechar="|")
-        # First get a list of all the images
         images = []
         for row in spamreader:
             vals = row[0].split(",")
@@ -35,7 +36,7 @@ def parse_labels(
             vals = row[0].split(",")
             original_tile_path = image_dir / vals[-3]
             tile_save_path = save_dir / vals[-3]
-            tile_json = (tile_save_path).with_suffix(".json")
+            tile_json = tile_save_path.with_suffix(".json")
             class_name = vals[0]
             x1, y1, w, h = vals[1:5]
             img_w, img_h = vals[-2], vals[-1]
@@ -63,26 +64,27 @@ def parse_labels(
         val_num = int(len(images) * val_percent / 100)
         val_imgs = images[:val_num]
         train_imgs = images[val_num:]
+
         for img in val_imgs:
-            shutil.copy2(image_dir / img, tmp_val / img)
+            shutil.copy2(save_dir / img, tmp_val / img)
             shutil.copy2(
-                (image_dir / img).with_suffix(".json"),
+                (save_dir / img).with_suffix(".json"),
                 (tmp_val / img).with_suffix(".json"),
             )
-            print(img)
 
         for img in train_imgs:
             shutil.copy2(image_dir / img, tmp_train / img)
             shutil.copy2(
-                (image_dir / img).with_suffix(".json"),
+                (save_dir / img).with_suffix(".json"),
                 (tmp_train / img).with_suffix(".json"),
             )
 
+        if val_percent < 100:
+            create_detection_data.create_coco_metadata(
+                tmp_train, save_dir.parent / "train_coco.json", img_ext=".JPG"
+            )
         create_detection_data.create_coco_metadata(
-            tmp_train, save_dir.parent / "train_coco.json", img_ext=".JPG"
-        )
-        create_detection_data.create_coco_metadata(
-            tmp_val, save_dir.parent / "val_coco.json", img_ext=".JPG"
+            tmp_val, save_dir.parent / "val_coco.json", img_ext=".jpg"
         )
 
 

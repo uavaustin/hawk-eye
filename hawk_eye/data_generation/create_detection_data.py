@@ -8,6 +8,7 @@ real life case.
 We also apply a lot of augmentations during the creation of data. We prefer to do this
 during generation instead of training to prevent augmentation bottlenecks. """
 
+import copy
 import dataclasses
 from typing import List, Tuple
 import multiprocessing
@@ -224,34 +225,28 @@ def add_shapes(
 
         x = shape_param[-2]
         y = shape_param[-1]
-        shape_img = shape_imgs[i]
-        *_, x2, y2 = shape_img.getbbox()
-        bg_at_shape = copy.deepcopy(background.crop((x, y, x2 + x, y2 + y)))
-        bg_at_shape_real = background.crop((x, y, x2 + x, y2 + y))
-        image_array = np.array(shape_img.convert("RGB"))
-        mask = np.array(image_array > 0, dtype=np.uint8)
-        bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        # bg_at_shape = bg_at_shape.filter(ImageFilter.UnsharpMask(2))
-        bg_at_shape = np.array(bg_at_shape.convert("RGB"))
-        bg_at_shape = bg_at_shape * mask
-        bg_at_shape[bg_at_shape == 0] = 255
-        bg_at_shape = PIL.Image.fromarray(bg_at_shape).convert("RGBA")
+        shape_img, target_mask = shape_imgs[i]
+        x1, y1, x2, y2 = shape_img.getbbox()
+        bg_at_shape = background.crop((x, y, x2 + x, y2 + y))
 
-        for x_ in range(bg_at_shape.width):
-            for y_ in range(bg_at_shape.height):
-                pr, pg, pb, _ = bg_at_shape.getpixel((x_, y_))
-                if pr != 255 or pg != 255 or pb != 255:
-                    bg_at_shape.putpixel((x_, y_), (pr, pg, pb, 255))
+        # Paste the target onto the background, then apply a blur to smooth
+        # out the target.
+        bg_at_shape.paste(shape_img, mask=shape_img)
+        bg_at_shape.filter(ImageFilter.MedianFilter(3))
 
+        bg_at_shape_arr = np.array(bg_at_shape)
+        bg_at_shape_arr *= target_mask
+
+        bg_at_shape = Image.fromarray(bg_at_shape_arr).convert("RGBA")
         bg_at_shape = strip_image(bg_at_shape)
-        bg_at_shape_real.paste(bg_at_shape, (0, 0), bg_at_shape)
-        background.paste(bg_at_shape_real, (x, y))
+        background.paste(bg_at_shape, (x, y, x2 + x, y2 + y), bg_at_shape)
+
         im_w, im_h = background.size
         x /= im_w
         y /= im_h
 
-        w = x2 / im_w
-        h = y2 / im_h
+        w = (x2 - x1) / im_w
+        h = (y2 - y1) / im_h
 
         shape_bboxes.append((CLASSES.index(shape_param[0]), x, y, w, h))
         """
@@ -320,10 +315,19 @@ def create_shape(
     ratio = min(size / w, size / h)
     image = image.resize((int(w * ratio), int(h * ratio)), 1)
 
-    # image = rotate_shape(image, angle)
+    image = rotate_shape(image, angle)
     image = strip_image(image)
 
-    return image
+    target_mask = np.array(image)
+    # Sum across the channel dimension. This will be 0 for the empty part of the
+    # target.
+    target_mask = np.sum(image, axis=-1, dtype=np.uint16)
+    target_mask[target_mask > 0.0] = 1.0
+
+    kernel = np.ones((8, 8), np.uint8)
+    target_mask = cv2.dilate(target_mask, kernel)
+
+    return image, target_mask[:, :, np.newaxis]
 
 
 def get_base(base, target_rgb, size):
@@ -337,8 +341,6 @@ def get_base(base, target_rgb, size):
             pr, pg, pb, _ = image.getpixel((x, y))
             if pr != 255 and pg != 255 and pb != 255:
                 image.putpixel((x, y), (r, g, b, 255))
-            else:
-                image.putpixel((x, y), (255, 255, 255, 255))
 
     return image
 
@@ -357,11 +359,12 @@ def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
     # Create our augmentations
     augs = albu.Compose(
         [
-            albu.RandomGamma(),
-            albu.GaussNoise(),
+            albu.GaussNoise(p=1.0),
             albu.RandomBrightnessContrast(),
-            albu.HueSaturationValue(25, 25, 25),
-            albu.GaussianBlur((1, 7)),
+            albu.RandomGamma(),
+            albu.HueSaturationValue(),
+            albu.IAAAffine(),
+            albu.GaussianBlur((1, 7), p=1.0),
         ]
     )
 
@@ -370,17 +373,18 @@ def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
 
     # To add even more variance to the data, we apply these augmentations to
     # random crops within the target itself.
-    for _ in range(4):
-        if random.uniform(0.0, 1.0) < 0.75:
-            x0 = random.randint(0, width - min_crop_w)
-            y0 = random.randint(0, height - min_crop_h)
-            w = random.randint(min_crop_w, width)
-            h = random.randint(min_crop_h, height)
-            x1 = x0 + w
-            y1 = y0 + h
-            image_array[y0:y1, x0:x1] = augs(image=image_array[y0:y1, x0:x1])["image"]
+    num_augs = random.randint(0, 10)
+    for _ in range(num_augs):
+        x0 = random.randint(0, width - min_crop_w)
+        y0 = random.randint(0, height - min_crop_h)
+        w = random.randint(max(width - 10, 0), width)
+        h = random.randint(max(height - 10, 0), height)
+        x1 = x0 + w
+        y1 = y0 + h
+        image_array[y0:y1, x0:x1] = augs(image=image_array[y0:y1, x0:x1])["image"]
 
     image_array *= target_mask
+    # image_array[image_array == 255] = 254
 
     # It's possible the augmenations brought the color down to complete black, so
     # here we make sure to only set the background to black & transparent.
@@ -398,7 +402,9 @@ def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
     for x in range(image.width):
         for y in range(image.height):
             r, g, b, _ = image.getpixel((x, y))
-            if r > 254 and g > 254 and b > 254:
+            if r == 255 and g == 255 and b == 255:
+                image.putpixel((x, y), (0, 0, 0, 0))
+            elif r == 0 and g == 0 and b == 0:
                 image.putpixel((x, y), (0, 0, 0, 0))
 
     image = image.crop(image.getbbox())
