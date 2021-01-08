@@ -24,9 +24,11 @@ _MODELS_DIR = pathlib.Path.cwd() / "hawk_eye/core/production_models"
 def _get_packages() -> List[str]:
     all_deps = pathlib.Path("requirements.txt").read_text().splitlines()
     deps = []
+    deps_to_export = ["numpy", "pillow", "pyyaml"]
     for dep in all_deps:
-        if "numpy" in dep or "pillow" in dep:
-            deps.append(dep)
+        for export_dep in deps_to_export:
+            if export_dep in dep:
+                deps.append(dep)
 
     return deps
 
