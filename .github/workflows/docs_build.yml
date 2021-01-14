@@ -19,6 +19,15 @@ jobs:
 
     - uses: actions/checkout@v2
 
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
