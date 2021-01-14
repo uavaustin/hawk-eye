@@ -22,7 +22,8 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install -r docs/requirements.txt -r requirements.txt -r requirements-cpu.txt
+        ./docs/setup_linux.sh
+        python3 -m pip install -r docs/requirements.txt
 
     - name: make-docs
       run: |
