@@ -13,7 +13,6 @@ hawk-eye
 
 An Application to Detect Ground-Based Targets
 
-
 Structure
 ~~~~~~~~~~~~~~~~~~~~~~
 - **configs** - different configuration files for model training.
