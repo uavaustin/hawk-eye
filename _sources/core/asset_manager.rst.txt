@@ -4,8 +4,9 @@ hawk_eye.core.asset_manager
 --------------------------------
 
 .. automodule:: hawk_eye.core.asset_manager
+.. currentmodule:: hawk_eye.core.asset_manager
 
-ConvBn1d
+Asset Handling
 ~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: generated
