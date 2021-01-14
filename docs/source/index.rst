@@ -23,23 +23,21 @@ Structure
 - **train** - scripts related to training models.
 
 
+.. toctree::
+    :caption: Setup
+    :maxdepth: 2
+
+    setup/setup
+
+.. toctree::
+    :caption: Core
+    :maxdepth: 2
+
+    core/asset_manager
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-.. toctree::
-    :caption: Setup
-    :maxdepth: 2
-    :hidden:
-
-    setup/setup
-
-.. toctree::
-    :caption: Setup
-    :maxdepth: 2
-    :hidden:
-
-    core/asset_manager
