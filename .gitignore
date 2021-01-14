@@ -14,3 +14,6 @@ hawk_eye/core/production_models
 
 .DS_Store
 .vscode
+
+# Sphinx documentation
+docs/_build/
