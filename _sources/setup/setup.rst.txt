@@ -1,3 +1,6 @@
+Setup
+==============================================================================
+
 This projects works best with Linux, WSL, and Mac systems. The `setup_linux.sh` script
 in this folder will set up Ubuntu and WSL systems. To run the script, execute::
 
