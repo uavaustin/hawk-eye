@@ -8,11 +8,7 @@ hawk_eye.core.asset_manager
 
 Asset Handling
 ~~~~~~~~~~~~~~~
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    pull_all
-    pull_backgrounds
-    pull_base_shapes
-    pull_fonts
+.. autofunction:: pull_all
+.. autofunction:: pull_backgrounds
+.. autofunction:: pull_base_shapes
+.. autofunction:: pull_fonts
