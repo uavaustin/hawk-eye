@@ -16,24 +16,24 @@ _BUCKET = "uav-austin-test"
 
 
 def pull_all() -> None:
-    """ Pull all assets. """
+    r""" Pull all assets. """
     pull_backgrounds()
     pull_base_shapes()
     pull_fonts()
 
 
 def pull_backgrounds() -> None:
-    """Pull the shape generation backgrounds."""
+    r"""Pull the shape generation backgrounds."""
     download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
-    """Pull the base shape images."""
+    r"""Pull the base shape images."""
     download_file(config.BASE_SHAPES_URL, config.ASSETS_DIR)
 
 
 def pull_fonts() -> None:
-    """Pull the fonts."""
+    r"""Pull the fonts."""
     download_file(config.FONTS_URL, config.ASSETS_DIR)
 
 

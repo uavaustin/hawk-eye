@@ -36,3 +36,10 @@ Indices and tables
     :hidden:
 
     setup/setup
+
+.. toctree::
+    :caption: Setup
+    :maxdepth: 2
+    :hidden:
+
+    core/asset_manager
