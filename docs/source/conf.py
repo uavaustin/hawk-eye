@@ -52,6 +52,17 @@ extensions = [
 
 autodoc_mock_imports = ["google"]
 
+# build the templated autosummary files
+autosummary_generate = True
+numpydoc_show_class_members = False
+
+# autosectionlabel throws warnings if section names are duplicated.
+# The following tells autosectionlabel to not throw a warning for
+# duplicated section names that are in different documents.
+autosectionlabel_prefix_document = True
+
+napoleon_use_ivar = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -68,13 +79,7 @@ exclude_patterns = []
 #
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {}
-# html_theme_options = {
-#     "display_version": True,
-#     "prev_next_buttons_location": "bottom",
-#     "collapse_navigation": False,
-#     "sticky_navigation": True,
-#     "navigation_depth": 4,
-# }
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
