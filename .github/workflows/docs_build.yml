@@ -23,10 +23,10 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install -r docs/requirements.txt
 
-    - uses: ammaraskar/sphinx-action@master
-      with:
-        build-command: "sphinx-build -b html . _build"
-        docs-folder: "docs/source"
+    - uses: make-docs
+      run: |
+        cd docs/source
+        sphinx-build -b html . _build
 
     - name: Commit documentation changes
       run: |
@@ -40,6 +40,7 @@ jobs:
         git commit -m "Update documentation" -a || true
         # The above command will fail if no changes were present, so we ignore
         # that.
+
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
