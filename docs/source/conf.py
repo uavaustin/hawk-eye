@@ -14,7 +14,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../../"))
+sys.path.insert(0, os.path.abspath("./../../"))
 
 
 # -- Project information -----------------------------------------------------
@@ -71,6 +71,9 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+source_suffix = ".rst"
+# The master toctree document.
+master_doc = "index"
 
 # -- Options for HTML output -------------------------------------------------
 
