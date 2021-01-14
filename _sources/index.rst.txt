@@ -29,3 +29,10 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. toctree::
+    :caption: Setup
+    :maxdepth: 2
+    :hidden:
+
+    setup/setup
