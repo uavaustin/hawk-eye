@@ -17,3 +17,4 @@ hawk_eye/core/production_models
 
 # Sphinx documentation
 docs/_build/
+docs/source/_build
