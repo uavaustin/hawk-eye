@@ -52,9 +52,30 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "pytorch_sphinx_theme"
+html_theme = "catalyst_sphinx_theme"
+html_theme_options = {}
+# html_theme_options = {
+#     "display_version": True,
+#     "prev_next_buttons_location": "bottom",
+#     "collapse_navigation": False,
+#     "sticky_navigation": True,
+#     "navigation_depth": 4,
+# }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+html_context = {
+    "display_github": True,
+    "source_url_prefix": (
+        f"https://github.com/{docs_user}/{docs_repo}/tree/master/docs"
+    ),
+    "github_host": "github.com",
+    "github_user": docs_user,
+    "github_repo": docs_repo,
+    "github_version": "master",
+    "conf_py_path": "/docs/",
+    "source_suffix": ".rst",
+}
