@@ -23,7 +23,7 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install -r docs/requirements.txt
 
-    - uses: make-docs
+    - name: make-docs
       run: |
         cd docs/source
         sphinx-build -b html . _build
