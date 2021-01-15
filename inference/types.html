@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hawk_eye.inference.types &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="hawk_eye.inference.find_targets" href="find_targets.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Data Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../data_generation/create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Inference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.inference.types</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>hawk_eye.inference.types</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/inference/types.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-hawk_eye.inference.types">
+<span id="hawk-eye-inference-types"></span><h1>hawk_eye.inference.types<a class="headerlink" href="#module-hawk_eye.inference.types" title="Permalink to this headline">¶</a></h1>
+<p>Contains basic storage types passed around in the library.</p>
+<dl class="class">
+<dt id="hawk_eye.inference.types.Color">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Color</code><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Color"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains colors for the AUVSI SUAS Interop Server.
+These colors can be used for both the background color and the
+alphanumeric color. NOTE: Color.NONE can be used if a color
+cannot be identified.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="hawk_eye.inference.types.Shape">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Shape</code><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains target shapes for the AUVSI SUAS Interop Server.
+NOTE: Shape.NAS (not-a-shape) can be used if a shape cannot
+be identified.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="hawk_eye.inference.types.Target">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Target</code><span class="sig-paren">(</span><em class="sig-param">x: int</em>, <em class="sig-param">y: int</em>, <em class="sig-param">width: int</em>, <em class="sig-param">height: int</em>, <em class="sig-param">shape: hawk_eye.inference.types.Shape = &lt;Shape.NAS: 0&gt;</em>, <em class="sig-param">orientation: float = 0.0</em>, <em class="sig-param">background_color: hawk_eye.inference.types.Color = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">alphanumeric: str = ''</em>, <em class="sig-param">alphanumeric_color: hawk_eye.inference.types.Color = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">image: PIL.Image.Image = None</em>, <em class="sig-param">confidence: float = 0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a target found on an image.</p>
+<p>This is intended to be built upon as the the target is being
+classified.</p>
+<p>Note that a target must have at least an x-position, y-position,
+width, and height to be created.</p>
+<p>A target should only be returned back by the library if at also
+contains a background color as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>int</em>) – The x position of the top-left corner in pixels.</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – The y position of the top-left corner in pixels.</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – The width of the blob in pixels.</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – The height of the blob in pixels.</p></li>
+<li><p><strong>orientation</strong> (<em>float</em>) – The orientation of the target. An
+orientation of 0 means the target is not rotated, an
+orientation of 90 means it the top of the target points
+to the right of the image (0 &lt;= orientation &lt; 360).</p></li>
+<li><p><strong>shape</strong> (<a class="reference internal" href="#hawk_eye.inference.types.Shape" title="hawk_eye.inference.types.Shape"><em>Shape</em></a>) – The target shape.</p></li>
+<li><p><strong>background_color</strong> (<a class="reference internal" href="#hawk_eye.inference.types.Color" title="hawk_eye.inference.types.Color"><em>Color</em></a>) – The target background color.</p></li>
+<li><p><strong>alphanumeric</strong> (<em>str</em>) – The letter(s) and/or number(s) on the
+target. May consist of one or more of the characters 0-9,
+A-Z, a-z. Typically, this will only be one capital
+letter.</p></li>
+<li><p><strong>alphanumeric_color</strong> (<a class="reference internal" href="#hawk_eye.inference.types.Color" title="hawk_eye.inference.types.Color"><em>Color</em></a>) – The target alphanumeric color.</p></li>
+<li><p><strong>image</strong> (<em>PIL.Image</em>) – Image showing the target.</p></li>
+<li><p><strong>confidence</strong> (<em>float</em>) – The confidence that the target exists
+(0 &lt;= confidence &lt;= 1).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="find_targets.html" class="btn btn-neutral float-left" title="hawk_eye.inference.find_targets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

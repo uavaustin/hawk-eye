@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>hawk_eye.core.asset_manager &mdash; hawk-eye 0.0.2b0 documentation</title>
+  <title>hawk_eye.inference.benchmark_inference &mdash; hawk-eye 0.0.2b0 documentation</title>
   
 
   
@@ -39,8 +39,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hawk_eye.core.classifier" href="classifier.html" />
-    <link rel="prev" title="Setup" href="../setup/setup.html" /> 
+    <link rel="next" title="hawk_eye.inference.find_targets" href="find_targets.html" />
+    <link rel="prev" title="hawk_eye.data_generation.create_detection_data" href="../data_generation/create_detection_data.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -90,10 +90,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Setup</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Core</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.core.asset_manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="classifier.html">hawk_eye.core.classifier</a></li>
-<li class="toctree-l1"><a class="reference internal" href="detector.html">hawk_eye.core.detector</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/detector.html">hawk_eye.core.detector</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Data Generation</span></p>
 <ul>
@@ -101,10 +101,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Inference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../inference/types.html">hawk_eye.inference.types</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">hawk_eye.inference.types</a></li>
 </ul>
 
             
@@ -153,14 +153,14 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>hawk_eye.core.asset_manager</li>
+      <li>hawk_eye.inference.benchmark_inference</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
             
-              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/core/asset_manager.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/inference/benchmark_inference.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -174,35 +174,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-hawk_eye.core.asset_manager">
-<span id="hawk-eye-core-asset-manager"></span><h1>hawk_eye.core.asset_manager<a class="headerlink" href="#module-hawk_eye.core.asset_manager" title="Permalink to this headline">¶</a></h1>
-<p>Functions to pull in data from the cloud.
-This relies on Google Cloud Storage python API. Please see the Image Recognition lead
-to recieve the proper credentials for access to the bucket.</p>
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_all">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_all" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull all assets.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_backgrounds">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_backgrounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_backgrounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_backgrounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull the shape generation backgrounds.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_base_shapes">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_base_shapes</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_base_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_base_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull the base shape images.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_fonts">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_fonts</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_fonts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_fonts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull the fonts.</p>
-</dd></dl>
-
+  <div class="section" id="hawk-eye-inference-benchmark-inference">
+<h1>hawk_eye.inference.benchmark_inference<a class="headerlink" href="#hawk-eye-inference-benchmark-inference" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-hawk_eye.inference.benchmark_inference"></span><p>A script to benchmark inference for both detector and classification models.
+This is useful for seeing how a new model performs on a device. For example, this
+can be run on the Jetson to see how the models perform.</p>
 </div>
 
 
@@ -211,8 +187,8 @@ to recieve the proper credentials for access to the bucket.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="classifier.html" class="btn btn-neutral float-right" title="hawk_eye.core.classifier" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="../setup/setup.html" class="btn btn-neutral float-left" title="Setup" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="find_targets.html" class="btn btn-neutral float-right" title="hawk_eye.inference.find_targets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../data_generation/create_detection_data.html" class="btn btn-neutral float-left" title="hawk_eye.data_generation.create_detection_data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

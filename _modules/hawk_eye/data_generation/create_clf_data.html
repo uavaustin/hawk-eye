@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hawk_eye.data_generation.create_clf_data &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Data Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_generation/create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Inference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/types.html">hawk_eye.inference.types</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>hawk_eye.data_generation.create_clf_data</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for hawk_eye.data_generation.create_clf_data</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot;  This script creates classification data for the pre-detection classification step;</span>
+<span class="sd">however, this script relies upon detection already existing. Also, we need to ensure our</span>
+<span class="sd">output dataset does not have repeats of image slices between the train and validation</span>
+<span class="sd">sets -- this would mess up our training metrics. Since the detector data can contain</span>
+<span class="sd">empty tiles, we will not be copying those here. Instead, we prefer to generate our own</span>
+<span class="sd">empty slices so we have precise cnotrol over which exist. We will first generate all the</span>
+<span class="sd">background crops and copy the target crops into one folder, then we&#39;ll shuffle them all</span>
+<span class="sd">and split the data into 80% training and 20% validation. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">import</span> <span class="nn">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">hawk_eye.data_generation</span> <span class="kn">import</span> <span class="n">generate_config</span> <span class="k">as</span> <span class="n">config</span>
+<span class="kn">from</span> <span class="nn">hawk_eye.data_generation</span> <span class="kn">import</span> <span class="n">create_detection_data</span>
+
+<span class="c1"># Get constants from config</span>
+<span class="n">CLF_WIDTH</span><span class="p">,</span> <span class="n">CLF_HEIGHT</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PRECLF_SIZE</span>
+<span class="n">CROP_WIDTH</span><span class="p">,</span> <span class="n">CROP_HEIGHT</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span>
+
+
+<div class="viewcode-block" id="create_clf_images"><a class="viewcode-back" href="../../../data_generation/create_clf_data.html#hawk_eye.data_generation.create_clf_data.create_clf_images">[docs]</a><span class="k">def</span> <span class="nf">create_clf_images</span><span class="p">(</span>
+    <span class="n">num_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">DATA_DIR</span><span class="p">,</span>
+    <span class="n">val_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">CLF_VAL_FRACTION</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Generate data for the classifier model. &quot;&quot;&quot;</span>
+
+    <span class="n">val_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val_fraction</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+
+    <span class="c1"># We want to make sure create_detection_data has already been run so there are tiles</span>
+    <span class="c1"># with targets. If the folders do not exist, we need to make the data first here.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">DATA_DIR</span> <span class="o">/</span> <span class="s2">&quot;detector_train&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">create_detection_data</span><span class="o">.</span><span class="n">generate_all_images</span><span class="p">(</span>
+            <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;detector_train&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">DET_TRAIN_IMAGES</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">DATA_DIR</span> <span class="o">/</span> <span class="s2">&quot;detector_val&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">create_detection_data</span><span class="o">.</span><span class="n">generate_all_images</span><span class="p">(</span>
+            <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;detector_val&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">DET_VAL_IMAGES</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Do the initial processing in a temporary directory so we don&#39;t pollute the</span>
+    <span class="c1"># workspace unncessarily.</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
+        <span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Copying target tiles.&quot;</span><span class="p">)</span>
+        <span class="n">imgs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">imgs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">((</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;detector_train&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">IMAGE_EXT</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)))</span>
+        <span class="n">imgs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">((</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;detector_val&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">IMAGE_EXT</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)))</span>
+
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">imgs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">image_path</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">imgs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">image_path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">&quot;bboxes&quot;</span><span class="p">]:</span>
+                <span class="c1"># If there are labels, copy it to the save folder with the proper</span>
+                <span class="c1"># filename. Load the image, resize, and save to new folder.</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">PRECLF_SIZE</span><span class="p">)</span>
+                <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">tmp_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;target_</span><span class="si">{</span><span class="n">idx</span><span class="si">}{</span><span class="n">image_path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">num_gen</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+        <span class="c1"># Collect all the backgrounds and slice them up.</span>
+        <span class="n">backgrounds</span> <span class="o">=</span> <span class="n">create_detection_data</span><span class="o">.</span><span class="n">get_backgrounds</span><span class="p">()</span>
+        <span class="n">num_tiles</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">backgrounds</span><span class="p">)):</span>
+            <span class="n">num_tiles</span> <span class="o">=</span> <span class="n">single_clf_image</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">num_gen</span><span class="p">,</span> <span class="n">tmp_dir</span><span class="p">,</span> <span class="n">num_tiles</span><span class="p">)</span>
+
+        <span class="c1"># Make output dir to save data after we do all the processing.</span>
+        <span class="n">train_dir</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;clf_train&quot;</span>
+        <span class="n">train_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">val_dir</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;clf_val&quot;</span>
+        <span class="n">val_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">imgs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tmp_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">))</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">imgs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">imgs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">val_int</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">val_dir</span> <span class="o">/</span> <span class="n">img</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">train_dir</span> <span class="o">/</span> <span class="n">img</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="single_clf_image"><a class="viewcode-back" href="../../../data_generation/create_clf_data.html#hawk_eye.data_generation.create_clf_data.single_clf_image">[docs]</a><span class="k">def</span> <span class="nf">single_clf_image</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span>
+    <span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
+    <span class="n">num_tiles</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Slice out crops from the original background image and save to disk. NOTE: we do</span>
+<span class="sd">    not have any overlap between adjacent tiles because we want to avoid having any</span>
+<span class="sd">    leakage between images. With data leakage, we might end up with two adjacent tiles in</span>
+<span class="sd">    both the train and eval set.&quot;&quot;&quot;</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">tile_num</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">num_tiles</span> <span class="o">&gt;</span> <span class="n">num_gen</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">crop</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">crop</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">crop</span> <span class="o">=</span> <span class="n">crop</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">PRECLF_SIZE</span><span class="p">)</span>
+            <span class="n">save_path</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">save_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;background_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">tile_num</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">y</span><span class="si">}{</span><span class="n">config</span><span class="o">.</span><span class="n">IMAGE_EXT</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">crop</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span>
+            <span class="n">num_tiles</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">tile_num</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">num_tiles</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">CLF_IMAGES</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">create_clf_images</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">CLF_IMAGES</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">CLF_VAL_FRACTION</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

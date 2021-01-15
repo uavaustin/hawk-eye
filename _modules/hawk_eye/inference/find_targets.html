@@ -1,0 +1,629 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hawk_eye.inference.find_targets &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Data Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_generation/create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Inference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/types.html">hawk_eye.inference.types</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>hawk_eye.inference.find_targets</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for hawk_eye.inference.find_targets</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot; Contains logic for finding targets in images. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Generator</span>
+
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">ImageDraw</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">classifier</span>
+<span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">detector</span>
+<span class="kn">from</span> <span class="nn">hawk_eye.data_generation</span> <span class="kn">import</span> <span class="n">generate_config</span> <span class="k">as</span> <span class="n">config</span>
+<span class="kn">from</span> <span class="nn">hawk_eye.inference</span> <span class="kn">import</span> <span class="n">types</span>
+<span class="kn">from</span> <span class="nn">third_party.models</span> <span class="kn">import</span> <span class="n">postprocess</span>
+
+<span class="n">_PROD_MODELS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;clf&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-09-05T15.51.57&quot;</span><span class="p">,</span> <span class="s2">&quot;det&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-10T14.02.09&quot;</span><span class="p">}</span>
+
+
+<span class="c1"># Taken directly from albumentation src: augmentations/functional.py#L131.</span>
+<span class="c1"># This is the only function we really need from albumentations for inference,</span>
+<span class="c1"># so it is not worth requiring that as a dependency for distribution.</span>
+<div class="viewcode-block" id="normalize"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.normalize">[docs]</a><span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span>
+    <span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">mean</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">),</span>
+    <span class="n">std</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">),</span>
+    <span class="n">max_pixel_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">255.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Normalize images based on ImageNet values. This is identical to</span>
+<span class="sd">    albumentations normalization used for training.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        img: The image to normalize.</span>
+<span class="sd">        mean: The mean of each channel.</span>
+<span class="sd">        std: The standard deviation of each channel.</span>
+<span class="sd">        max_pixel_value: The max value a pixel can have.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A normalized image as a numpy array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">*=</span> <span class="n">max_pixel_value</span>
+
+    <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">std</span> <span class="o">*=</span> <span class="n">max_pixel_value</span>
+
+    <span class="n">denominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">img</span> <span class="o">-=</span> <span class="n">mean</span>
+    <span class="n">img</span> <span class="o">*=</span> <span class="n">denominator</span>
+
+    <span class="k">return</span> <span class="n">img</span></div>
+
+
+<div class="viewcode-block" id="tile_image"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.tile_image">[docs]</a><span class="k">def</span> <span class="nf">tile_image</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="n">tile_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">overlap</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># (H, W)</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+    <span class="sd">&quot;&quot;&quot; Take in an image and tile it into smaller tiles for inference.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        image: The input image to tile.</span>
+<span class="sd">        tile_size: The (width, height) of the tiles.</span>
+<span class="sd">        overlap: The overlap between adjacent tiles.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of the tiles and a list of the (x, y) offset for the tiles.</span>
+<span class="sd">            The offets are needed to keep track of which tiles have targets.</span>
+<span class="sd">    Usage:</span>
+<span class="sd">        &gt;&gt;&gt; tiles, coords = tile_image(Image.new(&quot;RGB&quot;, (1000, 1000)), (512, 512), 50)</span>
+<span class="sd">        &gt;&gt;&gt; tiles.shape[0]</span>
+<span class="sd">        9</span>
+<span class="sd">        &gt;&gt;&gt; len(coords)</span>
+<span class="sd">        9</span>
+<span class="sd">        &gt;&gt;&gt; tiles.shape[-2:]</span>
+<span class="sd">        torch.Size([512, 512])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tiles</span><span class="p">,</span> <span class="n">coords</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="n">x_step</span> <span class="o">=</span> <span class="n">width</span> <span class="k">if</span> <span class="n">width</span> <span class="o">==</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">overlap</span>
+    <span class="n">y_step</span> <span class="o">=</span> <span class="n">height</span> <span class="k">if</span> <span class="n">height</span> <span class="o">==</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">overlap</span>
+
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">x_step</span><span class="p">):</span>
+        <span class="c1"># Shift back to extract tiles on the image</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">+</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">width</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">width</span> <span class="o">-</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">y_step</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">y</span> <span class="o">+</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">height</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">tile</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">crop</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span> <span class="o">+</span> <span class="n">tile_size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+            <span class="p">)</span>
+
+            <span class="n">tiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">tile</span><span class="p">))</span>
+            <span class="n">coords</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+    <span class="c1"># Transpose the images from BHWC -&gt; BCHW</span>
+    <span class="n">tiles</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">tiles</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tiles</span><span class="p">,</span> <span class="n">coords</span></div>
+
+
+<div class="viewcode-block" id="create_batches"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.create_batches">[docs]</a><span class="k">def</span> <span class="nf">create_batches</span><span class="p">(</span>
+    <span class="n">image_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">BBox</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Creates batches of images based on the supplied params. The whole image</span>
+<span class="sd">    is tiled first, the batches are generated.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        image: The opencv opened image.</span>
+<span class="sd">        tile_size: The height, width of the tiles to create.</span>
+<span class="sd">        overlap: The amount of overlap between tiles.</span>
+<span class="sd">        batch_size: The number of images to have per batch.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Yields the image batch and the top left coordinate of the tile in the</span>
+<span class="sd">        space of the original image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">image_tensor</span><span class="p">[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="load_models"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.load_models">[docs]</a><span class="k">def</span> <span class="nf">load_models</span><span class="p">(</span>
+    <span class="n">clf_timestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_PROD_MODELS</span><span class="p">[</span><span class="s2">&quot;clf&quot;</span><span class="p">],</span> <span class="n">det_timestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_PROD_MODELS</span><span class="p">[</span><span class="s2">&quot;det&quot;</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot; Loads the given time stamps for the classification and detector models.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        clf_timestamp: Which classification model to load.</span>
+<span class="sd">        det_timestamp: Which detection model to load.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Returns both models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">clf_model</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">Classifier</span><span class="p">(</span>
+        <span class="n">timestamp</span><span class="o">=</span><span class="n">clf_timestamp</span><span class="p">,</span> <span class="n">half_precision</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">clf_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="c1"># TODO(alex): Pass in the confidence for the detector.</span>
+    <span class="n">det_model</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span>
+        <span class="n">timestamp</span><span class="o">=</span><span class="n">det_timestamp</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">half_precision</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">det_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="c1"># Do FP16 when inferencing</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="n">det_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">det_model</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+
+        <span class="n">clf_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">clf_model</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">clf_model</span><span class="p">,</span> <span class="n">det_model</span></div>
+
+
+<div class="viewcode-block" id="find_all_targets"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.find_all_targets">[docs]</a><span class="k">def</span> <span class="nf">find_all_targets</span><span class="p">(</span>
+    <span class="n">images</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">clf_timestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_PROD_MODELS</span><span class="p">[</span><span class="s2">&quot;clf&quot;</span><span class="p">],</span>
+    <span class="n">det_timestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_PROD_MODELS</span><span class="p">[</span><span class="s2">&quot;det&quot;</span><span class="p">],</span>
+    <span class="n">visualization_dir</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">save_json_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Entrypoint function if running this script as main.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        images: A list of all the images to inference.</span>
+<span class="sd">        clf_timestamp: The classification model to load.</span>
+<span class="sd">        det_timestamp: The detection model to load.</span>
+<span class="sd">        visualization_dir: Where to save the visualizations, if any.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">clf_model</span><span class="p">,</span> <span class="n">det_model</span> <span class="o">=</span> <span class="n">load_models</span><span class="p">(</span><span class="n">clf_timestamp</span><span class="p">,</span> <span class="n">det_timestamp</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">image_path</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+
+        <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">image</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Could not read </span><span class="si">{</span><span class="n">image_path</span><span class="si">}</span><span class="s2">.&quot;</span>
+
+        <span class="n">targets</span><span class="p">,</span> <span class="n">target_tiles</span> <span class="o">=</span> <span class="n">find_targets</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">clf_model</span><span class="p">,</span> <span class="n">det_model</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">visualization_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">visualize_image</span><span class="p">(</span>
+                <span class="n">image_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
+                <span class="n">visualization_dir</span><span class="p">,</span>
+                <span class="n">targets</span><span class="p">,</span>
+                <span class="n">target_tiles</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">save_json_data</span><span class="p">:</span>
+            <span class="n">save_target_meta</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">visualization_dir</span> <span class="o">/</span> <span class="n">image_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">),</span>
+                <span class="n">image_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">targets</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="find_targets"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.find_targets">[docs]</a><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">find_targets</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span>
+    <span class="n">clf_model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+    <span class="n">det_model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+    <span class="n">clf_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Tile up image, classify them, then perform object detection where it&#39;s needed.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        image: The input image to inference.</span>
+<span class="sd">        clf_model: The loaded classification model.</span>
+<span class="sd">        det_model: The loaded detection model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">image_tensor</span><span class="p">,</span> <span class="n">coords</span> <span class="o">=</span> <span class="n">tile_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_OVERLAP</span><span class="p">)</span>
+
+    <span class="c1"># Keep track of the tiles that were classified as having targets for</span>
+    <span class="c1"># visualization.</span>
+    <span class="n">target_tiles</span><span class="p">,</span> <span class="n">retval</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+    <span class="c1"># Get the image slices.</span>
+    <span class="k">for</span> <span class="n">tiles_batch</span><span class="p">,</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">create_batches</span><span class="p">(</span><span class="n">image_tensor</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="mi">200</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">tiles_batch</span> <span class="o">=</span> <span class="n">tiles_batch</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+
+        <span class="c1"># Resize the slices for classification.</span>
+        <span class="n">tiles</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">tiles_batch</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">PRECLF_SIZE</span><span class="p">)</span>
+
+        <span class="c1"># Call the pre-clf to find the target tiles.</span>
+        <span class="c1"># TODO(alex): Pass in the classification confidence from cmdl.</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">clf_model</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">probability</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">clf_confidence</span>
+
+        <span class="n">target_tiles</span> <span class="o">+=</span> <span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">det_tiles</span><span class="p">,</span> <span class="n">det_coords</span> <span class="ow">in</span> <span class="n">create_batches</span><span class="p">(</span><span class="n">tiles_batch</span><span class="p">[</span><span class="n">preds</span><span class="p">],</span> <span class="n">coords</span><span class="p">,</span> <span class="mi">15</span><span class="p">):</span>
+                <span class="c1"># Pass these target-containing tiles to the detector</span>
+                <span class="n">det_tiles</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span>
+                    <span class="n">det_tiles</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">DETECTOR_SIZE</span>
+                <span class="p">)</span>
+                <span class="n">boxes</span> <span class="o">=</span> <span class="n">det_model</span><span class="p">(</span><span class="n">det_tiles</span><span class="p">)</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">target_tiles</span><span class="p">,</span> <span class="n">boxes</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">retval</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="p">[]))</span>
+
+    <span class="k">return</span> <span class="n">globalize_boxes</span><span class="p">(</span><span class="n">retval</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">target_tiles</span></div>
+
+
+<div class="viewcode-block" id="globalize_boxes"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.globalize_boxes">[docs]</a><span class="k">def</span> <span class="nf">globalize_boxes</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">postprocess</span><span class="o">.</span><span class="n">BoundingBox</span><span class="p">],</span> <span class="n">img_size</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">Target</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Take the normalized detections on a _tile_ and gloabalize them to pixel space of</span>
+<span class="sd">    the original large image.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        results: A list of the detections for the tiles.</span>
+<span class="sd">        img_size: The size of the tile whihc is needed to unnormalize the detections.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of the globalized boxes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">final_targets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">img_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="n">img_size</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">coords</span><span class="p">,</span> <span class="n">bboxes</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">bboxes</span><span class="p">:</span>
+            <span class="n">relative_coords</span> <span class="o">=</span> <span class="n">box</span><span class="o">.</span><span class="n">box</span> <span class="o">*</span> <span class="n">img_size</span>
+            <span class="n">relative_coords</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">list</span><span class="p">(</span><span class="n">coords</span><span class="p">))</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>
+            <span class="n">final_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">types</span><span class="o">.</span><span class="n">Target</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">relative_coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">y</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">relative_coords</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">width</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">relative_coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">relative_coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">height</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">relative_coords</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">relative_coords</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">shape</span><span class="o">=</span><span class="n">types</span><span class="o">.</span><span class="n">Shape</span><span class="p">[</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">OD_CLASSES</span><span class="p">[</span><span class="n">box</span><span class="o">.</span><span class="n">class_id</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">final_targets</span></div>
+
+
+<div class="viewcode-block" id="visualize_image"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.visualize_image">[docs]</a><span class="k">def</span> <span class="nf">visualize_image</span><span class="p">(</span>
+    <span class="n">image_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">visualization_dir</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">Target</span><span class="p">],</span>
+    <span class="n">clf_tiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Function used to draw boxes and information onto image for visualizing the output</span>
+<span class="sd">    of inference.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        image_name: The original image name used for saving the visualization.</span>
+<span class="sd">        image: The image array.</span>
+<span class="sd">        visualization_dir: Where to save the visualizations.</span>
+<span class="sd">        targets: A list of the targets that were found during inference.</span>
+<span class="sd">        clf_tiles: Which tiles were classified as having targets in them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Create a PIL drawable object.</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGBA&quot;</span><span class="p">)</span>
+    <span class="n">image_draw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="c1"># Draw the target rectangles.</span>
+    <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+        <span class="n">top_left</span> <span class="o">=</span> <span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">bottom_right</span> <span class="o">=</span> <span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">target</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">target</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+        <span class="n">image_draw</span><span class="o">.</span><span class="n">rectangle</span><span class="p">([</span><span class="n">top_left</span><span class="p">,</span> <span class="n">bottom_right</span><span class="p">],</span> <span class="n">outline</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">image_draw</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="mi">10</span><span class="p">),</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Draw an overlay onto the tiles which were classified as having targets.</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">CROP_SIZE</span>
+    <span class="n">overlay</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGBA&quot;</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">draw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">clf_tiles</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">group</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">rectangle</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">w</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h</span><span class="p">)],</span> <span class="n">fill</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">40</span><span class="p">))</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">alpha_composite</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">overlay</span><span class="p">)</span>
+
+    <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">((</span><span class="n">visualization_dir</span> <span class="o">/</span> <span class="n">image_name</span><span class="p">))</span></div>
+
+
+<span class="c1"># TODO(alex) use this for writing jsons.</span>
+<div class="viewcode-block" id="save_target_meta"><a class="viewcode-back" href="../../../inference/find_targets.html#hawk_eye.inference.find_targets.save_target_meta">[docs]</a><span class="k">def</span> <span class="nf">save_target_meta</span><span class="p">(</span>
+    <span class="n">filename_meta</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">filename_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">Target</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Save target metadata to a file. &quot;&quot;&quot;</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">targets</span><span class="p">):</span>
+        <span class="n">meta</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;target-</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+            <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+            <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+            <span class="s2">&quot;orientation&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">orientation</span><span class="p">,</span>
+            <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="s2">&quot;background_color&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">background_color</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="s2">&quot;alphanumeric&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">alphanumeric</span><span class="p">,</span>
+            <span class="s2">&quot;alphanumeric_color&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">alphanumeric_color</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">filename_image</span><span class="p">,</span>
+            <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="n">filename_meta</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Script used to find targets in an image&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--image_path&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to an image to inference.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--image_dir&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to directory of images to inference.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--image_extension&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Needed when an image directory is supplied.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--clf_timestamp&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">_PROD_MODELS</span><span class="p">[</span><span class="s2">&quot;clf&quot;</span><span class="p">],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Timestamp of the classifier model to use.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--det_timestamp&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">_PROD_MODELS</span><span class="p">[</span><span class="s2">&quot;det&quot;</span><span class="p">],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Timestamp of the detector model to use.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--visualization_dir&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional directory to save visualization to.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--save_json_data&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Save JSON data if specified.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># Get either the image or images</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">image_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">image_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please supply either an image or directory of images.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">image_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">imgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">image_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()]</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">image_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">image_extension</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">imgs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">image_dir</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">image_extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">viz_dir</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">visualization_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">viz_dir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">visualization_dir</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+        <span class="n">viz_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">find_all_targets</span><span class="p">(</span>
+        <span class="n">imgs</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">clf_timestamp</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">det_timestamp</span><span class="p">,</span> <span class="n">viz_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">save_json_data</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
