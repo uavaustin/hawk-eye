@@ -1,0 +1,374 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hawk_eye.core.detector &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>hawk_eye.core.detector</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for hawk_eye.core.detector</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; A detector model which wraps around a feature extraction backbone, fpn, and RetinaNet</span>
+<span class="sd">head.This allows for easy interchangeability during experimentation and a reliable way to</span>
+<span class="sd">load saved models. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">asset_manager</span>
+<span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">fpn</span>
+<span class="kn">from</span> <span class="nn">third_party.vovnet</span> <span class="kn">import</span> <span class="n">vovnet</span>
+<span class="kn">from</span> <span class="nn">third_party.models</span> <span class="kn">import</span> <span class="n">postprocess</span>
+<span class="kn">from</span> <span class="nn">third_party.models</span> <span class="kn">import</span> <span class="n">regression</span>
+<span class="kn">from</span> <span class="nn">third_party.models</span> <span class="kn">import</span> <span class="n">anchors</span>
+<span class="kn">from</span> <span class="nn">third_party.models</span> <span class="kn">import</span> <span class="n">retinanet_head</span>
+
+
+<div class="viewcode-block" id="Detector"><a class="viewcode-back" href="../../../core/detector.html#hawk_eye.core.detector.Detector">[docs]</a><span class="k">class</span> <span class="nc">Detector</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">num_detections_per_image</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">half_precision</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">half_precision</span> <span class="o">=</span> <span class="n">half_precision</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_detections_per_image</span> <span class="o">=</span> <span class="n">num_detections_per_image</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">=</span> <span class="n">confidence</span>
+
+        <span class="k">if</span> <span class="n">model_params</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must supply either model timestamp or backbone to load&quot;</span><span class="p">)</span>
+
+        <span class="c1"># If a timestamp is given, download it.</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="c1"># For the distributed pip package, look inside `production_models`</span>
+            <span class="n">production_models</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;production_models&quot;</span>
+            <span class="k">if</span> <span class="n">production_models</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                <span class="n">model_path</span> <span class="o">=</span> <span class="n">production_models</span> <span class="o">/</span> <span class="n">timestamp</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Download the model. This has the yaml containing the backbone.</span>
+                <span class="n">model_path</span> <span class="o">=</span> <span class="n">asset_manager</span><span class="o">.</span><span class="n">download_model</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+            <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">((</span><span class="n">model_path</span> <span class="o">/</span> <span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="n">model_params</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_params</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_params</span><span class="p">(</span><span class="n">model_params</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">backbone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_backbone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">backbone</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backbone</span><span class="o">.</span><span class="n">delete_classification_head</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fpn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_fpn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">backbone</span><span class="o">.</span><span class="n">get_pyramid_channels</span><span class="p">())</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">anchor_sizes</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_levels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anchors</span> <span class="o">=</span> <span class="n">anchors</span><span class="o">.</span><span class="n">AnchorGenerator</span><span class="p">(</span>
+            <span class="n">img_height</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img_height</span><span class="p">,</span>
+            <span class="n">img_width</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img_width</span><span class="p">,</span>
+            <span class="n">pyramid_levels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_levels</span><span class="p">,</span>
+            <span class="n">aspect_ratios</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aspect_ratios</span><span class="p">,</span>
+            <span class="n">sizes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">anchor_sizes</span><span class="p">,</span>
+            <span class="n">anchor_scales</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">anchor_scales</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create the retinanet head.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retinanet_head</span> <span class="o">=</span> <span class="n">retinanet_head</span><span class="o">.</span><span class="n">RetinaNetHead</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span>
+            <span class="n">in_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_channels</span><span class="p">,</span>
+            <span class="n">anchors_per_cell</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">num_anchors_per_cell</span><span class="p">,</span>
+            <span class="n">num_convolutions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_head_convs</span><span class="p">,</span>
+            <span class="n">use_dw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">retinanet_head_dw</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">all_anchors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">all_anchors</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">anchors_over_all_feature_maps</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">anchors</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span> <span class="k">for</span> <span class="n">anchors</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">anchors_over_all_feature_maps</span>
+            <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span> <span class="o">=</span> <span class="n">model_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image_size&quot;</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">postprocess</span> <span class="o">=</span> <span class="n">postprocess</span><span class="o">.</span><span class="n">PostProcessor</span><span class="p">(</span>
+            <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span>
+            <span class="n">image_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span>
+            <span class="n">all_anchors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">all_anchors</span><span class="p">,</span>
+            <span class="n">regressor</span><span class="o">=</span><span class="n">regression</span><span class="o">.</span><span class="n">Regressor</span><span class="p">(),</span>
+            <span class="n">max_detections_per_image</span><span class="o">=</span><span class="n">num_detections_per_image</span><span class="p">,</span>
+            <span class="n">score_threshold</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="n">nms_threshold</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># After all the components are initialized, load the weights.</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span> <span class="o">/</span> <span class="s2">&quot;min-loss.pt&quot;</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_load_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Function to parse the model definition params for later building.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backbone</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backbone&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">backbone</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Please supply a backbone!&quot;</span>
+
+        <span class="n">fpn_params</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fpn&quot;</span><span class="p">)</span>
+        <span class="n">head_params</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retinanet_head&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">fpn_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Must supply a fpn section in the config.&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fpn_type</span> <span class="o">=</span> <span class="n">fpn_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fpn_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Must supply a fpn type.&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fpn_channels</span> <span class="o">=</span> <span class="n">fpn_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_channels&quot;</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fpn_use_dw</span> <span class="o">=</span> <span class="n">fpn_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_dw&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_head_convs</span> <span class="o">=</span> <span class="n">head_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_levels&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fpn_levels</span> <span class="o">=</span> <span class="n">fpn_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;levels&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retinanet_head_dw</span> <span class="o">=</span> <span class="n">head_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_dw&quot;</span><span class="p">)</span>
+
+        <span class="n">anchor_params</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;anchors&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">anchor_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Please add an anchor section.&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aspect_ratios</span> <span class="o">=</span> <span class="n">anchor_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;aspect_ratios&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anchor_sizes</span> <span class="o">=</span> <span class="n">anchor_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sizes&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anchor_scales</span> <span class="o">=</span> <span class="n">anchor_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scales&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.25</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">img_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_width</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;img_size&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_classes&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_load_backbone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backbone</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Load the supplied backbone.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;vovnet&quot;</span> <span class="ow">in</span> <span class="n">backbone</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">vovnet</span><span class="o">.</span><span class="n">VoVNet</span><span class="p">(</span><span class="n">backbone</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported backbone </span><span class="si">{</span><span class="n">backbone</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">model</span>
+
+    <span class="k">def</span> <span class="nf">_load_fpn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fpn_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;retinanet&quot;</span> <span class="ow">in</span> <span class="n">fpn_name</span><span class="p">:</span>
+            <span class="n">fpn_</span> <span class="o">=</span> <span class="n">fpn</span><span class="o">.</span><span class="n">FPN</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="o">=</span><span class="n">features</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:],</span>
+                <span class="n">out_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_channels</span><span class="p">,</span>
+                <span class="n">num_levels</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_levels</span><span class="p">),</span>
+                <span class="n">use_dw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fpn_use_dw</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fpn_</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backbone</span><span class="o">.</span><span class="n">forward_pyramids</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># Only keep the levels specified during construction.</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">levels</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fpn_levels</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fpn</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span>
+        <span class="n">classifications</span><span class="p">,</span> <span class="n">regressions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retinanet_head</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">classifications</span><span class="p">,</span> <span class="n">regressions</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess</span><span class="p">(</span><span class="n">classifications</span><span class="p">,</span> <span class="n">regressions</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -33,6 +33,8 @@ Structure
     :maxdepth: 2
 
     core/asset_manager
+    core/classifier
+    core/detector
 
 Indices and tables
 ==================

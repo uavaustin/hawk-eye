@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Overview: module code &mdash; hawk-eye 0.0.2b0 documentation</title>
+  <title>hawk_eye.core.classifier &mdash; hawk-eye 0.0.2b0 documentation</title>
   
 
   
@@ -38,7 +38,9 @@
 
     
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="hawk_eye.core.detector" href="detector.html" />
+    <link rel="prev" title="hawk_eye.core.asset_manager" href="asset_manager.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,10 +90,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Setup</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Core</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../core/classifier.html">hawk_eye.core.classifier</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../core/detector.html">hawk_eye.core.detector</a></li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">hawk_eye.core.detector</a></li>
 </ul>
 
             
@@ -140,10 +142,16 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Overview: module code</li>
+      <li>hawk_eye.core.classifier</li>
     
     
       <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/core/classifier.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
         
       </li>
     
@@ -155,16 +163,33 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="hawk_eye/core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
-<li><a href="hawk_eye/core/classifier.html">hawk_eye.core.classifier</a></li>
-<li><a href="hawk_eye/core/detector.html">hawk_eye.core.detector</a></li>
-</ul>
+  <div class="section" id="module-hawk_eye.core.classifier">
+<span id="hawk-eye-core-classifier"></span><h1>hawk_eye.core.classifier<a class="headerlink" href="#module-hawk_eye.core.classifier" title="Permalink to this headline">¶</a></h1>
+<p>A classifier model which wraps around a backbone. This setup allows for easy
+interchangeability during experimentation and a reliable way to load saved models.</p>
+<dl class="class">
+<dt id="hawk_eye.core.classifier.Classifier">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.core.classifier.</code><code class="sig-name descname">Classifier</code><span class="sig-paren">(</span><em class="sig-param">num_classes: int = 2</em>, <em class="sig-param">timestamp: str = None</em>, <em class="sig-param">backbone: str = None</em>, <em class="sig-param">half_precision: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="hawk_eye.core.classifier.Classifier.classify">
+<code class="sig-name descname">classify</code><span class="sig-paren">(</span><em class="sig-param">x: torch.Tensor</em>, <em class="sig-param">probability: bool = False</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.classify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.classify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take in an image batch and return the class for each image. If specified,
+softmax will be applied to the predictions.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
 
            </div>
            
           </div>
           <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="detector.html" class="btn btn-neutral float-right" title="hawk_eye.core.detector" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="asset_manager.html" class="btn btn-neutral float-left" title="hawk_eye.core.asset_manager" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 
