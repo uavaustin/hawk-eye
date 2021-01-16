@@ -54,6 +54,12 @@ Structure
     inference/find_targets
     inference/types
 
+.. toctree::
+    :caption: Inference
+    :maxdepth: 1
+
+    distribution
+
 
 Indices and tables
 ==================

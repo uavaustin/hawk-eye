@@ -31,8 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
-        ./docs/setup_linux.sh
-        python3 -m pip install -r docs/requirements.txt
+        hawk_eye/setup/setup_env.sh
 
     - name: make-docs
       run: |

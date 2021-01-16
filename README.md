@@ -9,6 +9,8 @@
 Specifically, the goal is to produce models that perform well in the [AUVSI SUAS](https://static1.squarespace.com/static/5d554e14aaa5e300011a4844/t/5fd3780f2662933f59dbedd5/1607694352554/auvsi_suas-2021-rules.pdf)
 competition.
 
+The output of this project is a python package that can be utilized by UAV Austin's
+[Orchestra](https://github.com/uavaustin/orchestra) team.
 
 ## Contents
 
