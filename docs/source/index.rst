@@ -28,11 +28,32 @@ Structure
 
     setup/setup
 
+
 .. toctree::
     :caption: Core
     :maxdepth: 2
 
     core/asset_manager
+    core/classifier
+    core/detector
+
+
+.. toctree::
+    :caption: Data Generation
+    :maxdepth: 2
+
+    data_generation/create_clf_data
+    data_generation/create_detection_data
+
+
+.. toctree::
+    :caption: Inference
+    :maxdepth: 2
+
+    inference/benchmark_inference
+    inference/find_targets
+    inference/types
+
 
 Indices and tables
 ==================
