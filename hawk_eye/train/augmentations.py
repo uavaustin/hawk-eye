@@ -1,21 +1,15 @@
-""" The augmentations used during training and inference for the various models. These
+"""The augmentations used during training and inference for the various models. These
 are not meant to be an all-encompassing augmentation regime for any of the models.
 Feel free to experiment with any of the available augmentations:
-https://albumentations.readthedocs.io/en/latest/index.html """
+https://albumentations.readthedocs.io/en/latest/index.html"""
 
 import albumentations as albu
 
 
 def clf_train_augs(height: int, width: int) -> albu.Compose:
     """Training augmentations for classification. We prefer for this model to be really
-    robust. Feel free to tweak these paramters or ad other augmentations.
+    robust. Feel free to tweak these paramters or ad other augmentations."""
 
-    Usage:
-        >>> import numpy as np
-        >>> img = np.zeros(1, 512, 512, 3)
-        >>> augs = clf_train_augs(224, 224)
-        >>> out = augs(image=img)["image"].shape
-    """
     return albu.Compose(
         [
             albu.Resize(height=height, width=width),
