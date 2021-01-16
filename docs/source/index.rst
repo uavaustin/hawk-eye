@@ -55,7 +55,7 @@ Structure
     inference/types
 
 .. toctree::
-    :caption: Inference
+    :caption: Distribution
     :maxdepth: 1
 
     distribution
