@@ -15,16 +15,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: docker login
-      run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
-        fi
-      shell: bash
-      env:
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -34,7 +24,7 @@ jobs:
       run: hawk_eye/setup/setup_env.sh
 
     - name: Authenticate on GCS
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      uses: google-github-actions/setup-gcloud@master
       with:
         version: '290.0.1'
         project_id: ${{ secrets.GCP_PROJECT_ID }}

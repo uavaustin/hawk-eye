@@ -20,34 +20,25 @@ The output of this project is a python package that can be utilized by UAV Austi
 * [`Inference`](#inference)
 * [`Testing`](#testing)
 * [`Bazel`](#bazel)
-* [`hawk_eye Distibution`](#distribution)
 * [`Style`](#style)
 
 ## Setup
 This project supports Linux, WSL, and Mac systems. To setup one of these environments, run:
 
-```
-hawk_eye/setup/setup_env.sh
-```
+`hawk_eye/setup/setup_env.sh`
 
 This file also takes an optional argument to a python virtual environment:
 
-```
-hawk_eye/setup/setup_env.sh ~/path_to_venv
-```
+`hawk_eye/setup/setup_env.sh ~/path_to_venv`
 
 Upon sucessful termination of this script, you need to then recieve access to Google
 Cloud Storage. See your lead about gaining permissions, then run
 
-```
-hawk_eye/setup/install_google_cloud.sh
-```
+`hawk_eye/setup/install_google_cloud.sh`
 
 To ensure you are all setup and ready to code, you can test code by running:
 
-```
-bazel test //...
-```
+`bazel test //...`
 
 ## Data Generation
 
@@ -105,25 +96,13 @@ One can also specify the model timestamps if you have a certain model to test.
 
 ## Testing
 
-Testing is done with `bazel`, but you can alternatively run each test_*.py as a python
-executable.
-
-Please look inside the `test` folder for more information. In short, there are python
-unit tests and `flake8` style tests. We'll use bazel to run all the test targets:
-
-```
-bazel test //...
-```
-
-To run the style tests:
-
-```
-flake8
-```
+Testing is done with `bazel`. You can alternatively run each test_*.py as a python
+executable. Please see `test/README.md` for more information on writing and running
+tests.
 
 ## Bazel
 
-`Bazel` is an open-sourced Google product used for a variety of build environments. Right
+`Bazel` is an open-sourced Google project used for a variety of build environments. Right
 now, we mainly use it for python testing, but if PyTorch eventually supports building
 itself as an external third party project, we might start using the C++ PyTorch API.
 
@@ -131,27 +110,8 @@ For now, if you're interested,
 [`here`](https://docs.bazel.build/versions/master/user-manual.html)
 is some documentation.
 
-## Distribution
-
-Once Image Recognition has an inference pipeline we'd like Infrastructure to use, we need
-to create a `pip` package for them to access. We do this using `setuptools` and a
-`setup.py` script.
-
-Any time a new release is created on Github, the `.github/workflows/create_release.yaml`
-workflow will be kicked off and upload a generic python wheel. This `.whl` file contains
-our necessary inference code and the models for inferencing.
-
-To create the wheel locally, run:
-
-```
-./setup.py bdist_wheel
-```
-
-A `.whl` file will be generated inside of `./dist/` and be named in accordance with the
-version inside of `version.txt`.
-
 ## Style
 
 All python code will be automatically formatted using `Black` through `pre-commit`.
-`flake8` will be employed to correct any other style errors. Please familiarize yourself
+`flake8` is employed to correct any other style errors. Please familiarize yourself
 with the [`Google python style guide`](https://google.github.io/styleguide/pyguide.html).
