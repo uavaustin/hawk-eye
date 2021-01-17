@@ -18,6 +18,10 @@ def benchmark(
 ) -> None:
     """Benchmarks a model.
 
+    This function will load the specified model, create a random tensor from the
+    model's internal height and width and the given batch then perform
+    forward passes through the model for :attr:`run_time` seconds.
+
     Args:
         timestamp: The model's specific timestamp.
         model_type: Which type of model this is.

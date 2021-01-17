@@ -48,7 +48,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
 ]
-
+autoclass_content = "both"
 autodoc_mock_imports = ["google"]
 
 # build the templated autosummary files

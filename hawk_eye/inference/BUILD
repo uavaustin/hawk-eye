@@ -28,4 +28,7 @@ py_library(
     srcs = ["types.py"],
 )
 
-exports_files(["requirements.txt", "production_models.py"])
+exports_files([
+    "requirements.txt",
+    "production_models.py",
+])

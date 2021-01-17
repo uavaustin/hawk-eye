@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Contains logic for finding targets in images. """
+"""Contains logic for finding targets in images."""
 
 import argparse
 import pathlib
@@ -37,6 +37,7 @@ def normalize(
         mean: The mean of each channel.
         std: The standard deviation of each channel.
         max_pixel_value: The max value a pixel can have.
+
     Returns:
         A normalized image as a numpy array.
     """
@@ -57,17 +58,21 @@ def normalize(
 
 
 def tile_image(
-    image: Image.Image, tile_size: Tuple[int, int], overlap: int  # (H, W)
+    image: Image.Image, tile_size: Tuple[int, int], overlap: int
 ) -> Tuple[torch.Tensor, List[Tuple[int, int]]]:
-    """ Take in an image and tile it into smaller tiles for inference.
+    """Take in an image and tile it into smaller tiles for inference.
+
     Args:
         image: The input image to tile.
         tile_size: The (width, height) of the tiles.
-        overlap: The overlap between adjacent tiles.
+        overlap: The overlap between adjacent tiles (height, width).
+
     Returns:
         A tensor of the tiles and a list of the (x, y) offset for the tiles.
-            The offets are needed to keep track of which tiles have targets.
-    Usage:
+        The offets are needed to keep track of which tiles have targets.
+
+    Examples::
+
         >>> tiles, coords = tile_image(Image.new("RGB", (1000, 1000)), (512, 512), 50)
         >>> tiles.shape[0]
         9
@@ -106,14 +111,16 @@ def tile_image(
 
 def create_batches(
     image_tensor: torch.Tensor, coords: List[Tuple[int, int]], batch_size: int
-) -> Generator[types.BBox, None, None]:
+):
     """Creates batches of images based on the supplied params. The whole image
     is tiled first, the batches are generated.
+
     Args:
         image: The opencv opened image.
         tile_size: The height, width of the tiles to create.
         overlap: The amount of overlap between tiles.
         batch_size: The number of images to have per batch.
+
     Returns:
         Yields the image batch and the top left coordinate of the tile in the
         space of the original image.
@@ -127,9 +134,11 @@ def load_models(
     clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
 ) -> Tuple[torch.nn.Module, torch.nn.Module]:
     """ Loads the given time stamps for the classification and detector models.
+
     Args:
         clf_timestamp: Which classification model to load.
         det_timestamp: Which detection model to load.
+
     Returns:
         Returns both models.
     """
@@ -166,6 +175,7 @@ def find_all_targets(
     save_json_data: bool = False,
 ) -> None:
     """ Entrypoint function if running this script as main.
+
     Args:
         images: A list of all the images to inference.
         clf_timestamp: The classification model to load.
@@ -207,6 +217,7 @@ def find_targets(
     clf_confidence: float = 0.9,
 ) -> None:
     """ Tile up image, classify them, then perform object detection where it's needed.
+
     Args:
         image: The input image to inference.
         clf_model: The loaded classification model.
@@ -252,9 +263,11 @@ def globalize_boxes(
 ) -> List[types.Target]:
     """Take the normalized detections on a _tile_ and gloabalize them to pixel space of
     the original large image.
+
     Args:
         results: A list of the detections for the tiles.
         img_size: The size of the tile whihc is needed to unnormalize the detections.
+
     Returns:
         A list of the globalized boxes
     """
@@ -290,6 +303,7 @@ def visualize_image(
 ) -> None:
     """Function used to draw boxes and information onto image for visualizing the output
     of inference.
+
     Args:
         image_name: The original image name used for saving the visualization.
         image: The image array.

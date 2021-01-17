@@ -1,17 +1,21 @@
-""" Contains basic storage types passed around in the library. """
+"""Contains basic storage types passed around in the library."""
 
-from enum import Enum
-from enum import unique
+import enum
+from typing import Optional
 
 from PIL import Image
 
 
-@unique
-class Color(Enum):
+@enum.unique
+class Color(enum.Enum):
     """Contains colors for the AUVSI SUAS Interop Server.
+
     These colors can be used for both the background color and the
-    alphanumeric color. NOTE: Color.NONE can be used if a color
-    cannot be identified."""
+    alphanumeric color.
+
+    .. note::
+        :attr:`NONE` can be used if a color cannot be identified.
+    """
 
     NONE = 0
     WHITE = 1
@@ -26,11 +30,13 @@ class Color(Enum):
     ORANGE = 10
 
 
-@unique
-class Shape(Enum):
+@enum.unique
+class Shape(enum.Enum):
     """Contains target shapes for the AUVSI SUAS Interop Server.
-    NOTE: Shape.NAS (not-a-shape) can be used if a shape cannot
-    be identified."""
+
+    .. note::
+        :attr:`NAS` (not-a-shape) can be used if a shape cannot be identified.
+    """
 
     NAS = 0
     CIRCLE = 1
@@ -48,59 +54,13 @@ class Shape(Enum):
     CROSS = 13
 
 
-class BBox:
-    def __init__(
-        self, x1: int, y1: int, x2: int, y2: int, image: Image.Image = None
-    ) -> None:
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
-        self.image = image
-        self.meta = ""
-        self.confidence = -1
-
-    @property
-    def width(self) -> int:
-        return self.x2 - self.x1
-
-    @property
-    def height(self) -> int:
-        return self.y2 - self.y1
-
-
 class Target:
     """Represents a target found on an image.
 
     This is intended to be built upon as the the target is being
-    classified.
-
-    Note that a target must have at least an x-position, y-position,
-    width, and height to be created.
-
-    A target should only be returned back by the library if at also
-    contains a background color as well.
-
-    Attributes:
-        x (int): The x position of the top-left corner in pixels.
-        y (int): The y position of the top-left corner in pixels.
-        width (int): The width of the blob in pixels.
-        height (int): The height of the blob in pixels.
-        orientation (float): The orientation of the target. An
-            orientation of 0 means the target is not rotated, an
-            orientation of 90 means it the top of the target points
-            to the right of the image (0 <= orientation < 360).
-        shape (Shape): The target shape.
-        background_color (Color): The target background color.
-        alphanumeric (str): The letter(s) and/or number(s) on the
-            target. May consist of one or more of the characters 0-9,
-            A-Z, a-z. Typically, this will only be one capital
-            letter.
-        alphanumeric_color (Color): The target alphanumeric color.
-        image (PIL.Image): Image showing the target.
-        confidence (float): The confidence that the target exists
-            (0 <= confidence <= 1).
-    """
+    classified. Note that a target must have at least an x-position, y-position,
+    width, and height to be created. A target should only be returned back by the
+    library if at also contains a background color as well."""
 
     def __init__(
         self,
@@ -108,15 +68,36 @@ class Target:
         y: int,
         width: int,
         height: int,
-        shape: Shape = Shape.NAS,
-        orientation: float = 0.0,
-        background_color: Color = Color.NONE,
-        alphanumeric: str = "",
-        alphanumeric_color: Color = Color.NONE,
-        image: Image.Image = None,
-        confidence: float = 0.0,
+        shape: Optional[Shape] = Shape.NAS,
+        orientation: Optional[float] = 0.0,
+        background_color: Optional[Color] = Color.NONE,
+        alphanumeric: Optional[str] = "",
+        alphanumeric_color: Optional[Color] = Color.NONE,
+        image: Optional[Image.Image] = None,
+        confidence: Optional[float] = 0.0,
     ) -> None:
-        """ Create a new Target object. """
+        """
+
+        Args:
+            x: The x position of the top-left corner in pixels.
+            y: The y position of the top-left corner in pixels.
+            width: The width of the blob in pixels.
+            height: The height of the blob in pixels.
+            orientation: The orientation of the target. An
+                orientation of 0 means the target is not rotated, an
+                orientation of 90 means it the top of the target points
+                to the right of the image (0 <= orientation < 360).
+            shape: The target :class:`Shape`.
+            background_color: The target background :class:`Color`.
+            alphanumeric: The letter(s) and/or number(s) on the
+                target. May consist of one or more of the characters 0-9,
+                A-Z, a-z. Typically, this will only be one capital
+                letter.
+            alphanumeric_color: The target alphanumeric :class:`Color`.
+            image: Image showing the target.
+            confidence: The confidence that the target exists
+                (0 <= confidence <= 1).
+        """
         self.x = x
         self.y = y
         self.width = width
@@ -130,7 +111,25 @@ class Target:
         self.confidence = confidence
 
     def overlaps(self, other_target: Shape) -> bool:
+        """Check if another :class:`Target` has overlap.
 
+        Args:
+            other_target: The other :class:`Target` to compare with.
+
+        Returns:
+            ``True`` if there is overlap, ``False`` if no overlap.
+
+        Examples::
+
+            >>> target1 = Target(x=0, y=0, width=10, height=10)
+            >>> target2 = Target(x=7, y=5, width=11, height=12)
+            >>> target1.overlaps(target2)
+            True
+            >>> target1 = Target(x=0, y=0, width=10, height=10)
+            >>> target2 = Target(x=20, y=22, width=30, height=32)
+            >>> target1.overlaps(target2)
+            False
+        """
         if (
             self.x > other_target.x + other_target.width
             or other_target.x > self.x + self.width

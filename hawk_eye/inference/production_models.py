@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Packaging around the production models. This needs to be updated with any new models
+for release. This file is also called by some bazel rules."""
 
 import argparse
 
@@ -14,6 +16,7 @@ _PROD_MODELS = {
     "classifier": _CLASSIFIER,
     "detector": _DETECTOR,
 }
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple model selection file.")

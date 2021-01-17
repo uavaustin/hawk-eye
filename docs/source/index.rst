@@ -57,6 +57,7 @@ Structure
     inference/benchmark_inference
     inference/find_targets
     inference/types
+    inference/production_models
 
 .. toctree::
     :caption: Distribution
