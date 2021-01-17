@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" Tests covering the inference functions. """
+"""Tests covering the inference functions."""
 
 import doctest
 import unittest
