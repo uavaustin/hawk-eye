@@ -1,6 +1,5 @@
 
 
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
@@ -8,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Index &mdash; hawk-eye 0.0.2b0 documentation</title>
+  <title>Distribution &mdash; hawk-eye 0.0.2b0 documentation</title>
   
 
   
@@ -38,8 +37,9 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-    <link rel="index" title="Index" href="#" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="hawk_eye.inference.types" href="inference/types.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -106,8 +106,8 @@
 <li class="toctree-l1"><a class="reference internal" href="inference/types.html">hawk_eye.inference.types</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="distribution.html">Distribution</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Distribution</a></li>
 </ul>
 
             
@@ -156,14 +156,14 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Index</li>
+      <li>Distribution</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
             
-              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/genindex.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/distribution.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -177,11 +177,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-
-<h1 id="index">Index</h1>
-
-<div class="genindex-jumpbox">
- 
+  <div class="section" id="distribution">
+<h1>Distribution<a class="headerlink" href="#distribution" title="Permalink to this headline">¶</a></h1>
+<p>The goal of <code class="docutils literal notranslate"><span class="pre">hawk_eye</span></code> is to create a python package that can be utilized by
+the <a class="reference external" href="https://github.com/uavaustin/orchestra">Orchestra</a> subteam. This documentation
+aims to give developers of <code class="docutils literal notranslate"><span class="pre">hawk_eye</span></code> a sense of how the distribution of this package
+is currently managed.</p>
+<p>The python package is defined by the <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> script at the root of the repo. Inside
+there you will see how the package is defined. The <code class="docutils literal notranslate"><span class="pre">PrepareModels</span></code> class looks for the
+timestamps of the production models defined in <code class="docutils literal notranslate"><span class="pre">hawk_eye/core/production_models.py</span></code> and
+downloads them. The package is partially defined by <code class="docutils literal notranslate"><span class="pre">MANIFEST.in</span></code> file.</p>
+<p>You can run the build locally with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">bdist_wheel</span>
+</pre></div>
+</div>
+<p>Also, the tests from <code class="docutils literal notranslate"><span class="pre">test.test_inference</span></code> are included in the package to ensure the
+application runs. These tests can be run with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">test</span>
+</pre></div>
+</div>
+<hr class="docutils" />
+<p>Automatic Distribution</p>
+<p>It’s tedious to manually handle the package building an distribution, so a Github Actions
+workflow was created.
+<a class="reference external" href="https://github.com/uavaustin/hawk-eye/blob/master/.github/workflows/create_release.yaml">This</a>
+automatically builds the release under two conditions:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>The code is merged into master</p></li>
+<li><p>The version inside <code class="docutils literal notranslate"><span class="pre">version.txt</span></code> has been changed to a git tag that does not exist.</p></li>
+</ol>
+</div></blockquote>
+<p>So, whenever something related to our package changes, update the version and merge into
+master after a proper PR review. You should find after a couple minutes, a release tag,
+release, and package are added to the
+<a class="reference external" href="https://github.com/uavaustin/hawk-eye/releases">release page</a>.</p>
 </div>
 
 
@@ -189,6 +219,9 @@
            
           </div>
           <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="inference/types.html" class="btn btn-neutral float-left" title="hawk_eye.inference.types" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 
