@@ -22,7 +22,7 @@ _MODELS_DIR = pathlib.Path.cwd() / "hawk_eye/core/production_models"
 
 
 def _get_packages() -> List[str]:
-    all_deps = pathlib.Path("requirements.txt").read_text().splitlines()
+    all_deps = pathlib.Path("hawk_eye/setup/requirements.txt").read_text().splitlines()
     deps = []
     for dep in all_deps:
         if "numpy" in dep or "pillow" in dep:

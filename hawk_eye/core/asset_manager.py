@@ -1,6 +1,7 @@
-""" Functions to pull in data from the cloud.
+"""Functions to pull in data from the cloud.
+
 This relies on Google Cloud Storage python API. Please see the Image Recognition lead
-to recieve the proper credentials for access to the bucket. """
+to recieve the proper credentials for access to the bucket."""
 
 import tarfile
 import pathlib
@@ -16,24 +17,24 @@ _BUCKET = "uav-austin-test"
 
 
 def pull_all() -> None:
-    r""" Pull all assets. """
+    """ Pull all assets. """
     pull_backgrounds()
     pull_base_shapes()
     pull_fonts()
 
 
 def pull_backgrounds() -> None:
-    r"""Pull the shape generation backgrounds."""
+    """Pull the shape generation backgrounds."""
     download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
-    r"""Pull the base shape images."""
+    """Pull the base shape images."""
     download_file(config.BASE_SHAPES_URL, config.ASSETS_DIR)
 
 
 def pull_fonts() -> None:
-    r"""Pull the fonts."""
+    """Pull the fonts."""
     download_file(config.FONTS_URL, config.ASSETS_DIR)
 
 
