@@ -29,7 +29,7 @@ fi
 
 python3 -m pip install -U Cython==0.29.21 numpy==1.17.4
 python3 -m pip install -U dataclasses==0.6
-python3 -m pip install -U -r requirements.txt
+python3 -m pip install -U -r setup/requirements.txt
 pre-commit && pre-commit install
 
 IS_MAC=$(uname -a)
@@ -41,9 +41,9 @@ else
     if lspci -vnnn | perl -lne 'print if /^\d+\:.+(\[\S+\:\S+\])/' | grep -q NVIDIA;
     then
         echo "GPU found."
-        python3 -m pip install -U -r requirements-gpu.txt
+        python3 -m pip install -U -r setup/requirements-gpu.txt
     else
-        python3 -m pip install -U -r requirements-cpu.txt
+        python3 -m pip install -U -r setup/requirements-cpu.txt
     fi
 fi
 
