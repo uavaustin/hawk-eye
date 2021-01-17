@@ -45,6 +45,12 @@ Structure
 
 
 .. toctree::
+    :caption: Training
+
+    training
+
+
+.. toctree::
     :caption: Inference
 
     inference/overview
