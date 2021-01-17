@@ -5,7 +5,7 @@ import pathlib
 import tempfile
 import unittest
 
-from hawk_eye.test import generate_config_test
+from test import generate_config_test
 from hawk_eye.data_generation import create_clf_data
 from hawk_eye.data_generation import create_detection_data
 

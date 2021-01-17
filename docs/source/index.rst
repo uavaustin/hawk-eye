@@ -31,7 +31,6 @@ Structure
 
 .. toctree::
     :caption: Core
-    :maxdepth: 2
 
     core/asset_manager
     core/classifier
@@ -40,7 +39,6 @@ Structure
 
 .. toctree::
     :caption: Data Generation
-    :maxdepth: 2
 
     data_generation/create_clf_data
     data_generation/create_detection_data
@@ -48,11 +46,21 @@ Structure
 
 .. toctree::
     :caption: Inference
-    :maxdepth: 2
 
+    inference/overview
     inference/benchmark_inference
     inference/find_targets
     inference/types
+
+.. toctree::
+    :caption: Distribution
+
+    distribution
+
+.. toctree::
+    :caption: Testing
+
+    tests
 
 
 Indices and tables

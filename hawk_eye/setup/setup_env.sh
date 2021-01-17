@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 if [ -z "$1" ]
   then
     echo "No python virtual environment specified."
@@ -29,7 +31,7 @@ fi
 
 python3 -m pip install -U Cython==0.29.21 numpy==1.17.4
 python3 -m pip install -U dataclasses==0.6
-python3 -m pip install -U -r requirements.txt
+python3 -m pip install -U -r hawk_eye/setup/requirements.txt
 pre-commit && pre-commit install
 
 IS_MAC=$(uname -a)
@@ -41,19 +43,9 @@ else
     if lspci -vnnn | perl -lne 'print if /^\d+\:.+(\[\S+\:\S+\])/' | grep -q NVIDIA;
     then
         echo "GPU found."
-        python3 -m pip install -U -r requirements-gpu.txt
-        pushd $(mktemp -d)
-        rm -rf apex
-        git clone --recursive https://github.com/NVIDIA/apex
-        pushd apex
-        export TORCH_CUDA_ARCH_LIST="6.0;6.1;6.2;7.0;7.5"
-        git checkout 1ff54b8fed441c39dac181091b44fecdca31a403
-        CUDA_HOME="/usr/local/cuda-10.2" pip install -v --no-cache-dir \
-            --global-option="--cpp_ext" --global-option="--cuda_ext" ./
-        popd
-        popd
+        python3 -m pip install -U -r hawk_eye/setup/requirements-gpu.txt
     else
-        python3 -m pip install -U -r requirements-cpu.txt
+        python3 -m pip install -U -r hawk_eye/setup/requirements-cpu.txt
     fi
 fi
 
