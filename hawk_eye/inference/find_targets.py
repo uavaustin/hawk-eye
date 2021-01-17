@@ -15,7 +15,7 @@ import torch
 from hawk_eye.core import classifier
 from hawk_eye.core import detector
 from hawk_eye.data_generation import generate_config as config
-from hawk_eye.inference import types
+from hawk_eye.inference import inference_types
 from third_party.models import postprocess
 
 _PROD_MODELS = {"clf": "2020-09-05T15.51.57", "det": "2020-10-10T14.02.09"}
@@ -260,7 +260,7 @@ def find_targets(
 
 def globalize_boxes(
     results: List[postprocess.BoundingBox], img_size: int
-) -> List[types.Target]:
+) -> List[inference_types.Target]:
     """Take the normalized detections on a _tile_ and gloabalize them to pixel space of
     the original large image.
 
@@ -280,12 +280,12 @@ def globalize_boxes(
             relative_coords = box.box * img_size
             relative_coords += torch.Tensor(2 * list(coords)).int()
             final_targets.append(
-                types.Target(
+                inference_types.Target(
                     x=int(relative_coords[0]),
                     y=int(relative_coords[1]),
                     width=int(relative_coords[2] - relative_coords[0]),
                     height=int(relative_coords[3] - relative_coords[1]),
-                    shape=types.Shape[
+                    shape=inference_types.Shape[
                         config.OD_CLASSES[box.class_id].upper().replace("-", "_")
                     ],
                 )
@@ -298,7 +298,7 @@ def visualize_image(
     image_name: str,
     image: np.ndarray,
     visualization_dir: pathlib.Path,
-    targets: List[types.Target],
+    targets: List[inference_types.Target],
     clf_tiles: List[Tuple[int, int]],
 ) -> None:
     """Function used to draw boxes and information onto image for visualizing the output
@@ -339,7 +339,9 @@ def visualize_image(
 
 # TODO(alex) use this for writing jsons.
 def save_target_meta(
-    filename_meta: pathlib.Path, filename_image: str, targets: List[types.Target]
+    filename_meta: pathlib.Path,
+    filename_image: str,
+    targets: List[inference_types.Target],
 ) -> None:
     """ Save target metadata to a file. """
     meta = {}
