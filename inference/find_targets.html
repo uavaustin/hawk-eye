@@ -39,7 +39,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hawk_eye.inference.types" href="types.html" />
+    <link rel="next" title="hawk_eye.inference.production_models" href="production_models.html" />
     <link rel="prev" title="hawk_eye.inference.benchmark_inference" href="benchmark_inference.html" /> 
 </head>
 
@@ -109,7 +109,6 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.inference.find_targets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="types.html">hawk_eye.inference.types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
@@ -245,7 +244,7 @@ space of the original image.</p>
 
 <dl class="function">
 <dt id="hawk_eye.inference.find_targets.globalize_boxes">
-<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">globalize_boxes</code><span class="sig-paren">(</span><em class="sig-param">results: List[third_party.models.postprocess.BoundingBox], img_size: int</em><span class="sig-paren">)</span> &#x2192; List[hawk_eye.inference.types.Target]<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#globalize_boxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.globalize_boxes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">globalize_boxes</code><span class="sig-paren">(</span><em class="sig-param">results: List[third_party.models.postprocess.BoundingBox], img_size: int</em><span class="sig-paren">)</span> &#x2192; List[hawk_eye.inference.inference_types.Target]<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#globalize_boxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.globalize_boxes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Take the normalized detections on a _tile_ and gloabalize them to pixel space of
 the original large image.</p>
 <dl class="field-list simple">
@@ -296,7 +295,7 @@ albumentations normalization used for training.
 
 <dl class="function">
 <dt id="hawk_eye.inference.find_targets.save_target_meta">
-<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">save_target_meta</code><span class="sig-paren">(</span><em class="sig-param">filename_meta: pathlib.Path, filename_image: str, targets: List[hawk_eye.inference.types.Target]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#save_target_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.save_target_meta" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">save_target_meta</code><span class="sig-paren">(</span><em class="sig-param">filename_meta: pathlib.Path, filename_image: str, targets: List[hawk_eye.inference.inference_types.Target]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#save_target_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.save_target_meta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save target metadata to a file.</p>
 </dd></dl>
 
@@ -331,7 +330,7 @@ The offets are needed to keep track of which tiles have targets.</p>
 
 <dl class="function">
 <dt id="hawk_eye.inference.find_targets.visualize_image">
-<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">visualize_image</code><span class="sig-paren">(</span><em class="sig-param">image_name: str, image: numpy.ndarray, visualization_dir: pathlib.Path, targets: List[hawk_eye.inference.types.Target], clf_tiles: List[Tuple[int, int]]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#visualize_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.visualize_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">visualize_image</code><span class="sig-paren">(</span><em class="sig-param">image_name: str, image: numpy.ndarray, visualization_dir: pathlib.Path, targets: List[hawk_eye.inference.inference_types.Target], clf_tiles: List[Tuple[int, int]]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#visualize_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.visualize_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function used to draw boxes and information onto image for visualizing the output
 of inference.</p>
 <dl class="field-list simple">
@@ -355,7 +354,7 @@ of inference.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="types.html" class="btn btn-neutral float-right" title="hawk_eye.inference.types" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="production_models.html" class="btn btn-neutral float-right" title="hawk_eye.inference.production_models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="benchmark_inference.html" class="btn btn-neutral float-left" title="hawk_eye.inference.benchmark_inference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

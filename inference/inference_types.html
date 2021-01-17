@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hawk_eye.inference.types &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Data Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../data_generation/create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Training</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Inference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="production_models.html">hawk_eye.inference.production_models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Distribution</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../distribution.html">Distribution</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Testing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tests.html">Tests</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>hawk_eye.inference.types</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/inference/inference_types.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-hawk_eye.inference.inference_types">
+<span id="hawk-eye-inference-types"></span><h1>hawk_eye.inference.types<a class="headerlink" href="#module-hawk_eye.inference.inference_types" title="Permalink to this headline">¶</a></h1>
+<p>Contains basic storage types passed around in the library.</p>
+<dl class="class">
+<dt id="hawk_eye.inference.inference_types.Color">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.inference_types.</code><code class="sig-name descname">Color</code><a class="reference internal" href="../_modules/hawk_eye/inference/inference_types.html#Color"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.inference_types.Color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains colors for the AUVSI SUAS Interop Server.</p>
+<p>These colors can be used for both the background color and the
+alphanumeric color.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">NONE</span></code> can be used if a color cannot be identified.</p>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="hawk_eye.inference.inference_types.Shape">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.inference_types.</code><code class="sig-name descname">Shape</code><a class="reference internal" href="../_modules/hawk_eye/inference/inference_types.html#Shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.inference_types.Shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains target shapes for the AUVSI SUAS Interop Server.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">NAS</span></code> (not-a-shape) can be used if a shape cannot be identified.</p>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="hawk_eye.inference.inference_types.Target">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.inference_types.</code><code class="sig-name descname">Target</code><span class="sig-paren">(</span><em class="sig-param">x: int</em>, <em class="sig-param">y: int</em>, <em class="sig-param">width: int</em>, <em class="sig-param">height: int</em>, <em class="sig-param">shape: Optional[hawk_eye.inference.inference_types.Shape] = &lt;Shape.NAS: 0&gt;</em>, <em class="sig-param">orientation: Optional[float] = 0.0</em>, <em class="sig-param">background_color: Optional[hawk_eye.inference.inference_types.Color] = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">alphanumeric: Optional[str] = ''</em>, <em class="sig-param">alphanumeric_color: Optional[hawk_eye.inference.inference_types.Color] = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">image: Optional[PIL.Image.Image] = None</em>, <em class="sig-param">confidence: Optional[float] = 0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/inference/inference_types.html#Target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.inference_types.Target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a target found on an image.</p>
+<p>This is intended to be built upon as the the target is being
+classified. Note that a target must have at least an x-position, y-position,
+width, and height to be created. A target should only be returned back by the
+library if at also contains a background color as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – The x position of the top-left corner in pixels.</p></li>
+<li><p><strong>y</strong> – The y position of the top-left corner in pixels.</p></li>
+<li><p><strong>width</strong> – The width of the blob in pixels.</p></li>
+<li><p><strong>height</strong> – The height of the blob in pixels.</p></li>
+<li><p><strong>orientation</strong> – The orientation of the target. An
+orientation of 0 means the target is not rotated, an
+orientation of 90 means it the top of the target points
+to the right of the image (0 &lt;= orientation &lt; 360).</p></li>
+<li><p><strong>shape</strong> – The target <a class="reference internal" href="#hawk_eye.inference.inference_types.Shape" title="hawk_eye.inference.inference_types.Shape"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shape</span></code></a>.</p></li>
+<li><p><strong>background_color</strong> – The target background <a class="reference internal" href="#hawk_eye.inference.inference_types.Color" title="hawk_eye.inference.inference_types.Color"><code class="xref py py-class docutils literal notranslate"><span class="pre">Color</span></code></a>.</p></li>
+<li><p><strong>alphanumeric</strong> – The letter(s) and/or number(s) on the
+target. May consist of one or more of the characters 0-9,
+A-Z, a-z. Typically, this will only be one capital
+letter.</p></li>
+<li><p><strong>alphanumeric_color</strong> – The target alphanumeric <a class="reference internal" href="#hawk_eye.inference.inference_types.Color" title="hawk_eye.inference.inference_types.Color"><code class="xref py py-class docutils literal notranslate"><span class="pre">Color</span></code></a>.</p></li>
+<li><p><strong>image</strong> – Image showing the target.</p></li>
+<li><p><strong>confidence</strong> – The confidence that the target exists
+(0 &lt;= confidence &lt;= 1).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="hawk_eye.inference.inference_types.Target.overlaps">
+<code class="sig-name descname">overlaps</code><span class="sig-paren">(</span><em class="sig-param">other_target: hawk_eye.inference.inference_types.Shape</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../_modules/hawk_eye/inference/inference_types.html#Target.overlaps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.inference_types.Target.overlaps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another <a class="reference internal" href="#hawk_eye.inference.inference_types.Target" title="hawk_eye.inference.inference_types.Target"><code class="xref py py-class docutils literal notranslate"><span class="pre">Target</span></code></a> has overlap.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other_target</strong> – The other <a class="reference internal" href="#hawk_eye.inference.inference_types.Target" title="hawk_eye.inference.inference_types.Target"><code class="xref py py-class docutils literal notranslate"><span class="pre">Target</span></code></a> to compare with.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if there is overlap, <code class="docutils literal notranslate"><span class="pre">False</span></code> if no overlap.</p>
+</dd>
+</dl>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target2</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">target2</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target2</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">target2</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
