@@ -1,0 +1,307 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hawk_eye.inference.benchmark_inference &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Data Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_generation/create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Training</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../training.html">Training</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Inference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html#example">Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/types.html">hawk_eye.inference.types</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Distribution</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../distribution.html">Distribution</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Testing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>hawk_eye.inference.benchmark_inference</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for hawk_eye.inference.benchmark_inference</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot;A script to benchmark inference for both detector and classification models.</span>
+<span class="sd">This is useful for seeing how a new model performs on a device. For example, this</span>
+<span class="sd">might be run on the Jetson to see if the model meets performance cutoffs.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">classifier</span>
+<span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">detector</span>
+
+
+<div class="viewcode-block" id="benchmark"><a class="viewcode-back" href="../../../inference/benchmark_inference.html#hawk_eye.inference.benchmark_inference.benchmark">[docs]</a><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">benchmark</span><span class="p">(</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">run_time</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Benchmarks a model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        timestamp: The model&#39;s specific timestamp.</span>
+<span class="sd">        model_type: Which type of model this is.</span>
+<span class="sd">        batch_size: The batch size to benchmark the model on.</span>
+<span class="sd">        run_time: How long to run the benchmark in seconds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Construct the model.</span>
+    <span class="k">if</span> <span class="n">model_type</span> <span class="o">==</span> <span class="s2">&quot;classifier&quot;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">Classifier</span><span class="p">(</span><span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">half_precision</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">model_type</span> <span class="o">==</span> <span class="s2">&quot;detector&quot;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">half_precision</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported model type: </span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">image_size</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting inference.&quot;</span><span class="p">)</span>
+    <span class="n">start_loop</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_loop</span> <span class="o">&lt;</span> <span class="n">run_time</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+
+    <span class="n">latency</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Total time: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">times</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Average batch inference time: </span><span class="si">{</span><span class="n">latency</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s. FPS: </span><span class="si">{</span><span class="n">batch_size</span> <span class="o">/</span> <span class="n">latency</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">.&quot;</span>
+    <span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model benchmark script using FP16 if CUDA is available.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--timestamp&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Model timestamp to test.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--model_type&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Why model type to test.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--batch_size&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;How many images per batch.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--run_time&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The duration of the inferencing.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">benchmark</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">run_time</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
