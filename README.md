@@ -12,6 +12,7 @@ competition.
 The output of this project is a python package that can be utilized by UAV Austin's
 [Orchestra](https://github.com/uavaustin/orchestra) team.
 
+
 ## Contents
 
 * [`Setup`](#setup)
@@ -21,6 +22,7 @@ The output of this project is a python package that can be utilized by UAV Austi
 * [`Testing`](#testing)
 * [`Bazel`](#bazel)
 * [`Style`](#style)
+
 
 ## Setup
 This project supports Linux, WSL, and Mac systems. To setup one of these environments, run:
@@ -40,44 +42,21 @@ To ensure you are all setup and ready to code, you can test code by running:
 
 `bazel test //...`
 
+
 ## Data Generation
 
-Before we can ever train a model we need data. In our project, we create artificial data
-using various python libraries. Inside of `hawk_eye/data_generation` you'll find the
-scripts related to data processing.
+Before we can ever train a model we need data. In our project, we actually create
+synthetic data using various python libraries. Inside of `hawk_eye/data_generation`
+you'll find the scripts related to data processing and more information.
 
-#### Contents
-* `config.yaml`: The file containing many of the tweakable parameters for data
-generation.
-* `create_clf_data.py`: Creates classification data. This is binary data, in other words,
-only two classes: target or background.
-* `create_detection_data.py`: Create detection data for the object detection models.
-The data will be saved as a COCO formatted archive.
-* `create_shape_combinations.py`: **Experimental** script for generating all possible combinations of targets/shapes/colors.
-* `generate_config.py`: The config file which references `config.yaml`.
 
 ## Model Training
 
-See example model configurations in `models/configs` for inspiration on a model
-architecture. Check out `torchvision` for more possibilities. An example
-training command is:
+Currently we train both classifiers and detection models. This is in flux as the pace
+of discovery in machine learning is rapid.
 
-```
-PYTHONPATH=. hawk_eye/train/train_clf.py \
-    --model_config configs/vovnet.yaml
-```
+See `hawk_eye/train/README.md` for more information on how to running training jobs.
 
-Use a detector config with `hawk_eye/train/train_det.py`:
-
-```
-PYTHONPATH=. hawk_eye/train/train_det.py \
-    --model_config configs/vovnet-det.yaml
-```
-
-Most model architectures will be located in `third_party` since we typically implement
-other researchers' models. Each model will save itself to `~/runs/uav-{model_type}`.
-Inside the timestamped archive, you can find the training log, a tensorboard file, and
-the saved weights.
 
 ## Inference
 
@@ -94,11 +73,12 @@ The command above will visualize and save the models' predictions. See
 
 One can also specify the model timestamps if you have a certain model to test.
 
+
 ## Testing
 
-Testing is done with `bazel`. You can alternatively run each test_*.py as a python
-executable. Please see `test/README.md` for more information on writing and running
-tests.
+Testing is done with `bazel`. Please see `test/README.md` for more information on
+writing and running tests.
+
 
 ## Bazel
 
@@ -109,6 +89,7 @@ itself as an external third party project, we might start using the C++ PyTorch 
 For now, if you're interested,
 [`here`](https://docs.bazel.build/versions/master/user-manual.html)
 is some documentation.
+
 
 ## Style
 
