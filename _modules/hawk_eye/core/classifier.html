@@ -183,13 +183,14 @@
            <div itemprop="articleBody">
             
   <h1>Source code for hawk_eye.core.classifier</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot; A classifier model which wraps around a backbone. This setup allows for easy</span>
-<span class="sd">interchangeability during experimentation and a reliable way to load saved models. &quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;A classifier model which wraps around a backbone. This setup allows for easy</span>
+<span class="sd">interchangeability during experimentation and a reliable way to load saved models.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">pathlib</span>
-<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">asset_manager</span>
@@ -202,18 +203,20 @@
 <div class="viewcode-block" id="Classifier"><a class="viewcode-back" href="../../../core/classifier.html#hawk_eye.core.classifier.Classifier">[docs]</a><span class="k">class</span> <span class="nc">Classifier</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">backbone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">half_precision</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">backbone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">half_precision</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            num_classes: The number of classes to predict.</span>
-<span class="sd">            timestamp: The timestamp of the model to download from bintray.</span>
+<span class="sd">            timestamp: The timestamp of the model to download from GCloud.</span>
 <span class="sd">            backbone: A string designating which model to load.</span>
 <span class="sd">            half_precision: Whether to use half precision for inference. For now</span>
 <span class="sd">                half_precision doesn&#39;t work well with training. Maybe in PyTorch 1.6.0.</span>
+
+<span class="sd">        :raises ValueError: Error if neither a timestamp or backbone arg is supplied.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">num_classes</span>
@@ -254,15 +257,32 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_precision</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="c1"># If using cuda and not training, assume inference.</span>
+<div class="viewcode-block" id="Classifier.forward"><a class="viewcode-back" href="../../../core/classifier.html#hawk_eye.core.classifier.Classifier.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Forward pass through classifier.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: input tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the output tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If half precision, assume inference not train.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_precision</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_load_backbone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backbone</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot; Load the supplied backbone. &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Load the supplied backbone.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            backbone: The backbone type to load.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The loaded model.</span>
+
+<span class="sd">        :raises ValueError: If improper backbone is supplied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;rexnet&quot;</span> <span class="ow">in</span> <span class="n">backbone</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="n">rexnet</span><span class="o">.</span><span class="n">ReXNet</span><span class="p">(</span><span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="n">backbone</span><span class="p">)</span>
         <span class="k">elif</span> <span class="s2">&quot;vovnet&quot;</span> <span class="ow">in</span> <span class="n">backbone</span><span class="p">:</span>
@@ -274,7 +294,15 @@
 
 <div class="viewcode-block" id="Classifier.classify"><a class="viewcode-back" href="../../../core/classifier.html#hawk_eye.core.classifier.Classifier.classify">[docs]</a>    <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">probability</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Take in an image batch and return the class for each image. If specified,</span>
-<span class="sd">        softmax will be applied to the predictions.&quot;&quot;&quot;</span>
+<span class="sd">        softmax will be applied to the predictions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: Input tensor.</span>
+<span class="sd">            probability: Whether or not to apply softmax.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The output tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cuda</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_precision</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>

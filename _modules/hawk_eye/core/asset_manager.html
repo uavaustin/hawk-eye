@@ -183,9 +183,10 @@
            <div itemprop="articleBody">
             
   <h1>Source code for hawk_eye.core.asset_manager</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot; Functions to pull in data from the cloud.</span>
+<span></span><span class="sd">&quot;&quot;&quot;Functions to pull in data from the cloud.</span>
+
 <span class="sd">This relies on Google Cloud Storage python API. Please see the Image Recognition lead</span>
-<span class="sd">to recieve the proper credentials for access to the bucket. &quot;&quot;&quot;</span>
+<span class="sd">to recieve the proper credentials for access to the bucket.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">tarfile</span>
 <span class="kn">import</span> <span class="nn">pathlib</span>
@@ -201,24 +202,24 @@
 
 
 <div class="viewcode-block" id="pull_all"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_all">[docs]</a><span class="k">def</span> <span class="nf">pull_all</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot; Pull all assets. &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot; Pull all assets. &quot;&quot;&quot;</span>
     <span class="n">pull_backgrounds</span><span class="p">()</span>
     <span class="n">pull_base_shapes</span><span class="p">()</span>
     <span class="n">pull_fonts</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="pull_backgrounds"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_backgrounds">[docs]</a><span class="k">def</span> <span class="nf">pull_backgrounds</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pull the shape generation backgrounds.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the shape generation backgrounds.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BACKGROUNDS_URLS</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pull_base_shapes"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_base_shapes">[docs]</a><span class="k">def</span> <span class="nf">pull_base_shapes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pull the base shape images.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the base shape images.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BASE_SHAPES_URL</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pull_fonts"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_fonts">[docs]</a><span class="k">def</span> <span class="nf">pull_fonts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pull the fonts.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the fonts.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">FONTS_URL</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 

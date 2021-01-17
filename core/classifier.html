@@ -194,16 +194,19 @@
 interchangeability during experimentation and a reliable way to load saved models.</p>
 <dl class="class">
 <dt id="hawk_eye.core.classifier.Classifier">
-<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.core.classifier.</code><code class="sig-name descname">Classifier</code><span class="sig-paren">(</span><em class="sig-param">num_classes: int = 2</em>, <em class="sig-param">timestamp: str = None</em>, <em class="sig-param">backbone: str = None</em>, <em class="sig-param">half_precision: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.core.classifier.</code><code class="sig-name descname">Classifier</code><span class="sig-paren">(</span><em class="sig-param">num_classes: Optional[int] = 2</em>, <em class="sig-param">timestamp: Optional[str] = None</em>, <em class="sig-param">backbone: Optional[str] = None</em>, <em class="sig-param">half_precision: Optional[bool] = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_classes</strong> – The number of classes to predict.</p></li>
-<li><p><strong>timestamp</strong> – The timestamp of the model to download from bintray.</p></li>
+<li><p><strong>timestamp</strong> – The timestamp of the model to download from GCloud.</p></li>
 <li><p><strong>backbone</strong> – A string designating which model to load.</p></li>
 <li><p><strong>half_precision</strong> – Whether to use half precision for inference. For now
 half_precision doesn’t work well with training. Maybe in PyTorch 1.6.0.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – Error if neither a timestamp or backbone arg is supplied.</p>
 </dd>
 </dl>
 <dl class="method">
@@ -211,6 +214,31 @@ half_precision doesn’t work well with training. Maybe in PyTorch 1.6.0.</p></l
 <code class="sig-name descname">classify</code><span class="sig-paren">(</span><em class="sig-param">x: torch.Tensor</em>, <em class="sig-param">probability: bool = False</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.classify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.classify" title="Permalink to this definition">¶</a></dt>
 <dd><p>Take in an image batch and return the class for each image. If specified,
 softmax will be applied to the predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Input tensor.</p></li>
+<li><p><strong>probability</strong> – Whether or not to apply softmax.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The output tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="hawk_eye.core.classifier.Classifier.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">x: torch.Tensor</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass through classifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> – input tensor.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the output tensor.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
