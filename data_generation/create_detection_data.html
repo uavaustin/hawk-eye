@@ -180,6 +180,80 @@
             
   <div class="section" id="hawk-eye-data-generation-create-detection-data">
 <h1>hawk_eye.data_generation.create_detection_data<a class="headerlink" href="#hawk-eye-data-generation-create-detection-data" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-hawk_eye.data_generation.create_detection_data"></span><p>This script generates training data for the object detector model. The output will be
+images and the corresponding COCO metadata jsons. For most RetinaNet related training we
+can train on images with _and <a href="#id1"><span class="problematic" id="id2">without_</span></a> targets. Training on images without any targets
+is valuable so the model sees that not every image will have a target, as this is the
+real life case.</p>
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.add_shapes">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">add_shapes</code><span class="sig-paren">(</span><em class="sig-param">background: PIL.Image.Image</em>, <em class="sig-param">shape_imgs: PIL.Image.Image</em>, <em class="sig-param">shape_params</em>, <em class="sig-param">blur_radius: int</em><span class="sig-paren">)</span> &#x2192; Tuple[List[Tuple[int, int, int, int, int]], PIL.Image.Image]<a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#add_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.add_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Paste shapes onto background and return bboxes</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="hawk_eye.data_generation.create_detection_data.alpha_params">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">alpha_params</code><span class="sig-paren">(</span><em class="sig-param">font_multiplier:Tuple[int, int]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#alpha_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.alpha_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.create_shape">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">create_shape</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">base</em>, <em class="sig-param">alpha</em>, <em class="sig-param">font_file</em>, <em class="sig-param">size</em>, <em class="sig-param">angle</em>, <em class="sig-param">target_color</em>, <em class="sig-param">target_rgb</em>, <em class="sig-param">alpha_color</em>, <em class="sig-param">alpha_rgb</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em><span class="sig-paren">)</span> &#x2192; PIL.Image.Image<a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#create_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.create_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a shape given all the input parameters</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.generate_all_images">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">generate_all_images</code><span class="sig-paren">(</span><em class="sig-param">gen_type: pathlib.Path</em>, <em class="sig-param">num_gen: int</em>, <em class="sig-param">offset: int = 0</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#generate_all_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.generate_all_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function which prepares all the relevant information regardining data
+generation. Data will be generated using a multiprocessing pool for efficiency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gen_type</strong> – The name of the data being generated.</p></li>
+<li><p><strong>num_gen</strong> – The number of images to generate.</p></li>
+<li><p><strong>offset</strong> – TODO(alex): Are we still using this?</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.generate_single_example">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">generate_single_example</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#generate_single_example"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.generate_single_example" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a single full image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.get_backgrounds">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">get_backgrounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[pathlib.Path]<a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#get_backgrounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.get_backgrounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of all the background images.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.get_base">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">get_base</code><span class="sig-paren">(</span><em class="sig-param">base</em>, <em class="sig-param">target_rgb</em>, <em class="sig-param">size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#get_base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.get_base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy and recolor the base shape</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.get_base_shapes">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">get_base_shapes</code><span class="sig-paren">(</span><em class="sig-param">shape</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#get_base_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.get_base_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the base shape images for a given shapes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.random_list">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">random_list</code><span class="sig-paren">(</span><em class="sig-param">items</em>, <em class="sig-param">count</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#random_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.random_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of items with length count</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.data_generation.create_detection_data.strip_image">
+<code class="sig-prename descclassname">hawk_eye.data_generation.create_detection_data.</code><code class="sig-name descname">strip_image</code><span class="sig-paren">(</span><em class="sig-param">image: PIL.Image.Image</em><span class="sig-paren">)</span> &#x2192; PIL.Image.Image<a class="reference internal" href="../_modules/hawk_eye/data_generation/create_detection_data.html#strip_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.create_detection_data.strip_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove white and black edges</p>
+</dd></dl>
+
 </div>
 
 

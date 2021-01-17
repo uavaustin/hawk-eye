@@ -178,8 +178,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="hawk-eye-core-classifier">
-<h1>hawk_eye.core.classifier<a class="headerlink" href="#hawk-eye-core-classifier" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-hawk_eye.core.classifier">
+<span id="hawk-eye-core-classifier"></span><h1>hawk_eye.core.classifier<a class="headerlink" href="#module-hawk_eye.core.classifier" title="Permalink to this headline">¶</a></h1>
+<p>A classifier model which wraps around a backbone. This setup allows for easy
+interchangeability during experimentation and a reliable way to load saved models.</p>
+<dl class="class">
+<dt id="hawk_eye.core.classifier.Classifier">
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.core.classifier.</code><code class="sig-name descname">Classifier</code><span class="sig-paren">(</span><em class="sig-param">num_classes: int = 2</em>, <em class="sig-param">timestamp: str = None</em>, <em class="sig-param">backbone: str = None</em>, <em class="sig-param">half_precision: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="hawk_eye.core.classifier.Classifier.classify">
+<code class="sig-name descname">classify</code><span class="sig-paren">(</span><em class="sig-param">x: torch.Tensor</em>, <em class="sig-param">probability: bool = False</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.classify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.classify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take in an image batch and return the class for each image. If specified,
+softmax will be applied to the predictions.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 

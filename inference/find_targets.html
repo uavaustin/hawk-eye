@@ -178,8 +178,136 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="hawk-eye-inference-find-targets">
-<h1>hawk_eye.inference.find_targets<a class="headerlink" href="#hawk-eye-inference-find-targets" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-hawk_eye.inference.find_targets">
+<span id="hawk-eye-inference-find-targets"></span><h1>hawk_eye.inference.find_targets<a class="headerlink" href="#module-hawk_eye.inference.find_targets" title="Permalink to this headline">¶</a></h1>
+<p>Contains logic for finding targets in images.</p>
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.create_batches">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">create_batches</code><span class="sig-paren">(</span><em class="sig-param">image_tensor: torch.Tensor, coords: List[Tuple[int, int]], batch_size: int</em><span class="sig-paren">)</span> &#x2192; Generator[[hawk_eye.inference.types.BBox, None], None]<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#create_batches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.create_batches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates batches of images based on the supplied params. The whole image
+is tiled first, the batches are generated.
+:param image: The opencv opened image.
+:param tile_size: The height, width of the tiles to create.
+:param overlap: The amount of overlap between tiles.
+:param batch_size: The number of images to have per batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Yields the image batch and the top left coordinate of the tile in the
+space of the original image.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.find_all_targets">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">find_all_targets</code><span class="sig-paren">(</span><em class="sig-param">images: List[pathlib.Path], clf_timestamp: str = '2020-09-05T15.51.57', det_timestamp: str = '2020-10-10T14.02.09', visualization_dir: pathlib.Path = None, save_json_data: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#find_all_targets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.find_all_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entrypoint function if running this script as main.
+:param images: A list of all the images to inference.
+:param clf_timestamp: The classification model to load.
+:param det_timestamp: The detection model to load.
+:param visualization_dir: Where to save the visualizations, if any.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.find_targets">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">find_targets</code><span class="sig-paren">(</span><em class="sig-param">image: PIL.Image.Image</em>, <em class="sig-param">clf_model: torch.nn.modules.module.Module</em>, <em class="sig-param">det_model: torch.nn.modules.module.Module</em>, <em class="sig-param">clf_confidence: float = 0.9</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#find_targets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.find_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tile up image, classify them, then perform object detection where it’s needed.
+:param image: The input image to inference.
+:param clf_model: The loaded classification model.
+:param det_model: The loaded detection model.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.globalize_boxes">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">globalize_boxes</code><span class="sig-paren">(</span><em class="sig-param">results: List[third_party.models.postprocess.BoundingBox], img_size: int</em><span class="sig-paren">)</span> &#x2192; List[hawk_eye.inference.types.Target]<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#globalize_boxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.globalize_boxes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take the normalized detections on a _tile_ and gloabalize them to pixel space of
+the original large image.
+:param results: A list of the detections for the tiles.
+:param img_size: The size of the tile whihc is needed to unnormalize the detections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of the globalized boxes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.load_models">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">load_models</code><span class="sig-paren">(</span><em class="sig-param">clf_timestamp: str = '2020-09-05T15.51.57'</em>, <em class="sig-param">det_timestamp: str = '2020-10-10T14.02.09'</em><span class="sig-paren">)</span> &#x2192; Tuple[torch.nn.modules.module.Module, torch.nn.modules.module.Module]<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#load_models"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.load_models" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads the given time stamps for the classification and detector models.
+:param clf_timestamp: Which classification model to load.
+:param det_timestamp: Which detection model to load.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Returns both models.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.normalize">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">normalize</code><span class="sig-paren">(</span><em class="sig-param">img: numpy.ndarray</em>, <em class="sig-param">mean: Tuple[float</em>, <em class="sig-param">float</em>, <em class="sig-param">float] = (0.485</em>, <em class="sig-param">0.456</em>, <em class="sig-param">0.406)</em>, <em class="sig-param">std: Tuple[float</em>, <em class="sig-param">float</em>, <em class="sig-param">float] = (0.229</em>, <em class="sig-param">0.224</em>, <em class="sig-param">0.225)</em>, <em class="sig-param">max_pixel_value: float = 255.0</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize images based on ImageNet values. This is identical to
+albumentations normalization used for training.
+:param img: The image to normalize.
+:param mean: The mean of each channel.
+:param std: The standard deviation of each channel.
+:param max_pixel_value: The max value a pixel can have.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A normalized image as a numpy array.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.save_target_meta">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">save_target_meta</code><span class="sig-paren">(</span><em class="sig-param">filename_meta: pathlib.Path, filename_image: str, targets: List[hawk_eye.inference.types.Target]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#save_target_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.save_target_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save target metadata to a file.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.tile_image">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">tile_image</code><span class="sig-paren">(</span><em class="sig-param">image: PIL.Image.Image, tile_size: Tuple[int, int], overlap: int</em><span class="sig-paren">)</span> &#x2192; Tuple[torch.Tensor, List[Tuple[int, int]]]<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#tile_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.tile_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take in an image and tile it into smaller tiles for inference.
+:param image: The input image to tile.
+:param tile_size: The (width, height) of the tiles.
+:param overlap: The overlap between adjacent tiles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A tensor of the tiles and a list of the (x, y) offset for the tiles.</dt><dd><p>The offets are needed to keep track of which tiles have targets.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+<dl>
+<dt>Usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tiles</span><span class="p">,</span> <span class="n">coords</span> <span class="o">=</span> <span class="n">tile_image</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)),</span> <span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">),</span> <span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">9</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+<span class="go">9</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+<span class="go">torch.Size([512, 512])</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.inference.find_targets.visualize_image">
+<code class="sig-prename descclassname">hawk_eye.inference.find_targets.</code><code class="sig-name descname">visualize_image</code><span class="sig-paren">(</span><em class="sig-param">image_name: str, image: numpy.ndarray, visualization_dir: pathlib.Path, targets: List[hawk_eye.inference.types.Target], clf_tiles: List[Tuple[int, int]]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/find_targets.html#visualize_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.find_targets.visualize_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function used to draw boxes and information onto image for visualizing the output
+of inference.
+:param image_name: The original image name used for saving the visualization.
+:param image: The image array.
+:param visualization_dir: Where to save the visualizations.
+:param targets: A list of the targets that were found during inference.
+:param clf_tiles: Which tiles were classified as having targets in them.</p>
+</dd></dl>
+
 </div>
 
 
