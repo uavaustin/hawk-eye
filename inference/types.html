@@ -39,7 +39,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Distribution" href="../distribution.html" />
+    <link rel="next" title="hawk_eye.inference.production_models" href="production_models.html" />
     <link rel="prev" title="hawk_eye.inference.find_targets" href="find_targets.html" /> 
 </head>
 
@@ -108,9 +108,9 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="benchmark_inference.html#example">Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="find_targets.html">hawk_eye.inference.find_targets</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.inference.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
 <ul>
@@ -194,54 +194,82 @@
 <dl class="class">
 <dt id="hawk_eye.inference.types.Color">
 <em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Color</code><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Color"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Color" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contains colors for the AUVSI SUAS Interop Server.
-These colors can be used for both the background color and the
-alphanumeric color. NOTE: Color.NONE can be used if a color
-cannot be identified.</p>
+<dd><p>Contains colors for the AUVSI SUAS Interop Server.</p>
+<p>These colors can be used for both the background color and the
+alphanumeric color.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">NONE</span></code> can be used if a color cannot be identified.</p>
+</div>
 </dd></dl>
 
 <dl class="class">
 <dt id="hawk_eye.inference.types.Shape">
 <em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Shape</code><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contains target shapes for the AUVSI SUAS Interop Server.
-NOTE: Shape.NAS (not-a-shape) can be used if a shape cannot
-be identified.</p>
+<dd><p>Contains target shapes for the AUVSI SUAS Interop Server.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">NAS</span></code> (not-a-shape) can be used if a shape cannot be identified.</p>
+</div>
 </dd></dl>
 
 <dl class="class">
 <dt id="hawk_eye.inference.types.Target">
-<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Target</code><span class="sig-paren">(</span><em class="sig-param">x: int</em>, <em class="sig-param">y: int</em>, <em class="sig-param">width: int</em>, <em class="sig-param">height: int</em>, <em class="sig-param">shape: hawk_eye.inference.types.Shape = &lt;Shape.NAS: 0&gt;</em>, <em class="sig-param">orientation: float = 0.0</em>, <em class="sig-param">background_color: hawk_eye.inference.types.Color = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">alphanumeric: str = ''</em>, <em class="sig-param">alphanumeric_color: hawk_eye.inference.types.Color = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">image: PIL.Image.Image = None</em>, <em class="sig-param">confidence: float = 0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Target" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">hawk_eye.inference.types.</code><code class="sig-name descname">Target</code><span class="sig-paren">(</span><em class="sig-param">x: int</em>, <em class="sig-param">y: int</em>, <em class="sig-param">width: int</em>, <em class="sig-param">height: int</em>, <em class="sig-param">shape: Optional[hawk_eye.inference.types.Shape] = &lt;Shape.NAS: 0&gt;</em>, <em class="sig-param">orientation: Optional[float] = 0.0</em>, <em class="sig-param">background_color: Optional[hawk_eye.inference.types.Color] = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">alphanumeric: Optional[str] = ''</em>, <em class="sig-param">alphanumeric_color: Optional[hawk_eye.inference.types.Color] = &lt;Color.NONE: 0&gt;</em>, <em class="sig-param">image: Optional[PIL.Image.Image] = None</em>, <em class="sig-param">confidence: Optional[float] = 0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Target" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a target found on an image.</p>
 <p>This is intended to be built upon as the the target is being
-classified.</p>
-<p>Note that a target must have at least an x-position, y-position,
-width, and height to be created.</p>
-<p>A target should only be returned back by the library if at also
-contains a background color as well.</p>
+classified. Note that a target must have at least an x-position, y-position,
+width, and height to be created. A target should only be returned back by the
+library if at also contains a background color as well.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Variables</dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>int</em>) – The x position of the top-left corner in pixels.</p></li>
-<li><p><strong>y</strong> (<em>int</em>) – The y position of the top-left corner in pixels.</p></li>
-<li><p><strong>width</strong> (<em>int</em>) – The width of the blob in pixels.</p></li>
-<li><p><strong>height</strong> (<em>int</em>) – The height of the blob in pixels.</p></li>
-<li><p><strong>orientation</strong> (<em>float</em>) – The orientation of the target. An
+<li><p><strong>x</strong> – The x position of the top-left corner in pixels.</p></li>
+<li><p><strong>y</strong> – The y position of the top-left corner in pixels.</p></li>
+<li><p><strong>width</strong> – The width of the blob in pixels.</p></li>
+<li><p><strong>height</strong> – The height of the blob in pixels.</p></li>
+<li><p><strong>orientation</strong> – The orientation of the target. An
 orientation of 0 means the target is not rotated, an
 orientation of 90 means it the top of the target points
 to the right of the image (0 &lt;= orientation &lt; 360).</p></li>
-<li><p><strong>shape</strong> (<a class="reference internal" href="#hawk_eye.inference.types.Shape" title="hawk_eye.inference.types.Shape"><em>Shape</em></a>) – The target shape.</p></li>
-<li><p><strong>background_color</strong> (<a class="reference internal" href="#hawk_eye.inference.types.Color" title="hawk_eye.inference.types.Color"><em>Color</em></a>) – The target background color.</p></li>
-<li><p><strong>alphanumeric</strong> (<em>str</em>) – The letter(s) and/or number(s) on the
+<li><p><strong>shape</strong> – The target <a class="reference internal" href="#hawk_eye.inference.types.Shape" title="hawk_eye.inference.types.Shape"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shape</span></code></a>.</p></li>
+<li><p><strong>background_color</strong> – The target background <a class="reference internal" href="#hawk_eye.inference.types.Color" title="hawk_eye.inference.types.Color"><code class="xref py py-class docutils literal notranslate"><span class="pre">Color</span></code></a>.</p></li>
+<li><p><strong>alphanumeric</strong> – The letter(s) and/or number(s) on the
 target. May consist of one or more of the characters 0-9,
 A-Z, a-z. Typically, this will only be one capital
 letter.</p></li>
-<li><p><strong>alphanumeric_color</strong> (<a class="reference internal" href="#hawk_eye.inference.types.Color" title="hawk_eye.inference.types.Color"><em>Color</em></a>) – The target alphanumeric color.</p></li>
-<li><p><strong>image</strong> (<em>PIL.Image</em>) – Image showing the target.</p></li>
-<li><p><strong>confidence</strong> (<em>float</em>) – The confidence that the target exists
+<li><p><strong>alphanumeric_color</strong> – The target alphanumeric <a class="reference internal" href="#hawk_eye.inference.types.Color" title="hawk_eye.inference.types.Color"><code class="xref py py-class docutils literal notranslate"><span class="pre">Color</span></code></a>.</p></li>
+<li><p><strong>image</strong> – Image showing the target.</p></li>
+<li><p><strong>confidence</strong> – The confidence that the target exists
 (0 &lt;= confidence &lt;= 1).</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="method">
+<dt id="hawk_eye.inference.types.Target.overlaps">
+<code class="sig-name descname">overlaps</code><span class="sig-paren">(</span><em class="sig-param">other_target: hawk_eye.inference.types.Shape</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../_modules/hawk_eye/inference/types.html#Target.overlaps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.types.Target.overlaps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another <a class="reference internal" href="#hawk_eye.inference.types.Target" title="hawk_eye.inference.types.Target"><code class="xref py py-class docutils literal notranslate"><span class="pre">Target</span></code></a> has overlap.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other_target</strong> – The other <a class="reference internal" href="#hawk_eye.inference.types.Target" title="hawk_eye.inference.types.Target"><code class="xref py py-class docutils literal notranslate"><span class="pre">Target</span></code></a> to compare with.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if there is overlap, <code class="docutils literal notranslate"><span class="pre">False</span></code> if no overlap.</p>
+</dd>
+</dl>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target2</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">target2</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target2</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target1</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">target2</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -252,7 +280,7 @@ letter.</p></li>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="../distribution.html" class="btn btn-neutral float-right" title="Distribution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="production_models.html" class="btn btn-neutral float-right" title="hawk_eye.inference.production_models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="find_targets.html" class="btn btn-neutral float-left" title="hawk_eye.inference.find_targets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

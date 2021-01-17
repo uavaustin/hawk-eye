@@ -1,6 +1,3 @@
-.. role:: hidden
-    :class: hidden-section
-
 hawk_eye.inference.types
 --------------------------------
 

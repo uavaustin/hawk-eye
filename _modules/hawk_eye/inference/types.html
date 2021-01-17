@@ -106,9 +106,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html#example">Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/types.html">hawk_eye.inference.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
 <ul>
@@ -183,20 +183,24 @@
            <div itemprop="articleBody">
             
   <h1>Source code for hawk_eye.inference.types</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot; Contains basic storage types passed around in the library. &quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Contains basic storage types passed around in the library.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">unique</span>
+<span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
 
 
-<div class="viewcode-block" id="Color"><a class="viewcode-back" href="../../../inference/types.html#hawk_eye.inference.types.Color">[docs]</a><span class="nd">@unique</span>
-<span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="Color"><a class="viewcode-back" href="../../../inference/types.html#hawk_eye.inference.types.Color">[docs]</a><span class="nd">@enum</span><span class="o">.</span><span class="n">unique</span>
+<span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Contains colors for the AUVSI SUAS Interop Server.</span>
+
 <span class="sd">    These colors can be used for both the background color and the</span>
-<span class="sd">    alphanumeric color. NOTE: Color.NONE can be used if a color</span>
-<span class="sd">    cannot be identified.&quot;&quot;&quot;</span>
+<span class="sd">    alphanumeric color.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        :attr:`NONE` can be used if a color cannot be identified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">WHITE</span> <span class="o">=</span> <span class="mi">1</span>
@@ -211,11 +215,13 @@
     <span class="n">ORANGE</span> <span class="o">=</span> <span class="mi">10</span></div>
 
 
-<div class="viewcode-block" id="Shape"><a class="viewcode-back" href="../../../inference/types.html#hawk_eye.inference.types.Shape">[docs]</a><span class="nd">@unique</span>
-<span class="k">class</span> <span class="nc">Shape</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="Shape"><a class="viewcode-back" href="../../../inference/types.html#hawk_eye.inference.types.Shape">[docs]</a><span class="nd">@enum</span><span class="o">.</span><span class="n">unique</span>
+<span class="k">class</span> <span class="nc">Shape</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Contains target shapes for the AUVSI SUAS Interop Server.</span>
-<span class="sd">    NOTE: Shape.NAS (not-a-shape) can be used if a shape cannot</span>
-<span class="sd">    be identified.&quot;&quot;&quot;</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        :attr:`NAS` (not-a-shape) can be used if a shape cannot be identified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">NAS</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">CIRCLE</span> <span class="o">=</span> <span class="mi">1</span>
@@ -233,59 +239,13 @@
     <span class="n">CROSS</span> <span class="o">=</span> <span class="mi">13</span></div>
 
 
-<span class="k">class</span> <span class="nc">BBox</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y2</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y1</span> <span class="o">=</span> <span class="n">y1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y2</span> <span class="o">=</span> <span class="n">y2</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">width</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">x1</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">height</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1</span>
-
-
 <div class="viewcode-block" id="Target"><a class="viewcode-back" href="../../../inference/types.html#hawk_eye.inference.types.Target">[docs]</a><span class="k">class</span> <span class="nc">Target</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Represents a target found on an image.</span>
 
 <span class="sd">    This is intended to be built upon as the the target is being</span>
-<span class="sd">    classified.</span>
-
-<span class="sd">    Note that a target must have at least an x-position, y-position,</span>
-<span class="sd">    width, and height to be created.</span>
-
-<span class="sd">    A target should only be returned back by the library if at also</span>
-<span class="sd">    contains a background color as well.</span>
-
-<span class="sd">    Attributes:</span>
-<span class="sd">        x (int): The x position of the top-left corner in pixels.</span>
-<span class="sd">        y (int): The y position of the top-left corner in pixels.</span>
-<span class="sd">        width (int): The width of the blob in pixels.</span>
-<span class="sd">        height (int): The height of the blob in pixels.</span>
-<span class="sd">        orientation (float): The orientation of the target. An</span>
-<span class="sd">            orientation of 0 means the target is not rotated, an</span>
-<span class="sd">            orientation of 90 means it the top of the target points</span>
-<span class="sd">            to the right of the image (0 &lt;= orientation &lt; 360).</span>
-<span class="sd">        shape (Shape): The target shape.</span>
-<span class="sd">        background_color (Color): The target background color.</span>
-<span class="sd">        alphanumeric (str): The letter(s) and/or number(s) on the</span>
-<span class="sd">            target. May consist of one or more of the characters 0-9,</span>
-<span class="sd">            A-Z, a-z. Typically, this will only be one capital</span>
-<span class="sd">            letter.</span>
-<span class="sd">        alphanumeric_color (Color): The target alphanumeric color.</span>
-<span class="sd">        image (PIL.Image): Image showing the target.</span>
-<span class="sd">        confidence (float): The confidence that the target exists</span>
-<span class="sd">            (0 &lt;= confidence &lt;= 1).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    classified. Note that a target must have at least an x-position, y-position,</span>
+<span class="sd">    width, and height to be created. A target should only be returned back by the</span>
+<span class="sd">    library if at also contains a background color as well.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -293,15 +253,36 @@
         <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">shape</span><span class="p">:</span> <span class="n">Shape</span> <span class="o">=</span> <span class="n">Shape</span><span class="o">.</span><span class="n">NAS</span><span class="p">,</span>
-        <span class="n">orientation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">background_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
-        <span class="n">alphanumeric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">alphanumeric_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
-        <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Shape</span><span class="p">]</span> <span class="o">=</span> <span class="n">Shape</span><span class="o">.</span><span class="n">NAS</span><span class="p">,</span>
+        <span class="n">orientation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">background_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Color</span><span class="p">]</span> <span class="o">=</span> <span class="n">Color</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+        <span class="n">alphanumeric</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">alphanumeric_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Color</span><span class="p">]</span> <span class="o">=</span> <span class="n">Color</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+        <span class="n">image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot; Create a new Target object. &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The x position of the top-left corner in pixels.</span>
+<span class="sd">            y: The y position of the top-left corner in pixels.</span>
+<span class="sd">            width: The width of the blob in pixels.</span>
+<span class="sd">            height: The height of the blob in pixels.</span>
+<span class="sd">            orientation: The orientation of the target. An</span>
+<span class="sd">                orientation of 0 means the target is not rotated, an</span>
+<span class="sd">                orientation of 90 means it the top of the target points</span>
+<span class="sd">                to the right of the image (0 &lt;= orientation &lt; 360).</span>
+<span class="sd">            shape: The target :class:`Shape`.</span>
+<span class="sd">            background_color: The target background :class:`Color`.</span>
+<span class="sd">            alphanumeric: The letter(s) and/or number(s) on the</span>
+<span class="sd">                target. May consist of one or more of the characters 0-9,</span>
+<span class="sd">                A-Z, a-z. Typically, this will only be one capital</span>
+<span class="sd">                letter.</span>
+<span class="sd">            alphanumeric_color: The target alphanumeric :class:`Color`.</span>
+<span class="sd">            image: Image showing the target.</span>
+<span class="sd">            confidence: The confidence that the target exists</span>
+<span class="sd">                (0 &lt;= confidence &lt;= 1).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
@@ -314,8 +295,26 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">=</span> <span class="n">confidence</span>
 
-    <span class="k">def</span> <span class="nf">overlaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_target</span><span class="p">:</span> <span class="n">Shape</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="Target.overlaps"><a class="viewcode-back" href="../../../inference/types.html#hawk_eye.inference.types.Target.overlaps">[docs]</a>    <span class="k">def</span> <span class="nf">overlaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_target</span><span class="p">:</span> <span class="n">Shape</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Check if another :class:`Target` has overlap.</span>
 
+<span class="sd">        Args:</span>
+<span class="sd">            other_target: The other :class:`Target` to compare with.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``True`` if there is overlap, ``False`` if no overlap.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">            &gt;&gt;&gt; target1 = Target(x=0, y=0, width=10, height=10)</span>
+<span class="sd">            &gt;&gt;&gt; target2 = Target(x=7, y=5, width=11, height=12)</span>
+<span class="sd">            &gt;&gt;&gt; target1.overlaps(target2)</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; target1 = Target(x=0, y=0, width=10, height=10)</span>
+<span class="sd">            &gt;&gt;&gt; target2 = Target(x=20, y=22, width=30, height=32)</span>
+<span class="sd">            &gt;&gt;&gt; target1.overlaps(target2)</span>
+<span class="sd">            False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">other_target</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">other_target</span><span class="o">.</span><span class="n">width</span>
             <span class="ow">or</span> <span class="n">other_target</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span>
@@ -328,7 +327,7 @@
         <span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
 
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>

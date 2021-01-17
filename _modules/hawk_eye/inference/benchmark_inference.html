@@ -106,9 +106,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../inference/benchmark_inference.html#example">Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../inference/types.html">hawk_eye.inference.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inference/production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
 <ul>
@@ -202,6 +202,10 @@
     <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">run_time</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Benchmarks a model.</span>
+
+<span class="sd">    This function will load the specified model, create a random tensor from the</span>
+<span class="sd">    model&#39;s internal height and width and the given batch then perform</span>
+<span class="sd">    forward passes through the model for :attr:`run_time` seconds.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        timestamp: The model&#39;s specific timestamp.</span>

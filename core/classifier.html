@@ -108,9 +108,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../inference/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../inference/benchmark_inference.html#example">Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../inference/types.html">hawk_eye.inference.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
 <ul>
@@ -195,7 +195,18 @@ interchangeability during experimentation and a reliable way to load saved model
 <dl class="class">
 <dt id="hawk_eye.core.classifier.Classifier">
 <em class="property">class </em><code class="sig-prename descclassname">hawk_eye.core.classifier.</code><code class="sig-name descname">Classifier</code><span class="sig-paren">(</span><em class="sig-param">num_classes: int = 2</em>, <em class="sig-param">timestamp: str = None</em>, <em class="sig-param">backbone: str = None</em>, <em class="sig-param">half_precision: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_classes</strong> – The number of classes to predict.</p></li>
+<li><p><strong>timestamp</strong> – The timestamp of the model to download from bintray.</p></li>
+<li><p><strong>backbone</strong> – A string designating which model to load.</p></li>
+<li><p><strong>half_precision</strong> – Whether to use half precision for inference. For now
+half_precision doesn’t work well with training. Maybe in PyTorch 1.6.0.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
 <dt id="hawk_eye.core.classifier.Classifier.classify">
 <code class="sig-name descname">classify</code><span class="sig-paren">(</span><em class="sig-param">x: torch.Tensor</em>, <em class="sig-param">probability: bool = False</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.classify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.classify" title="Permalink to this definition">¶</a></dt>
 <dd><p>Take in an image batch and return the class for each image. If specified,
