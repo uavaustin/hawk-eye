@@ -31,23 +31,23 @@ load("//third_party:gcs.bzl", "gcs_file")
 
 gcs_file(
     name = "base_shapes",
-    bucket = "gs://uav-austin-test",
+    bucket = "gs://uav_austin",
     downloaded_file_path = "base_shapes.tar.gz",
     file = "assets/base-shapes-v1.tar.gz",
     sha256 = "9266e23087c58ee679903a6891208bb8c636396cdbc0b35f0eeff294411ddbdc",
 )
 
-gcs_file(
-    name = "backgrounds",
-    bucket = "gs://uav-austin-test",
-    downloaded_file_path = "backgrounds.tar.gz",
-    file = "backgrounds/backgrounds-v1.tar.gz",
-    sha256 = "b00778153d14fd158345b9a18e5f79089d420c2cf36eb363a595d439d1b9c089",
-)
+#gcs_file(
+#    name = "backgrounds",
+#    bucket = "gs://uav_austin",
+#    downloaded_file_path = "backgrounds.tar.gz",
+#    file = "backgrounds/backgrounds-v1.tar.gz",
+#    sha256 = "b00778153d14fd158345b9a18e5f79089d420c2cf36eb363a595d439d1b9c089",
+#)
 
 gcs_file(
     name = "fonts",
-    bucket = "gs://uav-austin-test",
+    bucket = "gs://uav_austin",
     downloaded_file_path = "fonts.tar.gz",
     file = "assets/fonts.tar.gz",
     sha256 = "e67fc398c9e9a55071d2d4edd155c691540bf4951383cfa1bed69aacbee02675",
