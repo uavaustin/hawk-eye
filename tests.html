@@ -188,6 +188,17 @@
             
   <div class="section" id="tests">
 <h1>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h1>
+<p>Testing is mainly done with Bazel. For python code, please use <code class="docutils literal notranslate"><span class="pre">unittest</span></code> and
+<code class="docutils literal notranslate"><span class="pre">doctests</span></code> where applicable.</p>
+<p>To run all test, use a recursive search with Bazel (<code class="docutils literal notranslate"><span class="pre">...</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bazel</span> <span class="n">test</span> <span class="o">//...</span>
+</pre></div>
+</div>
+<p>Here, the <code class="docutils literal notranslate"><span class="pre">//</span></code> refers to the folder where our <code class="docutils literal notranslate"><span class="pre">WORKSPACE</span></code> file resides.</p>
+<p>To run a specific test, find the <code class="docutils literal notranslate"><span class="pre">BUILD</span></code> file that specifies the test target:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bazel</span> <span class="n">test</span> <span class="o">//</span><span class="n">third_party</span><span class="o">/</span><span class="n">detectron2</span><span class="p">:</span><span class="n">anchors_doctest</span>
+</pre></div>
+</div>
 </div>
 
 
