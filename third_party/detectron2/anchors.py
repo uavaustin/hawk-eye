@@ -13,8 +13,8 @@ class AnchorGenerator:
         img_width: int,
         pyramid_levels: List[int],
         aspect_ratios: List[float],
-        sizes: List[int],
-        anchor_scales: List[float],
+        sizes: List[int] = [32, 64, 128, 256, 512],
+        anchor_scales: List[float] = [1.0, 1.25, 1.5],
     ) -> None:
         """This class will hold the models anchor information. Important
         items are the anchors per feature map and the entire tensor of anchors.
@@ -125,8 +125,10 @@ class AnchorGenerator:
 
         Args:
             grid_sizes: The width, height of the grids to create for each feature map.
+
         Returns:
             A list of the anchors for each feature level.
+
         Usage:
         >>> anchor_gen = AnchorGenerator(512, 512, [3, 4, 5, 6, 7], [0.5, 1, 2])
         >>> len(anchor_gen._grid_anchors(anchor_gen.grid_sizes))

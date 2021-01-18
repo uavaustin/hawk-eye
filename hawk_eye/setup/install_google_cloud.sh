@@ -2,14 +2,15 @@
 
 IS_MAC=$(uname -a)
 if [[ $IS_MAC =~ "Darwin" ]]; then
-    curl https://sdk.cloud.google.com | bash
-    echo "Exiting the shell. Please run 'gcloud init'"
-    exec -l $SHELL
+    ARCHIVE=google-cloud-sdk-323.0.0-darwin-x86_64.tar.gz
 else
-    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-    sudo apt-get install -y apt-transport-https ca-certificates gnupg
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-    sudo apt-get update -y && sudo apt-get install -y google-cloud-sdk
+    ARCHIVE=google-cloud-sdk-323.0.0-linux-x86_64.tar.gz
 fi
-gcloud init
-gcloud auth application-default login
+pushd $(mktemp -d)
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/$ARCHIVE
+tar -xf $ARCHIVE
+./google-cloud-sdk/install.sh
+./google-cloud-sdk/bin/gcloud init --skip-diagnostics --console-only
+./google-cloud-sdk/bin/gcloud components update
+./google-cloud-sdk/bin/gcloud auth login
+popd

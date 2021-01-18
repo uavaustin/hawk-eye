@@ -2,3 +2,4 @@
 # CI will be running.
 test --test_env=CUDA_VISIBLE_DEVICES=-1
 test --test_env=GOOGLE_APPLICATION_CREDENTIALS
+test --discard_analysis_cache

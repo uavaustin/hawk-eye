@@ -32,12 +32,10 @@ class Regressor:
 
         Usage:
         >>> regressor = Regressor()
-        >>> srcs = torch.Tensor([10, 10, 20, 20])
-        >>> targets = torch.Tensor([10, 10, 20, 20])
+        >>> srcs = torch.Tensor([[10, 10, 20, 20]])
+        >>> targets = torch.Tensor([[10, 10, 20, 20]])
         >>> regressor.get_deltas(srcs, targets)
-        []
-        >>> []
-        True
+        tensor([[0., 0., 0., 0.]])
         """
         assert isinstance(src_boxes, torch.Tensor), type(src_boxes)
         assert isinstance(target_boxes, torch.Tensor), type(target_boxes)

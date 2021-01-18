@@ -3,10 +3,12 @@ load("//third_party/bazel_doctest:doctest.bzl", "py_doc_test")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "requirements.txt",
-    "production_models.py",
-])
+exports_files(["requirements.txt"])
+
+py_library(
+    name = "production_models",
+    srcs = ["production_models.py"]
+)
 
 py_library(
     name = "benchmark_inference",

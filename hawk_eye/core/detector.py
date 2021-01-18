@@ -15,10 +15,10 @@ except ModuleNotFoundError:
     pass
 from hawk_eye.core import fpn
 from third_party.vovnet import vovnet
-from third_party.models import postprocess
-from third_party.models import regression
-from third_party.models import anchors
-from third_party.models import retinanet_head
+from third_party.detectron2 import postprocess
+from third_party.detectron2 import regression
+from third_party.detectron2 import anchors
+from third_party.detectron2 import retinanet_head
 
 
 class Detector(torch.nn.Module):

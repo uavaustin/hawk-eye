@@ -16,7 +16,7 @@ from hawk_eye.core import classifier
 from hawk_eye.core import detector
 from hawk_eye.data_generation import generate_config as config
 from hawk_eye.inference import inference_types
-from third_party.models import postprocess
+from third_party.detectron2 import postprocess
 
 _PROD_MODELS = {"clf": "2020-09-05T15.51.57", "det": "2020-10-10T14.02.09"}
 

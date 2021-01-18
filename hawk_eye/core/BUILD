@@ -5,7 +5,7 @@ py_library(
     srcs = ["classifier.py"],
     deps = [
         ":asset_manager",
-        "//third_party",
+        "//third_party/vovnet:vovnet",
     ],
 )
 
@@ -18,7 +18,12 @@ py_library(
     ],
     deps = [
         ":asset_manager",
-        "//third_party",
+        "//third_party/vovnet:vovnet",
+        "//third_party/rexnet:rexnet",
+        "//third_party/detectron2:anchors",
+        "//third_party/detectron2:postprocess",
+        "//third_party/detectron2:regression",
+        "//third_party/detectron2:retinanet_head",
     ],
 )
 

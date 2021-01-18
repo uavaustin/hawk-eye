@@ -16,17 +16,11 @@ py_test(
 )
 
 py_test(
-    name = "test_third_party",
-    srcs = ["test_third_party.py"],
-    deps = ["//third_party"],
-)
-
-py_test(
     name = "test_inference",
     srcs = ["test_inference.py"],
     deps = [
-        "//hawk_eye/inference:find_targets",
+        "//hawk_eye/inference:production_models",
         "//hawk_eye/inference:benchmark_inference"
     ],
-    local = True,
+    local = True,  # Used to find GCloud project
 )
