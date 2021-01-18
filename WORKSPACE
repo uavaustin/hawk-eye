@@ -32,26 +32,26 @@ load("//third_party:gcs.bzl", "gcs_file")
 gcs_file(
     name = "base_shapes",
     bucket = "gs://uav_austin",
-    downloaded_file_path = "base_shapes.tar.gz",
-    file = "assets/base-shapes-v1.tar.gz",
-    sha256 = "9266e23087c58ee679903a6891208bb8c636396cdbc0b35f0eeff294411ddbdc",
+    downloaded_file_path = "base_shapes_test_20210117.tar.gz",
+    file = "test-deps/base_shapes_test_20210117.tar.gz",
+    sha256 = "79b5a45a6a9855baa7d292890b3b0f512371b9b5df5919581b1b2e28bed53c48",
 )
 
-#gcs_file(
-#    name = "backgrounds",
-#    bucket = "gs://uav_austin",
-#    downloaded_file_path = "backgrounds.tar.gz",
-#    file = "backgrounds/backgrounds-v1.tar.gz",
-#    sha256 = "b00778153d14fd158345b9a18e5f79089d420c2cf36eb363a595d439d1b9c089",
-#)
+gcs_file(
+    name = "backgrounds",
+    bucket = "gs://uav_austin",
+    downloaded_file_path = "backgrounds_test_2021017.tar.gz",
+    file = "test-deps/backgrounds_test_2021017.tar.gz",
+    sha256 = "d2118465bc6093ec066506ddf9b286ddacb2a26d67eb7b3a15e39ba242002a80",
+)
 
 gcs_file(
     name = "fonts",
     bucket = "gs://uav_austin",
-    downloaded_file_path = "fonts.tar.gz",
-    file = "assets/fonts.tar.gz",
-    sha256 = "e67fc398c9e9a55071d2d4edd155c691540bf4951383cfa1bed69aacbee02675",
-    strip_prefix = "fonts",
+    downloaded_file_path = "fonts_test_20210117.tar.gz",
+    file = "test-deps/fonts_test_20210117.tar.gz",
+    sha256 = "7c4d5561eac233d95c0f26665c9f29cf810e4637fdabd79a531ce1eb95210c58",
+    strip_prefix = "fonts_test",
 )
 
 load("//hawk_eye/core:models.bzl", "production_model")
