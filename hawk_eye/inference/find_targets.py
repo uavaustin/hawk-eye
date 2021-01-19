@@ -16,9 +16,8 @@ from hawk_eye.core import classifier
 from hawk_eye.core import detector
 from hawk_eye.data_generation import generate_config as config
 from hawk_eye.inference import inference_types
+from hawk_eye.inference import production_models
 from third_party.detectron2 import postprocess
-
-_PROD_MODELS = {"clf": "2020-09-05T15.51.57", "det": "2020-10-10T14.02.09"}
 
 
 # Taken directly from albumentation src: augmentations/functional.py#L131.
@@ -131,7 +130,8 @@ def create_batches(
 
 
 def load_models(
-    clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
+    clf_timestamp: str = production_models._CLASSIFIER["timestamp"],
+    det_timestamp: str = production_models._DETECTOR["timestamp"],
 ) -> Tuple[torch.nn.Module, torch.nn.Module]:
     """ Loads the given time stamps for the classification and detector models.
 
@@ -169,8 +169,8 @@ def load_models(
 
 def find_all_targets(
     images: List[pathlib.Path],
-    clf_timestamp: str = _PROD_MODELS["clf"],
-    det_timestamp: str = _PROD_MODELS["det"],
+    clf_timestamp: str = production_models._CLASSIFIER["timestamp"],
+    det_timestamp: str = production_models._DETECTOR["timestamp"],
     visualization_dir: pathlib.Path = None,
     save_json_data: bool = False,
 ) -> None:
@@ -388,14 +388,14 @@ if __name__ == "__main__":
         "--clf_timestamp",
         required=False,
         type=str,
-        default=_PROD_MODELS["clf"],
+        default=production_models._CLASSIFIER["timestamp"],
         help="Timestamp of the classifier model to use.",
     )
     parser.add_argument(
         "--det_timestamp",
         required=False,
         type=str,
-        default=_PROD_MODELS["det"],
+        default=production_models._DETECTOR["timestamp"],
         help="Timestamp of the detector model to use.",
     )
     parser.add_argument(

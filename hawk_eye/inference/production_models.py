@@ -12,7 +12,7 @@ _DETECTOR = {
     "timestamp": "2020-10-10T14.02.09",
     "sha256": "4443ff284576d6c4dabc3c6d12cb8724c8ca49322e26e5de6ccb5a9751bd2819",
 }
-_PROD_MODELS = {
+PROD_MODELS = {
     "classifier": _CLASSIFIER,
     "detector": _DETECTOR,
 }
@@ -25,5 +25,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    for key, val in _PROD_MODELS[args.model_type].items():
+    for key, val in PROD_MODELS[args.model_type].items():
         print(f"{key}: {val}")

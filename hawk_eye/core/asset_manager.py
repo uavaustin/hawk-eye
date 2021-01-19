@@ -13,7 +13,7 @@ from google.cloud import storage
 
 from hawk_eye.data_generation import generate_config as config
 
-_BUCKET = "uav-austin-test"
+BUCKET = "uav_austin"
 
 
 def pull_all() -> None:

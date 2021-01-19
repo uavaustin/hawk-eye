@@ -7,7 +7,17 @@ exports_files(["requirements.txt"])
 
 py_library(
     name = "production_models",
-    srcs = ["production_models.py"]
+    srcs = ["production_models.py"],
+)
+
+py_test(
+    name = "production_models_test",
+    srcs = ["production_models_test.py"],
+    deps = [
+        ":production_models",
+        "//hawk_eye/core:asset_manager",
+    ],
+    local = True,  # Used to find GCloud project
 )
 
 py_library(
@@ -20,11 +30,22 @@ py_library(
     ],
 )
 
+py_test(
+    name = "benchmark_inference_test",
+    srcs = ["benchmark_inference_test.py"],
+    deps = [
+        "//hawk_eye/inference:production_models",
+        "//hawk_eye/inference:benchmark_inference"
+    ],
+    local = True,  # Used to find GCloud project
+)
+
 py_library(
     name = "find_targets",
     srcs = ["find_targets.py"],
     deps = [
         ":inference_types",
+        ":production_models",
         "//hawk_eye/core:classifier",
         "//hawk_eye/core:detector",
         "//hawk_eye/data_generation:generate_config"

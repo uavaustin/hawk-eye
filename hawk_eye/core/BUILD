@@ -30,4 +30,5 @@ py_library(
 py_library(
     name = "asset_manager",
     srcs = ["asset_manager.py"],
+    deps = ["//hawk_eye/data_generation:generate_config"]
 )

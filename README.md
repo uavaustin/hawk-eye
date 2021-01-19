@@ -76,8 +76,8 @@ One can also specify the model timestamps if you have a certain model to test.
 
 ## Testing
 
-Testing is done with `bazel`. Please see `test/README.md` for more information on
-writing and running tests.
+Testing is done with `bazel`. Please see [the docs](https://uavaustin.github.io/hawk-eye/tests.html)
+for more information on writing and running tests.
 
 
 ## Bazel
@@ -90,6 +90,9 @@ For now, if you're interested,
 [`here`](https://docs.bazel.build/versions/master/user-manual.html)
 is some documentation.
 
+`hawk_eye` closely models the repository structure of Google's [`MediaPipe`](https://github.com/google/mediapipe).
+Please see this project when you have questions about how to structure certain Bazel
+files.
 
 ## Style
 

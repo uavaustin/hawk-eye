@@ -7,12 +7,9 @@ from hawk_eye.data_generation.generate_config import *
 
 # This is where we are going to store all the assets.
 ASSETS_DIR = pathlib.Path("external").expanduser()
-BACKGROUNDS_DIRS = [ASSETS_DIR / "backgrounds/backgrounds-v1"]
+BACKGROUNDS_DIRS = [ASSETS_DIR / "backgrounds/backgrounds_test"]
 
-BASE_SHAPES_VERSION = ["v1"]
-BASE_SHAPES_DIRS = [
-    ASSETS_DIR / f"base_shapes/base-shapes-{v}" for v in BASE_SHAPES_VERSION
-]
+BASE_SHAPES_DIRS = [ASSETS_DIR / f"base_shapes/base_shapes_test"]
 
 FONTS_URL = ASSETS_DIR / "fonts"
 DATA_DIR = pathlib.Path(__file__).parent / "data"
@@ -20,12 +17,8 @@ DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 ALPHA_FONT_DIR = ASSETS_DIR / "fonts"
 ALPHA_FONTS = [
-    ALPHA_FONT_DIR / "Rajdhani" / "Rajdhani-Bold.ttf",
     ALPHA_FONT_DIR / "Gudea" / "Gudea-Bold.ttf",
     ALPHA_FONT_DIR / "Inconsolata" / "Inconsolata-Bold.ttf",
-    ALPHA_FONT_DIR / "Open_Sans" / "OpenSans-Bold.ttf",
-    ALPHA_FONT_DIR / "Open_Sans" / "OpenSans-SemiBold.ttf",
-    ALPHA_FONT_DIR / "News_Cycle" / "NewsCycle-Bold.ttf",
 ]
 
 # Dataset images and splits
