@@ -21,7 +21,6 @@ class ProductionModels(unittest.TestCase):
         sha256sum exists on GCloud."""
 
         file_path = f"{model_type}/{model['timestamp']}.tar.gz"
-        blob = self._bucket.blob(str(file_path))
 
         return self._bucket.blob(str(file_path)).exists()
 

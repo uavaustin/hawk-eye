@@ -53,7 +53,7 @@ def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -
             with tempfile.TemporaryDirectory() as d:
                 tmp_file = pathlib.Path(d) / "file.tar.gz"
                 client = storage.Client()
-                bucket = client.get_bucket(_BUCKET)
+                bucket = client.get_bucket(BUCKET)
                 bucket.get_blob(str(filename)).download_to_filename(tmp_file)
                 untar_and_move(tmp_file, destination)
 
@@ -86,5 +86,5 @@ def download_model(model_type: str, timestamp: str) -> pathlib.Path:
 
 def upload_model(model_type: str, path: pathlib.Path) -> None:
     subprocess.check_call(
-        ["gsutil", "cp", "-z", str(path), f"{_BUCKET}/{model_type}/{path.name}"]
+        ["gsutil", "cp", "-z", str(path), f"{BUCKET}/{model_type}/{path.name}"]
     )

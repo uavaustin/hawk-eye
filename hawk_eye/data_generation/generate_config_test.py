@@ -9,7 +9,7 @@ from hawk_eye.data_generation.generate_config import *
 ASSETS_DIR = pathlib.Path("external").expanduser()
 BACKGROUNDS_DIRS = [ASSETS_DIR / "backgrounds/backgrounds_test"]
 
-BASE_SHAPES_DIRS = [ASSETS_DIR / f"base_shapes/base_shapes_test"]
+BASE_SHAPES_DIRS = [ASSETS_DIR / "base_shapes/base_shapes_test"]
 
 FONTS_URL = ASSETS_DIR / "fonts"
 DATA_DIR = pathlib.Path(__file__).parent / "data"
