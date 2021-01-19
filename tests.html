@@ -116,7 +116,10 @@
 </ul>
 <p class="caption"><span class="caption-text">Testing</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Tests</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tests</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#testing-style">Testing Style</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -198,6 +201,16 @@
 <p>To run a specific test, find the <code class="docutils literal notranslate"><span class="pre">BUILD</span></code> file that specifies the test target:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bazel</span> <span class="n">test</span> <span class="o">//</span><span class="n">third_party</span><span class="o">/</span><span class="n">detectron2</span><span class="p">:</span><span class="n">anchors_doctest</span>
 </pre></div>
+</div>
+<div class="section" id="testing-style">
+<h2>Testing Style<a class="headerlink" href="#testing-style" title="Permalink to this headline">¶</a></h2>
+<p>We prefer to write tests next to the file being tested. This helps test remain short
+and readable. For example if you have a file <code class="docutils literal notranslate"><span class="pre">module/foo.py</span></code> please write the tests
+in <code class="docutils literal notranslate"><span class="pre">module/foo_test.py</span></code>. You’ll need to place the proper test target in the
+corresponding <code class="docutils literal notranslate"><span class="pre">BUILD</span></code> file.</p>
+<p>It is important to have robust tests for <cite>hawk_eye/inference</cite> code and the related
+dependencies because this is the bulk of our distributed package. Other items like
+model training and data generation are harder and less important to test thoroughly.</p>
 </div>
 </div>
 
