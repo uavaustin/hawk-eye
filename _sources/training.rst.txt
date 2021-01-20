@@ -2,10 +2,6 @@ Training
 ===========================
 
 There are two types of training currently supported: classifier and detection.
-It is an unfortunate fact that most deep learning models need to be trained on
-GPUs to be done in a reasonable amount of time.
-
-Luckily our models are pretty light.
 
 
 Structure
@@ -30,8 +26,10 @@ Detection:
 
 Fine Tuning
 ---------------
+It is an unfortunate fact that most deep learning models need to be trained on
+GPUs to be done in a reasonable amount of time.
 
-If you only have a CPU, you might want to finetune a model. This meaning taking
+If you only have a CPU, you might want to finetune a model. This means taking
 an model intially trained on lots of data and training it on yours. This can
 drastically speed up training.
 

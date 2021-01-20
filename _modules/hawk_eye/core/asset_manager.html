@@ -185,7 +185,14 @@
 <span></span><span class="sd">&quot;&quot;&quot;Functions to pull in data from the cloud.</span>
 
 <span class="sd">This relies on Google Cloud Storage python API. Please see the Image Recognition lead</span>
-<span class="sd">to recieve the proper credentials for access to the bucket.&quot;&quot;&quot;</span>
+<span class="sd">to recieve the proper credentials for access to the bucket.</span>
+
+<span class="sd">If you do not have Google Cloud APIs installed please run:</span>
+
+<span class="sd">.. code-block::</span>
+<span class="sd">    hawk_eye/setup/install_google_cloud.sh</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">tarfile</span>
 <span class="kn">import</span> <span class="nn">pathlib</span>
@@ -201,7 +208,8 @@
 
 
 <div class="viewcode-block" id="pull_all"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_all">[docs]</a><span class="k">def</span> <span class="nf">pull_all</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Pull all assets.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull thee backgrounds, base shapes and font files as specified in</span>
+<span class="sd">    `hawk_eye.data_generation.generate_config.py`.&quot;&quot;&quot;</span>
     <span class="n">pull_backgrounds</span><span class="p">()</span>
     <span class="n">pull_base_shapes</span><span class="p">()</span>
     <span class="n">pull_fonts</span><span class="p">()</span></div>
@@ -220,6 +228,22 @@
 <div class="viewcode-block" id="pull_fonts"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_fonts">[docs]</a><span class="k">def</span> <span class="nf">pull_fonts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Pull the fonts.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">FONTS_URL</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="upload_file"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.upload_file">[docs]</a><span class="k">def</span> <span class="nf">upload_file</span><span class="p">(</span><span class="n">source_path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A generic function for uploading a file from local storage to the cloud.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source_path: a path to the local file</span>
+<span class="sd">        desination: where to upload the file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">source_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can&#39;t find </span><span class="si">{</span><span class="n">source_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">bucket</span> <span class="o">=</span> <span class="n">_get_client_bucket</span><span class="p">()</span>
+    <span class="n">blob</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="n">destination</span><span class="p">)</span>
+    <span class="n">blob</span><span class="o">.</span><span class="n">upload_from_filename</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source_path</span><span class="p">))</span></div>
 
 
 <span class="c1"># Download a file to the assets folder and return the filename.</span>
@@ -269,9 +293,12 @@
 
 
 <span class="k">def</span> <span class="nf">upload_model</span><span class="p">(</span><span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span>
-        <span class="p">[</span><span class="s2">&quot;gsutil&quot;</span><span class="p">,</span> <span class="s2">&quot;cp&quot;</span><span class="p">,</span> <span class="s2">&quot;-z&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">BUCKET</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
-    <span class="p">)</span>
+    <span class="n">upload_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_client_bucket</span><span class="p">():</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">BUCKET</span><span class="p">)</span>
 </pre></div>
 
            </div>

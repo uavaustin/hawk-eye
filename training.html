@@ -194,10 +194,7 @@
             
   <div class="section" id="training">
 <h1>Training<a class="headerlink" href="#training" title="Permalink to this headline">¶</a></h1>
-<p>There are two types of training currently supported: classifier and detection.
-It is an unfortunate fact that most deep learning models need to be trained on
-GPUs to be done in a reasonable amount of time.</p>
-<p>Luckily our models are pretty light.</p>
+<p>There are two types of training currently supported: classifier and detection.</p>
 <div class="section" id="structure">
 <h2>Structure<a class="headerlink" href="#structure" title="Permalink to this headline">¶</a></h2>
 <p>Most machine learning model training pipelines can be broken down into a few
@@ -218,7 +215,9 @@ major components: the model, dataset, and loss functions.</p>
 </div>
 <div class="section" id="fine-tuning">
 <h2>Fine Tuning<a class="headerlink" href="#fine-tuning" title="Permalink to this headline">¶</a></h2>
-<p>If you only have a CPU, you might want to finetune a model. This meaning taking
+<p>It is an unfortunate fact that most deep learning models need to be trained on
+GPUs to be done in a reasonable amount of time.</p>
+<p>If you only have a CPU, you might want to finetune a model. This means taking
 an model intially trained on lots of data and training it on yours. This can
 drastically speed up training.</p>
 <span class="target" id="module-hawk_eye.train.classification"></span><span class="target" id="module-hawk_eye.train.detection"></span></div>
