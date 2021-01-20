@@ -51,7 +51,7 @@ jobs:
 
     - name: Test
       run: |
-        bazel test //...
+        bazel test --test_output=streamed //...
 
     - name: Style Test
       run: flake8
