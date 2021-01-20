@@ -1,7 +1,14 @@
 """Functions to pull in data from the cloud.
 
 This relies on Google Cloud Storage python API. Please see the Image Recognition lead
-to recieve the proper credentials for access to the bucket."""
+to recieve the proper credentials for access to the bucket.
+
+If you do not have Google Cloud APIs installed please run:
+
+.. code-block::
+    hawk_eye/setup/install_google_cloud.sh
+
+"""
 
 import tarfile
 import pathlib
@@ -17,7 +24,8 @@ BUCKET = "uav_austin"
 
 
 def pull_all() -> None:
-    """Pull all assets."""
+    """Pull thee backgrounds, base shapes and font files as specified in
+    `hawk_eye.data_generation.generate_config.py`."""
     pull_backgrounds()
     pull_base_shapes()
     pull_fonts()
@@ -36,6 +44,22 @@ def pull_base_shapes() -> None:
 def pull_fonts() -> None:
     """Pull the fonts."""
     download_file(config.FONTS_URL, config.ASSETS_DIR)
+
+
+def upload_file(source_path: pathlib.Path, destination: str):
+    """A generic function for uploading a file from local storage to the cloud.
+
+    Args:
+        source_path: a path to the local file
+        desination: where to upload the file
+    """
+
+    if not source_path.is_file():
+        raise FileNotFoundError(f"Can't find {source_path}")
+
+    bucket = _get_client_bucket()
+    blob = bucket.blob(destination)
+    blob.upload_from_filename(str(source_path))
 
 
 # Download a file to the assets folder and return the filename.
@@ -85,6 +109,9 @@ def download_model(model_type: str, timestamp: str) -> pathlib.Path:
 
 
 def upload_model(model_type: str, path: pathlib.Path) -> None:
-    subprocess.check_call(
-        ["gsutil", "cp", "-z", str(path), f"{BUCKET}/{model_type}/{path.name}"]
-    )
+    upload_file(path, f"{model_type}/{path.name}")
+
+
+def _get_client_bucket():
+    client = storage.Client()
+    return client.get_bucket(BUCKET)

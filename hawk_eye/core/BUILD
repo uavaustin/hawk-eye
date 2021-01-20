@@ -32,3 +32,10 @@ py_library(
     srcs = ["asset_manager.py"],
     deps = ["//hawk_eye/data_generation:generate_config"]
 )
+
+py_test(
+    name = "asset_manager_test",
+    srcs = ["asset_manager_test.py"],
+    deps = [":asset_manager"],
+    local = True,
+)
