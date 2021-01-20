@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-""" Train a model to classify images as background or targets. This script will use
-distributed training if available any PyTorch AMP to speed up training. """
+"""Train a model to classify images as background or targets. This script will use
+distributed training if available any PyTorch AMP to speed up training."""
 
 import argparse
 import datetime
@@ -13,22 +13,14 @@ import shutil
 import os
 import yaml
 
-try:
-    import apex
-
-    _USE_APEX = True
-except ImportError as e:
-    _USE_APEX = False
-    print(f"{e}. Apex will not be used.")
-
 import torch
 import numpy as np
 
 from hawk_eye.core import asset_manager
 from hawk_eye.core import classifier
 from hawk_eye.data_generation import generate_config
-from hawk_eye.train import datasets
 from hawk_eye.train import augmentations
+from hawk_eye.train.classification import dataset
 from hawk_eye.train.train_utils import ema
 from hawk_eye.train.train_utils import logger
 from hawk_eye.train.train_utils import utils
@@ -114,16 +106,17 @@ def train(
         log.info(f"Model: \n {clf_model}")
 
     optimizer = utils.create_optimizer(train_cfg["optimizer"], clf_model)
-    if _USE_APEX:
-        clf_model, optimizer = apex.amp.initialize(
-            clf_model, optimizer, opt_level="O1", verbosity=is_main
-        )
+    use_mixed_precision = train_cfg.get("mixed-precision", True)
+    if use_mixed_precision:
+        if is_main:
+            log.info("Mixed-precision (AMP) enabled.")
+        scaler = torch.cuda.amp.GradScaler()
 
     ema_model = ema.Ema(clf_model)
 
     if world_size > 1:
-        clf_model = apex.parallel.DistributedDataParallel(
-            clf_model, delay_allreduce=True
+        clf_model = torch.nn.parallel.DistributedDataParallel(
+            clf_model, device_ids=[local_rank]
         )
 
     epochs = train_cfg.get("epochs", 0)
@@ -288,7 +281,7 @@ def create_data_loader(
     augmentations.clf_eval_augs(
         img_size, img_size
     ) if val else augmentations.clf_train_augs(img_size, img_size)
-    dataset = datasets.ClfDataset(
+    clf_dataset = dataset.ClfDataset(
         data_dir,
         img_ext=generate_config.IMAGE_EXT,
         augs=augmentations.clf_eval_augs(img_size, img_size)
@@ -300,12 +293,12 @@ def create_data_loader(
     sampler = None
     if world_size > 1:
         if not val:
-            sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
+            sampler = torch.utils.data.DistributedSampler(clf_dataset, shuffle=True)
         else:
-            sampler = torch.utils.data.SequentialSampler(dataset)
+            sampler = torch.utils.data.SequentialSampler(clf_dataset)
 
     loader = torch.utils.data.DataLoader(
-        dataset,
+        clf_dataset,
         batch_size=batch_size,
         pin_memory=True,
         sampler=sampler,
@@ -367,6 +360,7 @@ if __name__ == "__main__":
 
     os.environ["MASTER_ADDR"] = "127.0.0.1"
     os.environ["MASTER_PORT"] = "12345"
+
     if world_size > 1:
         torch.multiprocessing.spawn(
             train,

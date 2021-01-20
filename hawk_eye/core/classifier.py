@@ -112,7 +112,7 @@ class Classifier(torch.nn.Module):
         softmax will be applied to the predictions.
 
         Args:
-            x: Input tensor.
+            x: Input tensor of size (batch, height, width, channels).
             probability: Whether or not to apply softmax.
 
         Returns:

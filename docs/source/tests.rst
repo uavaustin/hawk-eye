@@ -27,3 +27,6 @@ corresponding ``BUILD`` file.
 It is important to have robust tests for ``hawk_eye/inference`` code and the related
 dependencies because this is the bulk of our distributed package. Other items like
 model training and data generation are harder and less important to test thoroughly.
+
+Inside of ``setup.py`` you will see that we actually include all the inference test in
+our hawk_eye pip package with ``test_suite="hawk_eye.inference"``.

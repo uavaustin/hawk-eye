@@ -52,14 +52,14 @@ py_library(
     ]
 )
 
-py_library(
-    name = "inference_types",
-    srcs = ["inference_types.py"],
-)
-
 py_doc_test(
     name = "find_targets_doctest",
     deps = [
         ":find_targets",
     ],
+)
+
+py_library(
+    name = "inference_types",
+    srcs = ["inference_types.py"],
 )

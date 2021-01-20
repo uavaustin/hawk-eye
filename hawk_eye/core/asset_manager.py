@@ -17,7 +17,7 @@ BUCKET = "uav_austin"
 
 
 def pull_all() -> None:
-    """ Pull all assets. """
+    """Pull all assets."""
     pull_backgrounds()
     pull_base_shapes()
     pull_fonts()
