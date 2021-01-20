@@ -97,7 +97,7 @@ try:
         cmdclass={"build": Build, "prepare_models": PrepareModels, "test": Test},
         include_package_data=True,
         install_requires=_get_packages(),
-        test_suite="hawk_eye.test.test_inference",
+        test_suite="hawk_eye.inference",
     )
 finally:
     shutil.rmtree(_MODELS_DIR)

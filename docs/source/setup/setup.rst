@@ -7,7 +7,7 @@ in ``hawk_eye/setup`` will prepare Ubuntu and WSL systems. To run the script, ex
     hawk_eye/setup/setup_env.sh
 
 
-inside of the `hawk_eye`` repository. This file also takes an optional argument to a python
+inside of the ``hawk_eye`` repository. This file also takes an optional argument to a python
 virtual environemnt
 ::
     hawk_eye/setup/setup_env.sh ~/path_to_venv
