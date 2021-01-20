@@ -17,14 +17,14 @@ class ClfDataset(torch.utils.data.Dataset):
         self,
         data_dir: pathlib.Path,
         img_ext: str = ".png",
-        augs: albumentations.Compose = None,
+        augmentations: albumentations.Compose = None,
     ) -> None:
         super().__init__()
         self.images = list(data_dir.glob(f"*{img_ext}"))
         assert self.images, f"No images found in {data_dir}."
 
         self.len = len(self.images)
-        self.transform = augs
+        self.transform = augmentations
         self.data_dir = data_dir
 
         # Generate some simple stats about the data.

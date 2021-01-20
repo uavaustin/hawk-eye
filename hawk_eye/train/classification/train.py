@@ -111,6 +111,7 @@ def train(
         if is_main:
             log.info("Mixed-precision (AMP) enabled.")
         scaler = torch.cuda.amp.GradScaler()
+        scaler
 
     ema_model = ema.Ema(clf_model)
 
@@ -164,13 +165,13 @@ def train(
             all_losses.append(loss.item())
 
             # Propogate the gradients back through the model.
-            if _USE_APEX:
-                with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
+            if use_mixed_precision:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
             else:
                 loss.backward()
-
-            optimizer.step()
+                optimizer.step()
 
             if lr_scheduler is not None:
                 lr_scheduler.step()
