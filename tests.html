@@ -211,6 +211,8 @@ corresponding <code class="docutils literal notranslate"><span class="pre">BUILD
 <p>It is important to have robust tests for <code class="docutils literal notranslate"><span class="pre">hawk_eye/inference</span></code> code and the related
 dependencies because this is the bulk of our distributed package. Other items like
 model training and data generation are harder and less important to test thoroughly.</p>
+<p>Inside of <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> you will see that we actually include all the inference test in
+our hawk_eye pip package with <code class="docutils literal notranslate"><span class="pre">test_suite=&quot;hawk_eye.inference&quot;</span></code>.</p>
 </div>
 </div>
 

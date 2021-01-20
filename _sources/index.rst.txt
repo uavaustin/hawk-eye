@@ -11,7 +11,7 @@ hawk-eye
    :caption: Contents:
 
 
-An Application to Detect Ground-Based Targets
+An Application to detect Ground-Based targets.
 
 Structure
 ~~~~~~~~~~~~~~~~~~~~~~

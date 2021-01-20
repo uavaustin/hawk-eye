@@ -8,6 +8,13 @@ GPUs to be done in a reasonable amount of time.
 Luckily our models are pretty light.
 
 
+Structure
+---------------------------
+Most machine learning model training pipelines can be broken down into a few
+major components: the model, dataset, and loss functions.
+
+
+
 Examples
 ---------------
 
@@ -27,3 +34,9 @@ Fine Tuning
 If you only have a CPU, you might want to finetune a model. This meaning taking
 an model intially trained on lots of data and training it on yours. This can
 drastically speed up training.
+
+.. automodule:: hawk_eye.train.classification
+   :members:
+
+.. automodule:: hawk_eye.train.detection
+   :members:
