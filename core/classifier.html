@@ -92,7 +92,11 @@
 <p class="caption"><span class="caption-text">Core</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="asset_manager.html">hawk_eye.core.asset_manager</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.core.classifier</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-hawk_eye.core.classifier">Module</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="detector.html">hawk_eye.core.detector</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Data Generation</span></p>
@@ -188,8 +192,24 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-hawk_eye.core.classifier">
-<span id="hawk-eye-core-classifier"></span><h1>hawk_eye.core.classifier<a class="headerlink" href="#module-hawk_eye.core.classifier" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="hawk-eye-core-classifier">
+<h1>hawk_eye.core.classifier<a class="headerlink" href="#hawk-eye-core-classifier" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Image classification aims to assign a class to an image. For UAV, we are focued
+on determining if an image is either “background” or “target.” A background image
+does not contain one of the AUVSI SUAS targets that we are interested. A image
+classified as a target should have one of these targets. Note, in this model, we
+don’t actually determine the specific target, that is left to a detector. In this
+way, the classifier works as a filter to feed only taget-containing images into
+the object detector.</p>
+<p>UAV Austin uses a fast classifier to speed up processing time, saving more room
+for the slower object detector. As technology improves, it might be possible to
+remove the classifier from the step completely and solely rely on the detector to
+process each image.</p>
+</div>
+<div class="section" id="module-hawk_eye.core.classifier">
+<span id="module"></span><h2>Module<a class="headerlink" href="#module-hawk_eye.core.classifier" title="Permalink to this headline">¶</a></h2>
 <p>A classifier model which wraps around a backbone. This setup allows for easy
 interchangeability during experimentation and a reliable way to load saved models.</p>
 <dl class="class">
@@ -201,14 +221,22 @@ interchangeability during experimentation and a reliable way to load saved model
 <li><p><strong>num_classes</strong> – The number of classes to predict.</p></li>
 <li><p><strong>timestamp</strong> – The timestamp of the model to download from GCloud.</p></li>
 <li><p><strong>backbone</strong> – A string designating which model to load.</p></li>
-<li><p><strong>half_precision</strong> – Whether to use half precision for inference. For now
-half_precision doesn’t work well with training. Maybe in PyTorch 1.6.0.</p></li>
+<li><p><strong>half_precision</strong> – Whether to use half precision. This should be False for
+training but True during inference.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – Error if neither a timestamp or backbone arg is supplied.</p>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">classifier</span> <span class="o">=</span> <span class="n">Classifier</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">backbone</span><span class="o">=</span><span class="s2">&quot;vovnet-19&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+<span class="gp">... </span>   <span class="n">predictions</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">predictions</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([1, 2])</span>
+</pre></div>
+</div>
 <dl class="method">
 <dt id="hawk_eye.core.classifier.Classifier.classify">
 <code class="sig-name descname">classify</code><span class="sig-paren">(</span><em class="sig-param">x: torch.Tensor</em>, <em class="sig-param">probability: bool = False</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.classify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.classify" title="Permalink to this definition">¶</a></dt>
@@ -241,8 +269,27 @@ softmax will be applied to the predictions.</p>
 </dl>
 </dd></dl>
 
+<dl class="method">
+<dt id="hawk_eye.core.classifier.Classifier.load_backbone">
+<code class="sig-name descname">load_backbone</code><span class="sig-paren">(</span><em class="sig-param">backbone: str</em><span class="sig-paren">)</span> &#x2192; torch.nn.modules.module.Module<a class="reference internal" href="../_modules/hawk_eye/core/classifier.html#Classifier.load_backbone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.classifier.Classifier.load_backbone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the supplied backbone. See this function for the list of potential
+backbones that can be loaded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>backbone</strong> – The backbone type to load.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The loaded model.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If improper backbone is supplied.</p>
+</dd>
+</dl>
 </dd></dl>
 
+</dd></dl>
+
+</div>
 </div>
 
 

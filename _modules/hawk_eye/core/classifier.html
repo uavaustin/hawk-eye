@@ -213,10 +213,17 @@
 <span class="sd">            num_classes: The number of classes to predict.</span>
 <span class="sd">            timestamp: The timestamp of the model to download from GCloud.</span>
 <span class="sd">            backbone: A string designating which model to load.</span>
-<span class="sd">            half_precision: Whether to use half precision for inference. For now</span>
-<span class="sd">                half_precision doesn&#39;t work well with training. Maybe in PyTorch 1.6.0.</span>
+<span class="sd">            half_precision: Whether to use half precision. This should be False for</span>
+<span class="sd">                training but True during inference.</span>
 
 <span class="sd">        :raises ValueError: Error if neither a timestamp or backbone arg is supplied.</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            &gt;&gt;&gt; classifier = Classifier(2, backbone=&quot;vovnet-19&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; with torch.no_grad():</span>
+<span class="sd">            ...    predictions = classifier.classify(torch.randn(1, 3, 64, 64), True)</span>
+<span class="sd">            &gt;&gt;&gt; predictions.shape</span>
+<span class="sd">            torch.Size([1, 2])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">num_classes</span>
@@ -240,14 +247,14 @@
             <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">((</span><span class="n">model_path</span> <span class="o">/</span> <span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
             <span class="n">backbone</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backbone&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="c1"># Construct the model, then load the state</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_backbone</span><span class="p">(</span><span class="n">backbone</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_backbone</span><span class="p">(</span><span class="n">backbone</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span>
                 <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span> <span class="o">/</span> <span class="s2">&quot;classifier.pt&quot;</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;image_size&quot;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># If no timestamp supplied, just load the backbone</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_backbone</span><span class="p">(</span><span class="n">backbone</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_backbone</span><span class="p">(</span><span class="n">backbone</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
@@ -272,8 +279,9 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_load_backbone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backbone</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Load the supplied backbone.</span>
+<div class="viewcode-block" id="Classifier.load_backbone"><a class="viewcode-back" href="../../../core/classifier.html#hawk_eye.core.classifier.Classifier.load_backbone">[docs]</a>    <span class="k">def</span> <span class="nf">load_backbone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backbone</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Load the supplied backbone. See this function for the list of potential</span>
+<span class="sd">        backbones that can be loaded.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            backbone: The backbone type to load.</span>
@@ -290,7 +298,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported backbone </span><span class="si">{</span><span class="n">backbone</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">model</span>
+        <span class="k">return</span> <span class="n">model</span></div>
 
 <div class="viewcode-block" id="Classifier.classify"><a class="viewcode-back" href="../../../core/classifier.html#hawk_eye.core.classifier.Classifier.classify">[docs]</a>    <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">probability</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Take in an image batch and return the class for each image. If specified,</span>
