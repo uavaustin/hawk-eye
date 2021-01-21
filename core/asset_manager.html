@@ -93,6 +93,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.core.asset_manager</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-hawk_eye.core.asset_manager">Module</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="classifier.html">hawk_eye.core.classifier</a></li>
@@ -202,6 +203,97 @@ in the cloud.</p>
 competition where data is gathered.</p>
 <p>Tests associated with this module will be uploaded to a bucket where its contents
 are deleted after 24hrs.</p>
+</div>
+<div class="section" id="module-hawk_eye.core.asset_manager">
+<span id="module"></span><h2>Module<a class="headerlink" href="#module-hawk_eye.core.asset_manager" title="Permalink to this headline">¶</a></h2>
+<p>Functions to pull in data from the cloud.</p>
+<p>This relies on Google Cloud Storage python API. Please see the Image Recognition lead
+to recieve the proper credentials for access to the bucket.</p>
+<p>If you do not have Google Cloud APIs installed please run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ hawk_eye/setup/install_google_cloud.sh
+</pre></div>
+</div>
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.download_file">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">download_file</code><span class="sig-paren">(</span><em class="sig-param">filename: str</em>, <em class="sig-param">destination: pathlib.Path</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#download_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.download_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download an object from Google Cloud Storage.</p>
+<p>This function assumes the file is in <code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code> format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> – the path to the file on Google Cloud. This should not include
+the bucket name.</p></li>
+<li><p><strong>destination</strong> – the path to extract the tarball.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p>FileNotFoundError if the object does not exist in Google Cloud.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.pull_all">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pull the backgrounds, base shapes and font files as specified in
+<code class="docutils literal notranslate"><span class="pre">hawk_eye.data_generation.generate_config.py</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.pull_backgrounds">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_backgrounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_backgrounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_backgrounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pull the shape generation backgrounds.</p>
+<p>This function utilizes the <code class="docutils literal notranslate"><span class="pre">BACKGROUNDS_URLS</span></code> in
+<code class="docutils literal notranslate"><span class="pre">hawk_eye.data_generation.generate_config.py</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.pull_base_shapes">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_base_shapes</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_base_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_base_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pull the base shapes.</p>
+<p>This function utilizes the <code class="docutils literal notranslate"><span class="pre">BASE_SHAPES_URL</span></code> in
+<code class="docutils literal notranslate"><span class="pre">hawk_eye.data_generation.generate_config.py</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.pull_fonts">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_fonts</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_fonts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_fonts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pull the fonts used in data generation.</p>
+<p>This function utilizes the <code class="docutils literal notranslate"><span class="pre">FONTS_URL</span></code> in
+<code class="docutils literal notranslate"><span class="pre">hawk_eye.data_generation.generate_config.py</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.untar_and_move">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">untar_and_move</code><span class="sig-paren">(</span><em class="sig-param">filename: pathlib.Path</em>, <em class="sig-param">destination: pathlib.Path</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#untar_and_move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.untar_and_move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract tarball to directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> – path to the archive to be extraced.</p></li>
+<li><p><strong>destination</strong> – where to extract the archive.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="hawk_eye.core.asset_manager.upload_file">
+<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">upload_file</code><span class="sig-paren">(</span><em class="sig-param">source_path: pathlib.Path</em>, <em class="sig-param">destination: str</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#upload_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.upload_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generic function for uploading a file from local storage to the cloud.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source_path</strong> – a path to the local file</p></li>
+<li><p><strong>desination</strong> – where to upload the file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p>FileNotFoundError if the object does not exist locally.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 </div>
 

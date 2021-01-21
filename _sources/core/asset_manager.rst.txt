@@ -26,6 +26,7 @@ are deleted after 24hrs.
     Come up with a policy for alerting users about new background archives. Is this
     just communicated from leads to members or another way?
 
+Module
 ----------------------------------------
 .. automodule:: hawk_eye.core.asset_manager
    :members:

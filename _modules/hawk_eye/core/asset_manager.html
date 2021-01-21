@@ -192,13 +192,12 @@
 <span class="sd">.. code-block:: bash</span>
 
 <span class="sd">    $ hawk_eye/setup/install_google_cloud.sh</span>
-
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">tarfile</span>
 <span class="kn">import</span> <span class="nn">pathlib</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">google.cloud</span> <span class="kn">import</span> <span class="n">storage</span>
@@ -209,25 +208,34 @@
 
 
 <div class="viewcode-block" id="pull_all"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_all">[docs]</a><span class="k">def</span> <span class="nf">pull_all</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Pull thee backgrounds, base shapes and font files as specified in</span>
-<span class="sd">    `hawk_eye.data_generation.generate_config.py`.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the backgrounds, base shapes and font files as specified in</span>
+<span class="sd">    ``hawk_eye.data_generation.generate_config.py``.&quot;&quot;&quot;</span>
     <span class="n">pull_backgrounds</span><span class="p">()</span>
     <span class="n">pull_base_shapes</span><span class="p">()</span>
     <span class="n">pull_fonts</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="pull_backgrounds"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_backgrounds">[docs]</a><span class="k">def</span> <span class="nf">pull_backgrounds</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Pull the shape generation backgrounds.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the shape generation backgrounds.</span>
+
+<span class="sd">    This function utilizes the ``BACKGROUNDS_URLS`` in</span>
+<span class="sd">    ``hawk_eye.data_generation.generate_config.py``.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BACKGROUNDS_URLS</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pull_base_shapes"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_base_shapes">[docs]</a><span class="k">def</span> <span class="nf">pull_base_shapes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Pull the base shape images.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the base shapes.</span>
+
+<span class="sd">    This function utilizes the ``BASE_SHAPES_URL`` in</span>
+<span class="sd">    ``hawk_eye.data_generation.generate_config.py``.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BASE_SHAPES_URL</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pull_fonts"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_fonts">[docs]</a><span class="k">def</span> <span class="nf">pull_fonts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Pull the fonts.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Pull the fonts used in data generation.</span>
+
+<span class="sd">    This function utilizes the ``FONTS_URL`` in</span>
+<span class="sd">    ``hawk_eye.data_generation.generate_config.py``.&quot;&quot;&quot;</span>
     <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">FONTS_URL</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
@@ -237,6 +245,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        source_path: a path to the local file</span>
 <span class="sd">        desination: where to upload the file</span>
+
+<span class="sd">    :raises: FileNotFoundError if the object does not exist locally.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">source_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -247,30 +257,43 @@
     <span class="n">blob</span><span class="o">.</span><span class="n">upload_from_filename</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source_path</span><span class="p">))</span></div>
 
 
-<span class="c1"># Download a file to the assets folder and return the filename.</span>
-<span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="n">filenames</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">destination</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="download_file"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.download_file">[docs]</a><span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Download an object from Google Cloud Storage.</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filenames</span><span class="p">]</span>
+<span class="sd">    This function assumes the file is in ``.tar.gz`` format.</span>
 
-    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="n">folder_name</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">stem</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">destination</span> <span class="o">/</span> <span class="n">folder_name</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fetching </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="sd">    Args:</span>
+<span class="sd">        filename: the path to the file on Google Cloud. This should not include</span>
+<span class="sd">            the bucket name.</span>
+<span class="sd">        destination: the path to extract the tarball.</span>
 
-            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
-                <span class="n">tmp_file</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;file.tar.gz&quot;</span>
-                <span class="n">client</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-                <span class="n">bucket</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">BUCKET</span><span class="p">)</span>
-                <span class="n">bucket</span><span class="o">.</span><span class="n">get_blob</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span><span class="o">.</span><span class="n">download_to_filename</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">)</span>
-                <span class="n">untar_and_move</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>
+<span class="sd">    :raises: FileNotFoundError if the object does not exist in Google Cloud.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">folder_name</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">stem</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">destination</span> <span class="o">/</span> <span class="n">folder_name</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fetching </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; done.&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">tmp_file</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;file.tar.gz&quot;</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+            <span class="n">bucket</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">BUCKET</span><span class="p">)</span>
+            <span class="n">blob</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">blob</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not find </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> on Google Cloud.&quot;</span><span class="p">)</span>
+            <span class="n">blob</span><span class="o">.</span><span class="n">download_to_filename</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">)</span>
+            <span class="n">untar_and_move</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; done.&quot;</span><span class="p">)</span></div>
 
 
-<span class="c1"># Untar a file, unless the directory already exists.</span>
-<span class="k">def</span> <span class="nf">untar_and_move</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="untar_and_move"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.untar_and_move">[docs]</a><span class="k">def</span> <span class="nf">untar_and_move</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Extract tarball to directory.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename: path to the archive to be extraced.</span>
+<span class="sd">        destination: where to extract the archive.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Extracting to </span><span class="si">{</span><span class="n">destination</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
@@ -279,7 +302,7 @@
     <span class="c1"># Remove hidden files that might have been left behind by</span>
     <span class="c1"># the untarring.</span>
     <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">destination</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;._*&quot;</span><span class="p">):</span>
-        <span class="n">filename</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+        <span class="n">filename</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span></div>
 
 
 <span class="k">def</span> <span class="nf">download_model</span><span class="p">(</span><span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">:</span>
