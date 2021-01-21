@@ -8,13 +8,12 @@ If you do not have Google Cloud APIs installed please run:
 .. code-block:: bash
 
     $ hawk_eye/setup/install_google_cloud.sh
-
 """
 
-import tarfile
 import pathlib
-import tempfile
 import subprocess
+import tarfile
+import tempfile
 from typing import List, Union
 
 from google.cloud import storage
@@ -25,25 +24,34 @@ BUCKET = "uav_austin"
 
 
 def pull_all() -> None:
-    """Pull thee backgrounds, base shapes and font files as specified in
-    `hawk_eye.data_generation.generate_config.py`."""
+    """Pull the backgrounds, base shapes and font files as specified in
+    ``hawk_eye.data_generation.generate_config.py``."""
     pull_backgrounds()
     pull_base_shapes()
     pull_fonts()
 
 
 def pull_backgrounds() -> None:
-    """Pull the shape generation backgrounds."""
+    """Pull the shape generation backgrounds.
+
+    This function utilizes the ``BACKGROUNDS_URLS`` in
+    ``hawk_eye.data_generation.generate_config.py``."""
     download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
-    """Pull the base shape images."""
+    """Pull the base shapes.
+
+    This function utilizes the ``BASE_SHAPES_URL`` in
+    ``hawk_eye.data_generation.generate_config.py``."""
     download_file(config.BASE_SHAPES_URL, config.ASSETS_DIR)
 
 
 def pull_fonts() -> None:
-    """Pull the fonts."""
+    """Pull the fonts used in data generation.
+
+    This function utilizes the ``FONTS_URL`` in
+    ``hawk_eye.data_generation.generate_config.py``."""
     download_file(config.FONTS_URL, config.ASSETS_DIR)
 
 
@@ -53,6 +61,8 @@ def upload_file(source_path: pathlib.Path, destination: str):
     Args:
         source_path: a path to the local file
         desination: where to upload the file
+
+    :raises: FileNotFoundError if the object does not exist locally.
     """
 
     if not source_path.is_file():
@@ -63,30 +73,43 @@ def upload_file(source_path: pathlib.Path, destination: str):
     blob.upload_from_filename(str(source_path))
 
 
-# Download a file to the assets folder and return the filename.
-def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -> None:
+def download_file(filename: str, destination: pathlib.Path) -> None:
+    """Download an object from Google Cloud Storage.
 
-    if isinstance(filenames, str):
-        filenames = [filenames]
+    This function assumes the file is in ``.tar.gz`` format.
 
-    for filename in filenames:
-        filename = pathlib.Path(filename)
-        folder_name = filename.stem.split(".", 1)[0]
-        if not (destination / folder_name).is_dir():
-            print(f"Fetching {filename}...", end="", flush=True)
+    Args:
+        filename: the path to the file on Google Cloud. This should not include
+            the bucket name.
+        destination: the path to extract the tarball.
 
-            with tempfile.TemporaryDirectory() as d:
-                tmp_file = pathlib.Path(d) / "file.tar.gz"
-                client = storage.Client()
-                bucket = client.get_bucket(BUCKET)
-                bucket.get_blob(str(filename)).download_to_filename(tmp_file)
-                untar_and_move(tmp_file, destination)
+    :raises: FileNotFoundError if the object does not exist in Google Cloud.
+    """
+    filename = pathlib.Path(filename)
+    folder_name = filename.stem.split(".", 1)[0]
+    if not (destination / folder_name).is_dir():
+        print(f"Fetching {filename}...", end="", flush=True)
+
+        with tempfile.TemporaryDirectory() as d:
+            tmp_file = pathlib.Path(d) / "file.tar.gz"
+            client = storage.Client()
+            bucket = client.get_bucket(BUCKET)
+            blob = bucket.blob(str(filename))
+            if not blob.exists():
+                raise FileNotFoundError(f"Could not find {filename} on Google Cloud.")
+            blob.download_to_filename(tmp_file)
+            untar_and_move(tmp_file, destination)
 
             print(" done.")
 
 
-# Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
+    """Extract tarball to directory.
+
+    Args:
+        filename: path to the archive to be extraced.
+        destination: where to extract the archive.
+    """
 
     print(f"Extracting to {destination}...", end="", flush=True)
     with tarfile.open(filename, "r") as tar:

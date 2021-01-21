@@ -14,8 +14,7 @@ in the cloud.
 For data generation, new data will be added whenever there is a test flight or
 competition where data is gathered.
 
-@TODO uploading process
 
-
+----------------------------------------
 .. automodule:: hawk_eye.core.asset_manager
    :members:
