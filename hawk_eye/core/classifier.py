@@ -28,10 +28,17 @@ class Classifier(torch.nn.Module):
             num_classes: The number of classes to predict.
             timestamp: The timestamp of the model to download from GCloud.
             backbone: A string designating which model to load.
-            half_precision: Whether to use half precision for inference. For now
-                half_precision doesn't work well with training. Maybe in PyTorch 1.6.0.
+            half_precision: Whether to use half precision. This should be False for
+                training but True during inference.
 
         :raises ValueError: Error if neither a timestamp or backbone arg is supplied.
+
+        Examples:
+            >>> classifier = Classifier(2, backbone="vovnet-19")
+            >>> with torch.no_grad():
+            ...    predictions = classifier.classify(torch.randn(1, 3, 64, 64), True)
+            >>> predictions.shape
+            torch.Size([1, 2])
         """
         super().__init__()
         self.num_classes = num_classes
@@ -55,14 +62,14 @@ class Classifier(torch.nn.Module):
             config = yaml.safe_load((model_path / "config.yaml").read_text())["model"]
             backbone = config.get("backbone", None)
             # Construct the model, then load the state
-            self.model = self._load_backbone(backbone)
+            self.model = self.load_backbone(backbone)
             self.load_state_dict(
                 torch.load(model_path / "classifier.pt", map_location="cpu")
             )
             self.image_size = config["image_size"]
         else:
             # If no timestamp supplied, just load the backbone
-            self.model = self._load_backbone(backbone)
+            self.model = self.load_backbone(backbone)
 
         self.model.eval()
 
@@ -87,8 +94,9 @@ class Classifier(torch.nn.Module):
 
         return self.model(x)
 
-    def _load_backbone(self, backbone: str) -> torch.nn.Module:
-        """Load the supplied backbone.
+    def load_backbone(self, backbone: str) -> torch.nn.Module:
+        """Load the supplied backbone. See this function for the list of potential
+        backbones that can be loaded.
 
         Args:
             backbone: The backbone type to load.

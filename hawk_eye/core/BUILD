@@ -1,3 +1,5 @@
+load("//third_party/bazel_doctest:doctest.bzl", "py_doc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 py_library(
@@ -6,7 +8,19 @@ py_library(
     deps = [
         ":asset_manager",
         "//third_party/vovnet:vovnet",
+        "//third_party/rexnet:rexnet",
     ],
+)
+
+py_test(
+    name = "classifier_test",
+    srcs = ["classifier_test.py"],
+    deps = [":classifier"]
+)
+
+py_doc_test(
+    name = "classifier_doctest",
+    deps = [":classifier"],
 )
 
 py_library(
