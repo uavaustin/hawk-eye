@@ -5,8 +5,9 @@ to recieve the proper credentials for access to the bucket.
 
 If you do not have Google Cloud APIs installed please run:
 
-.. code-block::
-    hawk_eye/setup/install_google_cloud.sh
+.. code-block:: bash
+
+    $ hawk_eye/setup/install_google_cloud.sh
 
 """
 
