@@ -56,7 +56,7 @@ Structure
     inference/overview
     inference/benchmark_inference
     inference/find_targets
-    inference/types
+    inference/inference_types
     inference/production_models
 
 .. toctree::

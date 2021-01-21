@@ -1,4 +1,4 @@
-hawk_eye.inference.types
+hawk_eye.inference.inference_types
 --------------------------------
 
 .. automodule:: hawk_eye.inference.inference_types

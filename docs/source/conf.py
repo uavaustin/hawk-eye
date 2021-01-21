@@ -54,6 +54,7 @@ autodoc_mock_imports = ["google"]
 # build the templated autosummary files
 autosummary_generate = True
 numpydoc_show_class_members = False
+todo_include_todos = True
 
 # autosectionlabel throws warnings if section names are duplicated.
 # The following tells autosectionlabel to not throw a warning for

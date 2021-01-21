@@ -62,7 +62,7 @@ def upload_file(source_path: pathlib.Path, destination: str):
         source_path: a path to the local file
         desination: where to upload the file
 
-    :raises: FileNotFoundError if the object does not exist locally.
+    :raises FileNotFoundError: if the object does not exist locally.
     """
 
     if not source_path.is_file():
@@ -83,7 +83,7 @@ def download_file(filename: str, destination: pathlib.Path) -> None:
             the bucket name.
         destination: the path to extract the tarball.
 
-    :raises: FileNotFoundError if the object does not exist in Google Cloud.
+    :raises FileNotFoundError: if the object does not exist in Google Cloud.
     """
     filename = pathlib.Path(filename)
     folder_name = filename.stem.split(".", 1)[0]
