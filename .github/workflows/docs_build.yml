@@ -1,0 +1,60 @@
+name: deploy-docs
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  build-docs:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.6'
+
+    - uses: actions/checkout@v2
+
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        hawk_eye/setup/setup_env.sh
+        python3 -m pip install -r docs/requirements.txt
+
+    - name: make-docs
+      run: |
+        cd docs/source
+        sphinx-build -b html . _build
+
+    - name: Commit documentation changes
+      run: |
+        git clone https://github.com/uavaustin/hawk-eye.git --branch gh-pages --single-branch gh-pages
+        cp -r docs/source/_build/* gh-pages/
+        cd gh-pages
+        touch .nojekyll
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Update documentation" -a || true
+        # The above command will fail if no changes were present, so we ignore
+        # that.
+
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        branch: gh-pages
+        directory: gh-pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-""" A script to benchmark inference for both detector and classification models.
+"""A script to benchmark inference for both detector and classification models.
 This is useful for seeing how a new model performs on a device. For example, this
-can be run on the Jetson to see how the models perform. """
+might be run on the Jetson to see if the model meets performance cutoffs."""
 
 import argparse
 import time
@@ -16,12 +16,25 @@ from hawk_eye.core import detector
 def benchmark(
     timestamp: str, model_type: str, batch_size: int, run_time: float
 ) -> None:
+    """Benchmarks a model.
 
+    This function will load the specified model, create a random tensor from the
+    model's internal height and width and the given batch then perform
+    forward passes through the model for :attr:`run_time` seconds.
+
+    Args:
+        timestamp: The model's specific timestamp.
+        model_type: Which type of model this is.
+        batch_size: The batch size to benchmark the model on.
+        run_time: How long to run the benchmark in seconds.
+    """
     # Construct the model.
     if model_type == "classifier":
         model = classifier.Classifier(timestamp=timestamp, half_precision=True)
     elif model_type == "detector":
         model = detector.Detector(timestamp=timestamp, half_precision=True)
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}.")
 
     batch = torch.randn((batch_size, 3, model.image_size, model.image_size))
 

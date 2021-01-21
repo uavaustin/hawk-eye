@@ -16,3 +16,4 @@ training:
   epochs: 15
   batch_size: 200
   eval_start_epoch: 0
+  mixed_precision: true

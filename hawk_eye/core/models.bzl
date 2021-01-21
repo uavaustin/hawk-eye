@@ -5,7 +5,7 @@ load(
 )
 load("//third_party:gcs.bzl", "download_gcs_object")
 
-_BUCKET = "gs://uav-austin-test"
+_BUCKET = "gs://uav_austin"
 
 
 def _production_model_impl(repository_ctx):

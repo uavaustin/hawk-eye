@@ -36,12 +36,6 @@ _STAGE_SPECS = {
     "vovnet-39": VoVNetParams(
         128, [128, 160, 192, 224], [256, 512, 768, 1024], 5, [1, 1, 2, 2], False
     ),
-    "vovnet-57": VoVNetParams(
-        128, [128, 160, 192, 224], [256, 512, 768, 1024], 5, [1, 1, 4, 3], False
-    ),
-    "vovnet-99": VoVNetParams(
-        128, [128, 160, 192, 224], [256, 512, 768, 1024], 5, [1, 3, 9, 3], False
-    ),
 }
 
 
@@ -61,7 +55,7 @@ def dw_conv(
         ),
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
         torch.nn.BatchNorm2d(out_channels),
-        torch.nn.ReLU(),
+        torch.nn.ReLU(inplace=True),
     ]
 
 
@@ -85,7 +79,7 @@ def conv(
             bias=False,
         ),
         torch.nn.BatchNorm2d(out_channels),
-        torch.nn.ReLU(),
+        torch.nn.ReLU(inplace=True),
     ]
 
 
@@ -94,7 +88,7 @@ def pointwise(in_channels: int, out_channels: int) -> List[torch.nn.Module]:
     return [
         torch.nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=True),
         torch.nn.BatchNorm2d(out_channels),
-        torch.nn.ReLU(),
+        torch.nn.ReLU(inplace=True),
     ]
 
 
@@ -274,18 +268,6 @@ class VoVNet(torch.nn.Sequential):
         torch.Size([1, 1000])
 
         >>> net = VoVNet("vovnet-39", num_classes=1000)
-        >>> with torch.no_grad():
-        ...    out = net(torch.randn(1, 3, 512, 512))
-        >>> print(out.shape)
-        torch.Size([1, 1000])
-
-        >>> net = VoVNet("vovnet-57", num_classes=1000)
-        >>> with torch.no_grad():
-        ...    out = net(torch.randn(1, 3, 512, 512))
-        >>> print(out.shape)
-        torch.Size([1, 1000])
-
-        >>> net = VoVNet("vovnet-99", num_classes=1000)
         >>> with torch.no_grad():
         ...    out = net(torch.randn(1, 3, 512, 512))
         >>> print(out.shape)

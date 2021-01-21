@@ -1,66 +1,115 @@
-""" Functions to pull in data from the cloud.
-This relies on Google Cloud Storage python API. Please see the Image Recognition lead
-to recieve the proper credentials for access to the bucket. """
+"""Functions to pull in data from the cloud.
 
-import tarfile
+This relies on Google Cloud Storage python API. Please see the Image Recognition lead
+to recieve the proper credentials for access to the bucket.
+
+If you do not have Google Cloud APIs installed please run:
+
+.. code-block:: bash
+
+    $ hawk_eye/setup/install_google_cloud.sh
+"""
+
 import pathlib
-import tempfile
 import subprocess
+import tarfile
+import tempfile
 from typing import List, Union
 
 from google.cloud import storage
 
 from hawk_eye.data_generation import generate_config as config
 
-_BUCKET = "uav-austin-test"
+BUCKET = "uav_austin"
 
 
 def pull_all() -> None:
-    """ Pull all assets. """
+    """Pull the backgrounds, base shapes and font files as specified in
+    ``hawk_eye.data_generation.generate_config.py``."""
     pull_backgrounds()
     pull_base_shapes()
     pull_fonts()
 
 
 def pull_backgrounds() -> None:
-    """Pull the shape generation backgrounds."""
+    """Pull the shape generation backgrounds.
+
+    This function utilizes the ``BACKGROUNDS_URLS`` in
+    ``hawk_eye.data_generation.generate_config.py``."""
     download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
-    """Pull the base shape images."""
+    """Pull the base shapes.
+
+    This function utilizes the ``BASE_SHAPES_URL`` in
+    ``hawk_eye.data_generation.generate_config.py``."""
     download_file(config.BASE_SHAPES_URL, config.ASSETS_DIR)
 
 
 def pull_fonts() -> None:
-    """Pull the fonts."""
+    """Pull the fonts used in data generation.
+
+    This function utilizes the ``FONTS_URL`` in
+    ``hawk_eye.data_generation.generate_config.py``."""
     download_file(config.FONTS_URL, config.ASSETS_DIR)
 
 
-# Download a file to the assets folder and return the filename.
-def download_file(filenames: Union[str, List[str]], destination: pathlib.Path) -> None:
+def upload_file(source_path: pathlib.Path, destination: str):
+    """A generic function for uploading a file from local storage to the cloud.
 
-    if isinstance(filenames, str):
-        filenames = [filenames]
+    Args:
+        source_path: a path to the local file
+        desination: where to upload the file
 
-    for filename in filenames:
-        filename = pathlib.Path(filename)
-        folder_name = filename.stem.split(".", 1)[0]
-        if not (destination / folder_name).is_dir():
-            print(f"Fetching {filename}...", end="", flush=True)
+    :raises FileNotFoundError: if the object does not exist locally.
+    """
 
-            with tempfile.TemporaryDirectory() as d:
-                tmp_file = pathlib.Path(d) / "file.tar.gz"
-                client = storage.Client()
-                bucket = client.get_bucket(_BUCKET)
-                bucket.get_blob(str(filename)).download_to_filename(tmp_file)
-                untar_and_move(tmp_file, destination)
+    if not source_path.is_file():
+        raise FileNotFoundError(f"Can't find {source_path}")
+
+    bucket = _get_client_bucket()
+    blob = bucket.blob(destination)
+    blob.upload_from_filename(str(source_path))
+
+
+def download_file(filename: str, destination: pathlib.Path) -> None:
+    """Download an object from Google Cloud Storage.
+
+    This function assumes the file is in ``.tar.gz`` format.
+
+    Args:
+        filename: the path to the file on Google Cloud. This should not include
+            the bucket name.
+        destination: the path to extract the tarball.
+
+    :raises FileNotFoundError: if the object does not exist in Google Cloud.
+    """
+    filename = pathlib.Path(filename)
+    folder_name = filename.stem.split(".", 1)[0]
+    if not (destination / folder_name).is_dir():
+        print(f"Fetching {filename}...", end="", flush=True)
+
+        with tempfile.TemporaryDirectory() as d:
+            tmp_file = pathlib.Path(d) / "file.tar.gz"
+            client = storage.Client()
+            bucket = client.get_bucket(BUCKET)
+            blob = bucket.blob(str(filename))
+            if not blob.exists():
+                raise FileNotFoundError(f"Could not find {filename} on Google Cloud.")
+            blob.download_to_filename(tmp_file)
+            untar_and_move(tmp_file, destination)
 
             print(" done.")
 
 
-# Untar a file, unless the directory already exists.
 def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
+    """Extract tarball to directory.
+
+    Args:
+        filename: path to the archive to be extraced.
+        destination: where to extract the archive.
+    """
 
     print(f"Extracting to {destination}...", end="", flush=True)
     with tarfile.open(filename, "r") as tar:
@@ -84,6 +133,9 @@ def download_model(model_type: str, timestamp: str) -> pathlib.Path:
 
 
 def upload_model(model_type: str, path: pathlib.Path) -> None:
-    subprocess.check_call(
-        ["gsutil", "cp", "-z", str(path), f"{_BUCKET}/{model_type}/{path.name}"]
-    )
+    upload_file(path, f"{model_type}/{path.name}")
+
+
+def _get_client_bucket():
+    client = storage.Client()
+    return client.get_bucket(BUCKET)

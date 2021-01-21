@@ -1,13 +1,13 @@
-""" A detector model which wraps around a feature extraction backbone, fpn, and RetinaNet
+"""A detector model which wraps around a feature extraction backbone, fpn, and RetinaNet
 head.This allows for easy interchangeability during experimentation and a reliable way to
-load saved models. """
+load saved models."""
 
 import collections
 import pathlib
 from typing import List
-import yaml
 
 import torch
+import yaml
 
 try:
     from hawk_eye.core import asset_manager
@@ -15,10 +15,10 @@ except ModuleNotFoundError:
     pass
 from hawk_eye.core import fpn
 from third_party.vovnet import vovnet
-from third_party.models import postprocess
-from third_party.models import regression
-from third_party.models import anchors
-from third_party.models import retinanet_head
+from third_party.detectron2 import postprocess
+from third_party.detectron2 import regression
+from third_party.detectron2 import anchors
+from third_party.detectron2 import retinanet_head
 
 
 class Detector(torch.nn.Module):

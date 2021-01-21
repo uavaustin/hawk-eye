@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Contains logic for finding targets in images. """
+"""Contains logic for finding targets in images."""
 
 import argparse
 import pathlib
@@ -15,10 +15,9 @@ import torch
 from hawk_eye.core import classifier
 from hawk_eye.core import detector
 from hawk_eye.data_generation import generate_config as config
-from hawk_eye.inference import types
-from third_party.models import postprocess
-
-_PROD_MODELS = {"clf": "2020-09-05T15.51.57", "det": "2020-10-10T14.02.09"}
+from hawk_eye.inference import inference_types
+from hawk_eye.inference import production_models
+from third_party.detectron2 import postprocess
 
 
 # Taken directly from albumentation src: augmentations/functional.py#L131.
@@ -37,6 +36,7 @@ def normalize(
         mean: The mean of each channel.
         std: The standard deviation of each channel.
         max_pixel_value: The max value a pixel can have.
+
     Returns:
         A normalized image as a numpy array.
     """
@@ -57,17 +57,21 @@ def normalize(
 
 
 def tile_image(
-    image: Image.Image, tile_size: Tuple[int, int], overlap: int  # (H, W)
+    image: Image.Image, tile_size: Tuple[int, int], overlap: int
 ) -> Tuple[torch.Tensor, List[Tuple[int, int]]]:
-    """ Take in an image and tile it into smaller tiles for inference.
+    """Take in an image and tile it into smaller tiles for inference.
+
     Args:
         image: The input image to tile.
         tile_size: The (width, height) of the tiles.
-        overlap: The overlap between adjacent tiles.
+        overlap: The overlap between adjacent tiles (height, width).
+
     Returns:
         A tensor of the tiles and a list of the (x, y) offset for the tiles.
-            The offets are needed to keep track of which tiles have targets.
-    Usage:
+        The offets are needed to keep track of which tiles have targets.
+
+    Examples::
+
         >>> tiles, coords = tile_image(Image.new("RGB", (1000, 1000)), (512, 512), 50)
         >>> tiles.shape[0]
         9
@@ -106,14 +110,16 @@ def tile_image(
 
 def create_batches(
     image_tensor: torch.Tensor, coords: List[Tuple[int, int]], batch_size: int
-) -> Generator[types.BBox, None, None]:
+):
     """Creates batches of images based on the supplied params. The whole image
     is tiled first, the batches are generated.
+
     Args:
         image: The opencv opened image.
         tile_size: The height, width of the tiles to create.
         overlap: The amount of overlap between tiles.
         batch_size: The number of images to have per batch.
+
     Returns:
         Yields the image batch and the top left coordinate of the tile in the
         space of the original image.
@@ -124,12 +130,15 @@ def create_batches(
 
 
 def load_models(
-    clf_timestamp: str = _PROD_MODELS["clf"], det_timestamp: str = _PROD_MODELS["det"]
+    clf_timestamp: str = production_models._CLASSIFIER["timestamp"],
+    det_timestamp: str = production_models._DETECTOR["timestamp"],
 ) -> Tuple[torch.nn.Module, torch.nn.Module]:
     """ Loads the given time stamps for the classification and detector models.
+
     Args:
         clf_timestamp: Which classification model to load.
         det_timestamp: Which detection model to load.
+
     Returns:
         Returns both models.
     """
@@ -160,12 +169,13 @@ def load_models(
 
 def find_all_targets(
     images: List[pathlib.Path],
-    clf_timestamp: str = _PROD_MODELS["clf"],
-    det_timestamp: str = _PROD_MODELS["det"],
+    clf_timestamp: str = production_models._CLASSIFIER["timestamp"],
+    det_timestamp: str = production_models._DETECTOR["timestamp"],
     visualization_dir: pathlib.Path = None,
     save_json_data: bool = False,
 ) -> None:
     """ Entrypoint function if running this script as main.
+
     Args:
         images: A list of all the images to inference.
         clf_timestamp: The classification model to load.
@@ -207,6 +217,7 @@ def find_targets(
     clf_confidence: float = 0.9,
 ) -> None:
     """ Tile up image, classify them, then perform object detection where it's needed.
+
     Args:
         image: The input image to inference.
         clf_model: The loaded classification model.
@@ -249,12 +260,14 @@ def find_targets(
 
 def globalize_boxes(
     results: List[postprocess.BoundingBox], img_size: int
-) -> List[types.Target]:
+) -> List[inference_types.Target]:
     """Take the normalized detections on a _tile_ and gloabalize them to pixel space of
     the original large image.
+
     Args:
         results: A list of the detections for the tiles.
         img_size: The size of the tile whihc is needed to unnormalize the detections.
+
     Returns:
         A list of the globalized boxes
     """
@@ -267,12 +280,12 @@ def globalize_boxes(
             relative_coords = box.box * img_size
             relative_coords += torch.Tensor(2 * list(coords)).int()
             final_targets.append(
-                types.Target(
+                inference_types.Target(
                     x=int(relative_coords[0]),
                     y=int(relative_coords[1]),
                     width=int(relative_coords[2] - relative_coords[0]),
                     height=int(relative_coords[3] - relative_coords[1]),
-                    shape=types.Shape[
+                    shape=inference_types.Shape[
                         config.OD_CLASSES[box.class_id].upper().replace("-", "_")
                     ],
                 )
@@ -285,11 +298,12 @@ def visualize_image(
     image_name: str,
     image: np.ndarray,
     visualization_dir: pathlib.Path,
-    targets: List[types.Target],
+    targets: List[inference_types.Target],
     clf_tiles: List[Tuple[int, int]],
 ) -> None:
     """Function used to draw boxes and information onto image for visualizing the output
     of inference.
+
     Args:
         image_name: The original image name used for saving the visualization.
         image: The image array.
@@ -325,7 +339,9 @@ def visualize_image(
 
 # TODO(alex) use this for writing jsons.
 def save_target_meta(
-    filename_meta: pathlib.Path, filename_image: str, targets: List[types.Target]
+    filename_meta: pathlib.Path,
+    filename_image: str,
+    targets: List[inference_types.Target],
 ) -> None:
     """ Save target metadata to a file. """
     meta = {}
@@ -372,14 +388,14 @@ if __name__ == "__main__":
         "--clf_timestamp",
         required=False,
         type=str,
-        default=_PROD_MODELS["clf"],
+        default=production_models._CLASSIFIER["timestamp"],
         help="Timestamp of the classifier model to use.",
     )
     parser.add_argument(
         "--det_timestamp",
         required=False,
         type=str,
-        default=_PROD_MODELS["det"],
+        default=production_models._DETECTOR["timestamp"],
         help="Timestamp of the detector model to use.",
     )
     parser.add_argument(

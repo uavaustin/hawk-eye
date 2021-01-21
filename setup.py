@@ -22,7 +22,7 @@ _MODELS_DIR = pathlib.Path.cwd() / "hawk_eye/core/production_models"
 
 
 def _get_packages() -> List[str]:
-    all_deps = pathlib.Path("requirements.txt").read_text().splitlines()
+    all_deps = pathlib.Path("hawk_eye/setup/requirements.txt").read_text().splitlines()
     deps = []
     deps_to_export = ["numpy", "pillow", "pyyaml"]
     for dep in all_deps:
@@ -99,7 +99,7 @@ try:
         cmdclass={"build": Build, "prepare_models": PrepareModels, "test": Test},
         include_package_data=True,
         install_requires=_get_packages(),
-        test_suite="hawk_eye.test.test_inference",
+        test_suite="hawk_eye.inference",
     )
 finally:
     shutil.rmtree(_MODELS_DIR)
