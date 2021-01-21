@@ -113,6 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../inference/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/inference_types.html">hawk_eye.inference.inference_types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../inference/production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
@@ -203,6 +204,16 @@ in the cloud.</p>
 competition where data is gathered.</p>
 <p>Tests associated with this module will be uploaded to a bucket where its contents
 are deleted after 24hrs.</p>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<ul class="simple">
+<li><p>Come up with a scheme for versioning base shapes and fonts. We might ocasionally
+design better shapes, which can be introduced as a new version. A policy for
+updating users and removing the old versions needs to be established.</p></li>
+<li><p>Come up with a policy for alerting users about new background archives. Is this
+just communicated from leads to members or another way?</p></li>
+</ul>
+</div>
 </div>
 <div class="section" id="module-hawk_eye.core.asset_manager">
 <span id="module"></span><h2>Module<a class="headerlink" href="#module-hawk_eye.core.asset_manager" title="Permalink to this headline">¶</a></h2>
@@ -227,7 +238,7 @@ the bucket name.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>FileNotFoundError if the object does not exist in Google Cloud.</p>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – if the object does not exist in Google Cloud.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -289,7 +300,7 @@ the bucket name.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>FileNotFoundError if the object does not exist locally.</p>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – if the object does not exist locally.</p>
 </dd>
 </dl>
 </dd></dl>

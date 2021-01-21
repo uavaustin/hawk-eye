@@ -17,14 +17,14 @@ competition where data is gathered.
 Tests associated with this module will be uploaded to a bucket where its contents
 are deleted after 24hrs.
 
-.. todolist::
+.. todo::
 
-    Come up with a scheme for versioning base shapes and fonts. We might ocasionally
-    design better shapes, which can be introduced as a new version. A policy for
-    updating users and removing the old versions needs to be established.
+    * Come up with a scheme for versioning base shapes and fonts. We might ocasionally
+      design better shapes, which can be introduced as a new version. A policy for
+      updating users and removing the old versions needs to be established.
 
-    Come up with a policy for alerting users about new background archives. Is this
-    just communicated from leads to members or another way?
+    * Come up with a policy for alerting users about new background archives. Is this
+      just communicated from leads to members or another way?
 
 Module
 ----------------------------------------
