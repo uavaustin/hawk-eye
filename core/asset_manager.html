@@ -200,53 +200,6 @@ stores model training runs, testing dependencies, and components for data genera
 in the cloud.</p>
 <p>For data generation, new data will be added whenever there is a test flight or
 competition where data is gathered.</p>
-<p>&#64;TODO uploading process</p>
-<span class="target" id="module-hawk_eye.core.asset_manager"></span><p>Functions to pull in data from the cloud.</p>
-<p>This relies on Google Cloud Storage python API. Please see the Image Recognition lead
-to recieve the proper credentials for access to the bucket.</p>
-<p>If you do not have Google Cloud APIs installed please run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ hawk_eye/setup/install_google_cloud.sh
-</pre></div>
-</div>
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_all">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_all" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull thee backgrounds, base shapes and font files as specified in
-<cite>hawk_eye.data_generation.generate_config.py</cite>.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_backgrounds">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_backgrounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_backgrounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_backgrounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull the shape generation backgrounds.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_base_shapes">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_base_shapes</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_base_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_base_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull the base shape images.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.pull_fonts">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">pull_fonts</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#pull_fonts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.pull_fonts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull the fonts.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="hawk_eye.core.asset_manager.upload_file">
-<code class="sig-prename descclassname">hawk_eye.core.asset_manager.</code><code class="sig-name descname">upload_file</code><span class="sig-paren">(</span><em class="sig-param">source_path: pathlib.Path</em>, <em class="sig-param">destination: str</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hawk_eye/core/asset_manager.html#upload_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.core.asset_manager.upload_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>A generic function for uploading a file from local storage to the cloud.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source_path</strong> – a path to the local file</p></li>
-<li><p><strong>desination</strong> – where to upload the file</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
 </div>
 </div>
 
