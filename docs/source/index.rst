@@ -67,6 +67,11 @@ Structure
     distribution
 
 .. toctree::
+    :caption: Google Cloud Storage
+
+    google_cloud
+
+.. toctree::
     :caption: Testing
 
     tests
