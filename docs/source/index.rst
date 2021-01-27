@@ -40,8 +40,10 @@ Structure
 .. toctree::
     :caption: Data Generation
 
+    data_generation/overview.rst
     data_generation/create_clf_data
     data_generation/create_detection_data
+    data_generation/real_data.rst
 
 
 .. toctree::
