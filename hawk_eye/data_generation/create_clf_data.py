@@ -17,6 +17,7 @@ import tempfile
 from PIL import Image
 import tqdm
 
+from hawk_eye.core import asset_manager
 from hawk_eye.data_generation import generate_config as config
 from hawk_eye.data_generation import create_detection_data
 
@@ -122,4 +123,5 @@ if __name__ == "__main__":
     random.seed(42)
 
     if config.CLF_IMAGES != 0:
+        asset_manager.pull_all()
         create_clf_images(config.CLF_IMAGES, config.DATA_DIR, config.CLF_VAL_FRACTION)
