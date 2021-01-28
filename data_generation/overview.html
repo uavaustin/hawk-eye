@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>hawk_eye.inference.benchmark_inference &mdash; hawk-eye 0.0.2b0 documentation</title>
+  <title>Overview &mdash; hawk-eye 0.0.2b0 documentation</title>
   
 
   
@@ -39,8 +39,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hawk_eye.inference.find_targets" href="find_targets.html" />
-    <link rel="prev" title="Overview" href="overview.html" /> 
+    <link rel="next" title="hawk_eye.data_generation.create_clf_data" href="create_clf_data.html" />
+    <link rel="prev" title="hawk_eye.core.detector" href="../core/detector.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -96,26 +96,26 @@
 <li class="toctree-l1"><a class="reference internal" href="../core/detector.html">hawk_eye.core.detector</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Data Generation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../data_generation/overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../data_generation/create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../data_generation/create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../data_generation/real_data.html">Real Image Datasets</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#future-work">Future Work</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="real_data.html">Real Image Datasets</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Training</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Inference</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">hawk_eye.inference.benchmark_inference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="find_targets.html">hawk_eye.inference.find_targets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="inference_types.html">hawk_eye.inference.inference_types</a></li>
-<li class="toctree-l1"><a class="reference internal" href="production_models.html">hawk_eye.inference.production_models</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../inference/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/inference_types.html">hawk_eye.inference.inference_types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/production_models.html">hawk_eye.inference.production_models</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Distribution</span></p>
 <ul>
@@ -176,14 +176,14 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>hawk_eye.inference.benchmark_inference</li>
+      <li>Overview</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
             
-              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/inference/benchmark_inference.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/data_generation/overview.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -197,46 +197,36 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-hawk_eye.inference.benchmark_inference">
-<span id="hawk-eye-inference-benchmark-inference"></span><h1>hawk_eye.inference.benchmark_inference<a class="headerlink" href="#module-hawk_eye.inference.benchmark_inference" title="Permalink to this headline">¶</a></h1>
-<p>A script to benchmark inference for both detector and classification models.
-This is useful for seeing how a new model performs on a device. For example, this
-might be run on the Jetson to see if the model meets performance cutoffs.</p>
-<dl class="function">
-<dt id="hawk_eye.inference.benchmark_inference.benchmark">
-<code class="sig-prename descclassname">hawk_eye.inference.benchmark_inference.</code><code class="sig-name descname">benchmark</code><span class="sig-paren">(</span><em class="sig-param">timestamp: str</em>, <em class="sig-param">model_type: str</em>, <em class="sig-param">batch_size: int</em>, <em class="sig-param">run_time: float</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/inference/benchmark_inference.html#benchmark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.inference.benchmark_inference.benchmark" title="Permalink to this definition">¶</a></dt>
-<dd><p>Benchmarks a model.</p>
-<p>This function will load the specified model, create a random tensor from the
-model’s internal height and width and the given batch then perform
-forward passes through the model for <code class="xref py py-attr docutils literal notranslate"><span class="pre">run_time</span></code> seconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>timestamp</strong> – The model’s specific timestamp.</p></li>
-<li><p><strong>model_type</strong> – Which type of model this is.</p></li>
-<li><p><strong>batch_size</strong> – The batch size to benchmark the model on.</p></li>
-<li><p><strong>run_time</strong> – How long to run the benchmark in seconds.</p></li>
+  <div class="section" id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>To train deep neural nets, we need a lot of data; typically, the more the better.
+It’s also best practice to have the training data’s distribution match the
+distribution of the data you want the model to perform well on. In UAV terms, we
+want data that accurately depicts the AUVSI SUAS competition targets. Unfortunately,
+this data can be hard to come by since there is only one competition per year and
+a limited number of flight tests.</p>
+<p>To work around this limitation, we have devised a way to create an unbounded number
+of artifical training images. The data generation pipeline takes a base shape, perhaps
+a circle or square, alters the color, pastes on a letter or number, then pastes the
+shape into an aerial image.</p>
+<p>A downside to artifical data is it’s not a perfect representation of the real targets.
+There are some artifacts in the shape edges, predictable color characteristics, among
+other things that allow our models to learn quite quickly what is a fake target.</p>
+<div class="section" id="future-work">
+<h2>Future Work<a class="headerlink" href="#future-work" title="Permalink to this headline">¶</a></h2>
+<p>In no particular order of importance, here is a list of future avenues to pursue in
+regards to data generation and collection.</p>
+<ul class="simple">
+<li><p>Streamline an approach to take the real targets UAV has to take pictures during
+flight test or from the roof tops of buildings. This is a way to supplement the data
+we already have of real images.</p></li>
+<li><p>Improve synthetic data generation by adding pixel level variations in color, blurs,
+and other realistic artifacts. A useful task is comparing some synthetic data to real
+life data and analyzing the differences between the two.</p></li>
+<li><p>Research methods for using Generative Artifical Nets to augment synthetic data to look
+more like real data. This may or may not be feasible, but if successful, a low-cost
+way to generate better data.</p></li>
 </ul>
-</dd>
-</dl>
-</dd></dl>
-
-<div class="section" id="example">
-<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ PYTHONPATH=. hawk_eye/inference/benchmark_inference.py \
-  --timestamp 2020-09-05T15.51.57 \
-  --model_type classifier \
-  --batch_size 50 \
-  --run_time 10
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ PYTHONPATH=. hawk_eye/inference/benchmark_inference.py \
-  --timestamp 2020-10-10T14.02.09 \
-  --model_type detector \
-  --batch_size 10 \
-  --run_time 15
-</pre></div>
-</div>
 </div>
 </div>
 
@@ -246,8 +236,8 @@ forward passes through the model for <code class="xref py py-attr docutils liter
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="find_targets.html" class="btn btn-neutral float-right" title="hawk_eye.inference.find_targets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="overview.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="create_clf_data.html" class="btn btn-neutral float-right" title="hawk_eye.data_generation.create_clf_data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../core/detector.html" class="btn btn-neutral float-left" title="hawk_eye.core.detector" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

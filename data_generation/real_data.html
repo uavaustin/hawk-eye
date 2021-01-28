@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Real Image Datasets &mdash; hawk-eye 0.0.2b0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Training" href="../training.html" />
+    <link rel="prev" title="hawk_eye.data_generation.create_detection_data" href="create_detection_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> hawk-eye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Core</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../core/asset_manager.html">hawk_eye.core.asset_manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/classifier.html">hawk_eye.core.classifier</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core/detector.html">hawk_eye.core.detector</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Data Generation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="create_clf_data.html">hawk_eye.data_generation.create_clf_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="create_detection_data.html">hawk_eye.data_generation.create_detection_data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Real Image Datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-real-image-dataset">Creating a Real Image Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-hawk_eye.data_generation.process_labels">hawk_eye.data_generation.process_labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-hawk_eye.data_generation.slice_image">hawk_eye.data_generation.slice_image</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Training</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Inference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../inference/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/benchmark_inference.html">hawk_eye.inference.benchmark_inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/find_targets.html">hawk_eye.inference.find_targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/inference_types.html">hawk_eye.inference.inference_types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/production_models.html">hawk_eye.inference.production_models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Distribution</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../distribution.html">Distribution</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Google Cloud Storage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../google_cloud.html">Google Cloud Structure</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Testing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tests.html">Tests</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hawk-eye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Real Image Datasets</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/uavaustin/hawk-eye/blob/master/docs/data_generation/real_data.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="real-image-datasets">
+<h1>Real Image Datasets<a class="headerlink" href="#real-image-datasets" title="Permalink to this headline">¶</a></h1>
+<p>Occasionally, we will have a test flight where image rec is able to capture real
+pictures of the targets we bring to the airfield. This type of data is ideal for
+training our models, but we currently (as of 2021) only have a couple dozen unique
+target images.</p>
+<p>While an obvious solution is to have more test flights, it’s likely each flight
+uncovers a new bug, delaying our data collection. Moreover, to robustify our data,
+we’d need to keep repainting our targets and making new ones. Over the years, we
+might reach a point where we have enough flight test data to train a model.</p>
+<p>Since this is not the case (2021), we’ve devised a scheme for training a model
+on completely synthetic data first, then finetuning on the real images we do have.</p>
+<div class="section" id="creating-a-real-image-dataset">
+<h2>Creating a Real Image Dataset<a class="headerlink" href="#creating-a-real-image-dataset" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>The first step is to acquire the images from the plane.</p></li>
+<li><p>To cut down on manual work down the line, take the set of images and look for
+any images that contain targets. Split the work among peers if possible.</p></li>
+<li><p>With a collection of the images that contain targets, we now need to create
+tile slices from these images. This can be done using the following command:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PYTHONPATH</span><span class="o">=</span>. hawk_eye/data_generation/slice_image.py <span class="se">\</span>
+    --image_dir /path/to/image/folder <span class="se">\</span>
+    --image_extensions <span class="s2">&quot;different image extensions ex: .JPG&quot;</span> <span class="se">\</span>
+    --save_dir /path/to/saved/tiles
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Note, there is also an optional argument for the overlap between tiles.
+Sometimes, you might end up with a target spilt during the tiling. The overlap
+parameter allows you to adjust the tiling to you get the full target in atleast
+one tile.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>(Optional) At this point, you’ll have a lot of background tiles. You can choose to
+sort through these tiles and remove the boundground tiles before labeling the targets.
+This will also make uploading the images to the browser-based labeling tool quicker.</p></li>
+<li><p>Go to <a class="reference external" href="https://www.makesense.ai/">Make Sense</a> to label the data.</p>
+<ol class="arabic simple">
+<li><p>Click the “Get Started” button in the bottom right corner of the screen.</p></li>
+<li><p>The app will prompt you to upload your images. Drag the folder of images into
+the browser.</p></li>
+<li><p>Select “Object Detection”</p></li>
+<li><p>A prompt will come up asking for a labels file. Inside of you <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>
+specified in the call to <code class="docutils literal notranslate"><span class="pre">slice_images.py</span></code>, a file called <code class="docutils literal notranslate"><span class="pre">labels.txt</span></code> was
+generated. Click the “Load Labels from File” button and upload <code class="docutils literal notranslate"><span class="pre">labels.txt</span></code>
+into the browser prompt.</p></li>
+<li><p>Click “Create Labels List” then click “Start Project”</p></li>
+</ol>
+</li>
+<li><p>Go through the tiles and label the targets. Make sure you assign the right class to
+each target.</p></li>
+<li><p>Once you are done labeling, click the “Actions” button at the top of the window and
+select “Export Annotations.”</p></li>
+<li><p>A prompt appears asking which format to export as. Click “Single CSV file” and
+“Export.” This file will be downloaded to your machine.</p></li>
+<li><p>Now process the labels with the following call:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PYTHONPATH</span><span class="o">=</span>. hawk_eye/data_generation/process_labels.py <span class="se">\</span>
+    --image_dir /path/to/image/folder <span class="se">\</span>
+    --save_dir /path/to/new/dataset <span class="se">\</span>
+    --csv_path /downloaded/csv/file <span class="se">\</span>
+    --val_percent <span class="m">100</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Note, the <code class="docutils literal notranslate"><span class="pre">image_dir</span></code> arg should be the same folder of images uploaded to Make Sense.
+Please name the <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> dataset as follows: <code class="docutils literal notranslate"><span class="pre">dataset_type_YYYYMMDD</span></code>.</p></li>
+</ul>
+</li>
+<li><p>This dataset can now be uploaded to Google Cloud and used for evaluation and training.</p></li>
+</ol>
+</div>
+<div class="section" id="module-hawk_eye.data_generation.process_labels">
+<span id="hawk-eye-data-generation-process-labels"></span><h2>hawk_eye.data_generation.process_labels<a class="headerlink" href="#module-hawk_eye.data_generation.process_labels" title="Permalink to this headline">¶</a></h2>
+<p>A script to parse the labels returned from Make Sense labeling jobs.</p>
+<dl class="function">
+<dt id="hawk_eye.data_generation.process_labels.parse_labels">
+<code class="sig-prename descclassname">hawk_eye.data_generation.process_labels.</code><code class="sig-name descname">parse_labels</code><span class="sig-paren">(</span><em class="sig-param">image_dir: pathlib.Path</em>, <em class="sig-param">save_dir: pathlib.Path</em>, <em class="sig-param">csv_path: pathlib.Path</em>, <em class="sig-param">val_percent: int</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/data_generation/process_labels.html#parse_labels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.process_labels.parse_labels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entrypoint function for the script.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_dir</strong> – path to the tiles that were uploaded for labeling.</p></li>
+<li><p><strong>save_dir</strong> – where to save the dataset.</p></li>
+<li><p><strong>csv_path</strong> – path to the labels csv downloaded from Make Sense.</p></li>
+<li><p><strong>val_percent</strong> – an int specifying the percentage of data to use for
+validation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-hawk_eye.data_generation.slice_image">
+<span id="hawk-eye-data-generation-slice-image"></span><h2>hawk_eye.data_generation.slice_image<a class="headerlink" href="#module-hawk_eye.data_generation.slice_image" title="Permalink to this headline">¶</a></h2>
+<p>Contains code to slice up an image into smaller tiles.</p>
+<dl class="function">
+<dt id="hawk_eye.data_generation.slice_image.slice_image">
+<code class="sig-prename descclassname">hawk_eye.data_generation.slice_image.</code><code class="sig-name descname">slice_image</code><span class="sig-paren">(</span><em class="sig-param">images: List, tile_size: Tuple[int, int], overlap: int, save_dir: pathlib.Path</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/data_generation/slice_image.html#slice_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.slice_image.slice_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take in an image and slice it into smaller images.
+:param images: A list of paths to images to be sliced.
+:param tile_size: The (width, height) of the tiles.
+:param overlap: The overlap between adjacent tiles.
+:param save_dir: The path to the directory within which to save slices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../training.html" class="btn btn-neutral float-right" title="Training" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="create_detection_data.html" class="btn btn-neutral float-left" title="hawk_eye.data_generation.create_detection_data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, UAV Austin.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
