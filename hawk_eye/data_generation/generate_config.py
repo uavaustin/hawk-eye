@@ -13,7 +13,7 @@ generate_config = config["generate"]
 ASSETS_DIR = pathlib.Path(__file__).parent / "assets"
 
 BACKGROUNDS = generate_config.get("backgrounds_archives", [])
-BACKGROUNDS_URLS = [f"assets/{bkg}" for bkg in BACKGROUNDS]
+BACKGROUNDS_URLS = [f"flight-images/{bkg}" for bkg in BACKGROUNDS]
 BACKGROUNDS_DIRS = [
     ASSETS_DIR / ARCHIVE_FILENAME.match(bkg).group() for bkg in BACKGROUNDS
 ]

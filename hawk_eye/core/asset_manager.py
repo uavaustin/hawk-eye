@@ -36,7 +36,8 @@ def pull_backgrounds() -> None:
 
     This function utilizes the ``BACKGROUNDS_URLS`` in
     ``hawk_eye.data_generation.generate_config.py``."""
-    download_file(config.BACKGROUNDS_URLS, config.ASSETS_DIR)
+    for background_archive in config.BACKGROUNDS_URLS:
+        download_file(background_archive, config.ASSETS_DIR)
 
 
 def pull_base_shapes() -> None:
@@ -44,7 +45,8 @@ def pull_base_shapes() -> None:
 
     This function utilizes the ``BASE_SHAPES_URL`` in
     ``hawk_eye.data_generation.generate_config.py``."""
-    download_file(config.BASE_SHAPES_URL, config.ASSETS_DIR)
+    for bash_shape_archive in config.BASE_SHAPES_URL:
+        download_file(bash_shape_archive, config.ASSETS_DIR)
 
 
 def pull_fonts() -> None:
