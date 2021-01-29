@@ -227,7 +227,8 @@
 
 <span class="sd">    This function utilizes the ``BACKGROUNDS_URLS`` in</span>
 <span class="sd">    ``hawk_eye.data_generation.generate_config.py``.&quot;&quot;&quot;</span>
-    <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BACKGROUNDS_URLS</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
+    <span class="k">for</span> <span class="n">background_archive</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">BACKGROUNDS_URLS</span><span class="p">:</span>
+        <span class="n">download_file</span><span class="p">(</span><span class="n">background_archive</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pull_base_shapes"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_base_shapes">[docs]</a><span class="k">def</span> <span class="nf">pull_base_shapes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -235,7 +236,8 @@
 
 <span class="sd">    This function utilizes the ``BASE_SHAPES_URL`` in</span>
 <span class="sd">    ``hawk_eye.data_generation.generate_config.py``.&quot;&quot;&quot;</span>
-    <span class="n">download_file</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BASE_SHAPES_URL</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
+    <span class="k">for</span> <span class="n">bash_shape_archive</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">BASE_SHAPES_URL</span><span class="p">:</span>
+        <span class="n">download_file</span><span class="p">(</span><span class="n">bash_shape_archive</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">ASSETS_DIR</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pull_fonts"><a class="viewcode-back" href="../../../core/asset_manager.html#hawk_eye.core.asset_manager.pull_fonts">[docs]</a><span class="k">def</span> <span class="nf">pull_fonts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
