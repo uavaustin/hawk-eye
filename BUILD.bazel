@@ -8,13 +8,15 @@ cmake_external(
     cmake_options = [
         "-GNinja",
         "-DBUILD_LIST=core,highgui,imgcodecs,imgproc",
+        "-DBUILD_TESTS=OFF",
+        "-DBUILD_PERF_TESTS=OFF",
     ],
     lib_source = "@opencv//:all",
     make_commands = [
         "ninja",
         "ninja install",
     ],
-    out_include_dir = "include/opencv4",
+    out_include_dir = "include/opencv2",
     shared_libraries = [
         "libopencv_core.so",
         "libopencv_highgui.so",
