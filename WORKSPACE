@@ -55,6 +55,7 @@ gcs_file(
 )
 
 load("//hawk_eye/core:models.bzl", "production_model")
+
 production_model(
     name = "classification_model",
     type = "classifier",
@@ -64,23 +65,8 @@ production_model(
     type = "detector",
 )
 
-http_archive(
-   name = "rules_foreign_cc",
-   strip_prefix = "rules_foreign_cc-main",
-   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/main.zip",
-)
-
-load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies()
-
-# OpenCV
-http_archive(
+new_local_repository(
     name = "opencv",
-    build_file_content = """
-filegroup(name = "all",
-srcs = glob(["**"]),
-visibility = ["//visibility:public"])""",
-    strip_prefix = "opencv-4.3.0",
-    urls = ["https://github.com/opencv/opencv/archive/4.3.0.zip"],
+    build_file = "//third_party:opencv.BUILD",
+    path = "/usr",
 )

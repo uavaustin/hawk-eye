@@ -1,22 +1,26 @@
-load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
+# Description:
+#   OpenCV libraries for video/image processing on Linux
 
-cmake_external(
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+licenses(["notice"])  # BSD license
+
+cc_library(
     name = "opencv",
-    cmake_options = [
-        "-GNinja",
-        "-DBUILD_LIST=core,highgui,imgcodecs,imgproc",
+    srcs = glob(
+        [
+            "lib/libopencv_core.so",
+            "lib/libopencv_highgui.so",
+            "lib/libopencv_imgcodecs.so",
+            "lib/libopencv_imgproc.so",
+        ],
+    ),
+    hdrs = glob([
+        "include/opencv4/opencv2/**/*.h*",
+    ]),
+    includes = [
+        "include/opencv4/",
     ],
-    lib_source = "@opencv//:all",
-    make_commands = [
-        "ninja",
-        "ninja install",
-    ],
-    out_include_dir = "include/opencv4",
-    shared_libraries = [
-        "libopencv_core.so",
-        "libopencv_highgui.so",
-        "libopencv_imgcodecs.so",
-        "libopencv_imgproc.so",
-    ],
+    linkstatic = 1,
     visibility = ["//visibility:public"],
 )

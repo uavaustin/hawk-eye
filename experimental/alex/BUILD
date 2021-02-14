@@ -2,6 +2,6 @@
 cc_binary(
     name = "opencv",
     srcs = ["main.cpp"],
-    deps = ["//:opencv"],
+    deps = ["@opencv//:opencv"],
     visibility = ["//visibility:public"]
 )
