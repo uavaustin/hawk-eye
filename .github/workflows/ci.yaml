@@ -15,13 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Install xmllint
+    - name: Install deps
       run: sudo apt-get install cmake gcc g++ build-essential ninja-build
 
     - name: Set up Python ${{ matrix.python-version }}
