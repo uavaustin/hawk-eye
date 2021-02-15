@@ -13,8 +13,8 @@ else
 fi
 
 sudo apt-get update && \
-    sudo apt-get upgrade -y
-sudo apt-get install -y curl gzip python3-dev cmake gcc g++ build-essential ninja-build
+    sudo apt-get upgrade -y && \
+    sudo apt-get install -y curl gzip python3-dev cmake gcc g++ build-essential ninja-build
 
 pushd $(mktemp -d)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
