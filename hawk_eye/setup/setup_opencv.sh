@@ -19,7 +19,7 @@ set -e
 
 pushd $(mktemp -d)
     echo "Installing OpenCV from source"
-    sudo apt update && sudo apt install build-essential git
+    sudo apt update && sudo apt install build-essential
     sudo apt install cmake ffmpeg libavformat-dev libdc1394-22-dev libgtk2.0-dev \
                     libjpeg-dev libpng-dev libswscale-dev libtbb2 libtbb-dev \
                     libtiff-dev

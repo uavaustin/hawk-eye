@@ -65,8 +65,57 @@ production_model(
     type = "detector",
 )
 
-new_local_repository(
-    name = "opencv",
-    build_file = "//third_party:opencv.BUILD",
-    path = "/usr",
+http_archive(
+    name = "io_bazel_rules_docker",
+    sha256 = "1698624e878b0607052ae6131aa216d45ebb63871ec497f26c67455b34119c80",
+    strip_prefix = "rules_docker-0.15.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.15.0/rules_docker-v0.15.0.tar.gz"],
 )
+
+load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
+    docker_toolchain_configure="toolchain_configure"
+)
+docker_toolchain_configure(name = "docker_config")
+
+load(
+    "@io_bazel_rules_docker//repositories:repositories.bzl",
+    container_repositories = "repositories",
+)
+
+container_repositories()
+
+load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
+
+container_deps()
+
+load(
+    "@io_bazel_rules_docker//container:container.bzl",
+    "container_pull",
+)
+
+container_pull(
+    name = "cuda-ubuntu18",
+    registry = "nvcr.io",
+    repository = "nvidia/cuda",
+    tag = "11.1.1-devel-ubuntu18.04",
+)
+
+all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
+http_archive(
+    name = "opencv",
+    build_file_content = all_content,
+    strip_prefix = "opencv-4.5.0",
+    url = "https://github.com/opencv/opencv/archive/4.5.0.zip",
+    sha256 = "168f6e61d8462fb3d5a29ba0d19c0375c111125cac753ad01035a359584ccde9",
+)
+
+
+http_archive(
+    name = "rules_foreign_cc",
+    strip_prefix = "rules_foreign_cc-master",
+    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/master.zip",
+)
+
+load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
+
+rules_foreign_cc_dependencies()

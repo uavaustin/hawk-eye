@@ -14,3 +14,4 @@ flake8==3.8.3
 pre-commit==2.7.1
 tensorboard==2.3.0
 google-cloud-storage==1.31.2
+setuptools==53.0.0

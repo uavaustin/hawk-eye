@@ -12,9 +12,9 @@ else
     VENV_PATH="$1"
 fi
 
-sudo apt-get update && \
-    sudo apt-get upgrade -y && \
-    sudo apt-get install -y curl gzip python3-dev cmake gcc g++ build-essential ninja-build
+apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y curl gzip python3-dev cmake gcc g++ build-essential ninja-build
 
 pushd $(mktemp -d)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
@@ -49,21 +49,8 @@ else
     fi
 fi
 
-# Get bazelisk
-pushd $(mktemp -d)
-if [[ $IS_MAC =~ "Darwin" ]]; then
-    echo "Downloading Bazelisk for Darwin"
-    curl -fL -o bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.7.2/bazelisk-darwin-amd64
-else
-    curl -fL -o bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.7.1/bazelisk-linux-amd64
-fi
-
-chmod +x bazel
-sudo mv bazel /usr/local/bin
-popd
-
 if test -f "/usr/bin/python"; then
     echo "Not making python symlink"
 else
-    sudo ln -sf $(which python3) /usr/bin/python
+    ln -sf $(which python3) /usr/bin/python
 fi
