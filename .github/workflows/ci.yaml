@@ -40,7 +40,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Setup Machine
-      run: hawk_eye/setup/setup_env.sh
+      run: sudo hawk_eye/setup/setup_env.sh
 
     - name: Authenticate on GCS
       uses: google-github-actions/setup-gcloud@master
