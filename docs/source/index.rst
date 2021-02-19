@@ -11,7 +11,8 @@ hawk-eye
    :caption: Contents:
 
 
-An Application to detect ground-based targets.
+An Application to detect ground-based targets. To get started, see the ``Setup``
+procedure below.
 
 Structure
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -75,6 +76,16 @@ Structure
     :caption: Testing
 
     tests
+
+.. toctree::
+    :caption: Third Party
+
+    third_party.rst
+
+.. toctree::
+    :caption: Documentation
+
+    docs.rst
 
 
 Indices and tables

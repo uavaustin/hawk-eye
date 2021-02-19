@@ -1,5 +1,4 @@
 global-exclude .git*
-global-exclude *_test.py
 
 include LICENSE
 include MANIFEST.in
