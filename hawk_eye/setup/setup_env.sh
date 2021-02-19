@@ -12,9 +12,13 @@ else
     VENV_PATH="$1"
 fi
 
-apt-get update && \
+sudo apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y curl gzip python3-dev cmake gcc-10 g++-10 build-essential ninja-build
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 60 --slave /usr/bin/g++ g++ /usr/bin/g++-10
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 40 --slave /usr/bin/g++ g++ /usr/bin/g++-10
+sudo update-alternatives --config gcc
 
 pushd $(mktemp -d)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
@@ -54,3 +58,18 @@ if test -f "/usr/bin/python"; then
 else
     ln -sf $(which python3) /usr/bin/python
 fi
+
+
+echo "Installing Bazelisk"
+
+pushd $(mktemp -d)
+if [[ $IS_MAC =~ "Darwin" ]]; then
+    echo "Downloading Bazelisk for Darwin"
+    curl -fL -o bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.7.2/bazelisk-darwin-amd64
+else
+    curl -fL -o bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.7.1/bazelisk-linux-amd64
+fi
+
+chmod +x bazel
+sudo mv bazel /usr/local/bin
+popd
