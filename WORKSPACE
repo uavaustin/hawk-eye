@@ -65,11 +65,9 @@ production_model(
     type = "detector",
 )
 
-
-all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 http_archive(
     name = "opencv",
-    build_file_content = all_content,
+    build_file = "//third_party:opencv.BUILD",
     strip_prefix = "opencv-4.5.0",
     url = "https://github.com/opencv/opencv/archive/4.5.0.zip",
     sha256 = "168f6e61d8462fb3d5a29ba0d19c0375c111125cac753ad01035a359584ccde9",
@@ -84,3 +82,27 @@ http_archive(
 load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
 
 rules_foreign_cc_dependencies()
+
+http_archive(
+    name = "com_google_absl",
+    sha256 = "f41868f7a938605c92936230081175d1eae87f6ea2c248f41077c8f88316f111",
+    strip_prefix = "abseil-cpp-20200225.2",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/20200225.2.tar.gz"],
+)
+
+http_archive(
+    name = "com_google_logging",
+    sha256 = "9e1b54eb2782f53cd8af107ecf08d2ab64b8d0dc2b7f5594472f3bd63ca85cdc",
+    strip_prefix = "glog-0.4.0",
+    urls = ["https://github.com/google/glog/archive/v0.4.0.zip"],
+)
+
+http_archive(
+    name = "com_github_gflags_gflags",
+    sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
+    strip_prefix = "gflags-2.2.2",
+    urls = [
+        "https://mirror.bazel.build/github.com/gflags/gflags/archive/v2.2.2.tar.gz",
+        "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
+    ],
+)
