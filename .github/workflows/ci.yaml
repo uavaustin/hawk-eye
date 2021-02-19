@@ -28,8 +28,9 @@ jobs:
         export_default_credentials: true
 
     - uses: actions/checkout@v2
+
     - name: Setup Machine
-      run: sudo hawk_eye/setup/setup_env.sh
+      run: hawk_eye/setup/setup_env.sh
 
     - name: Test
       run: |

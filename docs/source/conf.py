@@ -11,6 +11,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
+import pathlib
 import os
 import sys
 
@@ -29,7 +30,7 @@ releases_github_path = f"{docs_user}/{docs_repo}"
 
 
 # The full version, including alpha/beta/rc tags
-release = "0.0.2b0"
+release = pathlib.Path("../../version.txt").read_text()
 
 
 # -- General configuration ---------------------------------------------------
@@ -49,7 +50,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
 ]
 autoclass_content = "both"
-autodoc_mock_imports = ["google"]
+autodoc_mock_imports = ["google", "torch", "torchvision"]
 
 # build the templated autosummary files
 autosummary_generate = True
