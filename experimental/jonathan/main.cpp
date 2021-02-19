@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <sys/stat.h>
+#include <chrono>
 #include <ctime>
 #include <assert.h>
 #include "opencv2/core.hpp"
@@ -54,19 +55,16 @@ int main()
     std::string image_path = initial_path+std::to_string(image_n)+".jpg";
     //hard coded path since stat doesn't seem to see it
     unsigned long int t = 0;
-    while(image_n<=1001){
+    while(image_n<=1033){
     	//process image
     	//measuire only this time
     	if(file_exists(image_path)){
     		//lots of hard coding since I'm lazy
-    		time_t current_time;
-    		time_t end_time;
-    		time(&current_time);
+    		std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     		process_image(image_path,image_n);
-    		time(&end_time);
-    		long int e = static_cast<long int>(end_time);
-    		long int s = static_cast<long int>(current_time);
-    		t+=(e-s);
+    		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    		std::chrono::duration<double, std::milli> time_span = t2 - t1;
+    		t+=time_span.count();
     	}
 
     	image_path = initial_path+std::to_string(++image_n)+".jpg";
