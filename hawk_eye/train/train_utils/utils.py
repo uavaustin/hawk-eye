@@ -1,3 +1,6 @@
+"""Collection of functions that are helpful across the various
+training regimes."""
+
 import pathlib
 from typing import Any, Dict, List
 

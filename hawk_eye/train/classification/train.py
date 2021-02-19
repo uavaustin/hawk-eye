@@ -93,8 +93,7 @@ def train(
     best_scores_path.write_text(json.dumps({}))
 
     clf_model = classifier.Classifier(
-        backbone=model_cfg.get("backbone", None),
-        num_classes=model_cfg.get("num_classes", 2),
+        backbone=model_cfg.get("backbone"), num_classes=model_cfg.get("num_classes"),
     )
     if initial_timestamp is not None:
         clf_model.load_state_dict(
@@ -111,7 +110,6 @@ def train(
         if is_main:
             log.info("Mixed-precision (AMP) enabled.")
         scaler = torch.cuda.amp.GradScaler()
-        scaler
 
     ema_model = ema.Ema(clf_model)
 
@@ -125,7 +123,7 @@ def train(
 
     # Create the learning rate scheduler.
     lr_scheduler = None
-    if train_cfg["optimizer"]["type"].lower() == "sgd":
+    if train_cfg.get("lr_scheduler") is not None:
         lr_config = train_cfg.get("lr_schedule", {})
         warm_up_percent = lr_config.get("warmup_fraction", 0)
         start_lr = float(lr_config.get("start_lr"))
@@ -159,9 +157,10 @@ def train(
             data = data.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 
-            out = clf_model(data)
+            with torch.cuda.amp.autocast(enabled=use_mixed_precision):
+                out = clf_model(data)
+                loss = loss_fn(out, labels)
 
-            loss = loss_fn(out, labels)
             all_losses.append(loss.item())
 
             # Propogate the gradients back through the model.
@@ -285,7 +284,7 @@ def create_data_loader(
     clf_dataset = dataset.ClfDataset(
         data_dir,
         img_ext=generate_config.IMAGE_EXT,
-        augs=augmentations.clf_eval_augs(img_size, img_size)
+        augmentations=augmentations.clf_eval_augs(img_size, img_size)
         if val
         else augmentations.clf_train_augs(img_size, img_size),
     )

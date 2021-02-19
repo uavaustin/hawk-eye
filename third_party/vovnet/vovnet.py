@@ -179,10 +179,10 @@ class _OSA(torch.nn.Module):
 
         x = torch.cat(output, dim=1)
         xt = self.concat(x)
-        # xt = self.ese(xt)
+        xt = self.ese(xt)
 
         if self.identity:
-            xt += identity_feat
+            xt = xt + identity_feat
 
         return xt
 

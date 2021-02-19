@@ -8,11 +8,12 @@ import random
 import albumentations
 import cv2
 import torch
+from torch.utils import data
 
 from hawk_eye.train import augmentations as augs
 
 
-class ClfDataset(torch.utils.data.Dataset):
+class ClfDataset(data.Dataset):
     def __init__(
         self,
         data_dir: pathlib.Path,

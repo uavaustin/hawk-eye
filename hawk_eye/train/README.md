@@ -3,8 +3,8 @@ architecture. Check out `torchvision` for more possibilities. An example
 training command is:
 
 ```
-PYTHONPATH=. hawk_eye/train/train_clf.py \
-    --model_config configs/vovnet.yaml
+PYTHONPATH=. hawk_eye/train/classification/train.py \
+    --config hawk_eye/configs/vovnet.yaml
 ```
 
 Use a detector config with `hawk_eye/train/train_det.py`:
