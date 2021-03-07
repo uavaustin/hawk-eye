@@ -5,6 +5,7 @@ __author__ = "Kadhir Umasankar"
 
 import argparse
 import pathlib
+import time
 from typing import List, Tuple
 
 import numpy as np
@@ -26,6 +27,8 @@ def slice_image(
     Returns:
         None.
     """
+    tile_times = []
+    start_time = time.time()
     for filename in tqdm.tqdm(images, desc="Slicing images", total=len(images)):
 
         image = Image.open(filename)
@@ -46,6 +49,11 @@ def slice_image(
                 tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
                 tile.save(save_dir / f"{filename.stem}-{x}-{y}{filename.suffix}")
+
+                end_time = time.time()
+                total_time = end_time - start_time
+                tile_times.append(total_time)
+    print("Average Time to Slice an Image = ", ((sum(tile_times) / len(tile_times))))
 
     (save_dir / "labels.txt").write_text("\n".join(config.SHAPE_TYPES))
 

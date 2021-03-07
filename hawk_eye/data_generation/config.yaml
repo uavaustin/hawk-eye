@@ -65,9 +65,7 @@ inputs:
     height: 224
 generate:
   backgrounds_archives: [
-    "competition-2018.tar.gz",
     "competition-2019.tar.gz",
-    "test_flight_20190215.tar.gz"
   ]
   base_shapes_version: ["v1"]
   max_shapes_per_image: 2
