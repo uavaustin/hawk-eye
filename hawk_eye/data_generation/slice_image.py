@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Contains code to slice up an image into smaller tiles."""
+"""Contains code to slice up an image into smaller tiles.
+
+PYTHONPATH=. hawk_eye/data_generation/slice_image.py \
+    --image_dir hawk_eye/data_generation/assets/competition-2019 \
+    --image_extensions .jpg \
+    --save_dir hawk_eye/data_generation/assets/competition-2019-tiles
+
+
+PYTHONPATH=. hawk_eye/data_generation/slice_image.py \
+    --image_path hawk_eye/data_generation/assets/competition-2019/image-001642.jpg \
+    --image_extensions .jpg \
+    --save_dir hawk_eye/data_generation/assets/competition-2019-tiles
+
+"""
 
 __author__ = "Kadhir Umasankar"
 
@@ -28,6 +41,7 @@ def slice_image(
         None.
     """
     tile_times = []
+    # TODO(anya): replace with perf_counter()
     start_time = time.time()
     for filename in tqdm.tqdm(images, desc="Slicing images", total=len(images)):
 
@@ -54,6 +68,8 @@ def slice_image(
                 total_time = end_time - start_time
                 tile_times.append(total_time)
     print("Average Time to Slice an Image = ", ((sum(tile_times) / len(tile_times))))
+    # print(f"Average Time to Slice an Image = {sum(tile_times) / len(tile_times):.4f}")
+    # Print total time, total number of original images, how many tiles
 
     (save_dir / "labels.txt").write_text("\n".join(config.SHAPE_TYPES))
 
@@ -89,6 +105,7 @@ if __name__ == "__main__":
         "--overlap",
         type=int,
         default=50,
+        required=False,
         help="Number of pixels of overlap between adjacent slices.",
     )
     args = parser.parse_args()
