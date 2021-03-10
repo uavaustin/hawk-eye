@@ -56,7 +56,7 @@ inputs:
   cropping:
     width: 512
     height: 512
-    overlap: 100
+    overlap: 50
   detector:
     width: 512
     height: 512

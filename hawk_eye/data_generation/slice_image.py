@@ -43,34 +43,50 @@ def slice_image(
     tile_times = []
     # TODO(anya): replace with perf_counter()
     start_time = time.perf_counter()
+    tile_count = 0
+    tile_names = []
     for filename in tqdm.tqdm(images, desc="Slicing images", total=len(images)):
 
         image = Image.open(filename)
         width, height = image.size
-
+        print(width, height)
         # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
-        for x in range(0, width, tile_size[0] - overlap):
-
+        for x in range(0, width - overlap, tile_size[0] - overlap):
+            print(x)
             # Shift back to extract tiles on the image
-            if x + tile_size[0] >= width and x != 0:
+            if x + tile_size[0] > width and x != 0:
                 x = width - tile_size[0]
+                print(x, "offset")
 
-            for y in range(0, height, tile_size[1] - overlap):
+            for y in range(0, height - overlap, tile_size[1] - overlap):
 
-                if y + tile_size[1] >= height and y != 0:
+                if y + tile_size[1] > height and y != 0:
                     y = height - tile_size[1]
 
                 tile = image.crop((x, y, x + tile_size[0], y + tile_size[1]))
 
                 tile.save(save_dir / f"{filename.stem}-{x}-{y}{filename.suffix}")
-
+                tile_names.append(
+                    save_dir / f"{filename.stem}-{x}-{y}{filename.suffix}"
+                )
+                tile_count += 1
                 end_time = time.perf_counter()
                 total_time = end_time - start_time
                 tile_times.append(total_time)
+
+    print(len(tile_names))
+    print(len(set(tile_names)))
+    for tile_name in tile_names:
+        if tile_names.count(tile_name) > 1:
+            print(tile_name)
+
     print("Average Time to Slice an Image = ", ((sum(tile_times) / len(tile_times))))
     print(f"Total Time to Slice All Images = {sum(tile_times)}")
     print(f"Number of Original Images = {len(images)}")
-    print(f"Total Number of Tiles After Slicing All Images = ?")
+    tile_count2 = list(save_dir.glob("*"))
+    print(
+        f"Total Number of Tiles After Slicing All Images = {tile_count}, or {len(tile_count2)}"
+    )
 
     # print(f"Average Time to Slice an Image = {sum(tile_times) / len(tile_times):.4f}")
     # Print total time, total number of original images, how many tiles

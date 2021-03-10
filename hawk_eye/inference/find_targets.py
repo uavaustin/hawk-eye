@@ -98,7 +98,6 @@ def tile_image(
             tile = normalize(
                 np.array(image.crop((x, y, x + tile_size[0], y + tile_size[1])))
             )
-
             tiles.append(torch.Tensor(tile))
             coords.append((x, y))
 
@@ -214,7 +213,7 @@ def find_targets(
     image: Image.Image,
     clf_model: torch.nn.Module,
     det_model: torch.nn.Module,
-    clf_confidence: float = 0.9,
+    clf_confidence: float = 0.5,
 ) -> None:
     """ Tile up image, classify them, then perform object detection where it's needed.
 
