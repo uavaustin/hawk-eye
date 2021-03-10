@@ -42,7 +42,7 @@ def slice_image(
     """
     tile_times = []
     # TODO(anya): replace with perf_counter()
-    start_time = time.time()
+    start_time = time.perf_counter()
     for filename in tqdm.tqdm(images, desc="Slicing images", total=len(images)):
 
         image = Image.open(filename)
@@ -64,10 +64,14 @@ def slice_image(
 
                 tile.save(save_dir / f"{filename.stem}-{x}-{y}{filename.suffix}")
 
-                end_time = time.time()
+                end_time = time.perf_counter()
                 total_time = end_time - start_time
                 tile_times.append(total_time)
     print("Average Time to Slice an Image = ", ((sum(tile_times) / len(tile_times))))
+    print(f"Total Time to Slice All Images = {sum(tile_times)}")
+    print(f"Number of Original Images = {len(images)}")
+    print(f"Total Number of Tiles After Slicing All Images = ?")
+
     # print(f"Average Time to Slice an Image = {sum(tile_times) / len(tile_times):.4f}")
     # Print total time, total number of original images, how many tiles
 
