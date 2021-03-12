@@ -214,7 +214,7 @@ def find_targets(
     image: Image.Image,
     clf_model: torch.nn.Module,
     det_model: torch.nn.Module,
-    clf_confidence: float = 0.9,
+    clf_confidence: float = 0.0,
 ) -> None:
     """ Tile up image, classify them, then perform object detection where it's needed.
 
