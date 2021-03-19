@@ -197,10 +197,14 @@
 <span class="kn">import</span> <span class="nn">pathlib</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
+<span class="kn">from</span> <span class="nn">hawk_eye.core</span> <span class="kn">import</span> <span class="n">asset_manager</span>
 <span class="kn">from</span> <span class="nn">hawk_eye.data_generation</span> <span class="kn">import</span> <span class="n">generate_config</span>
 <span class="kn">from</span> <span class="nn">hawk_eye.data_generation</span> <span class="kn">import</span> <span class="n">create_detection_data</span>
+
+<span class="n">_GCS_DATASET_FOLDER</span> <span class="o">=</span> <span class="s2">&quot;real-target-datasets&quot;</span>
 
 
 <div class="viewcode-block" id="parse_labels"><a class="viewcode-back" href="../../../data_generation/real_data.html#hawk_eye.data_generation.process_labels.parse_labels">[docs]</a><span class="k">def</span> <span class="nf">parse_labels</span><span class="p">(</span>
@@ -208,6 +212,7 @@
     <span class="n">save_dir</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
     <span class="n">csv_path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
     <span class="n">val_percent</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">upload</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Entrypoint function for the script.</span>
 
@@ -217,6 +222,7 @@
 <span class="sd">        csv_path: path to the labels csv downloaded from Make Sense.</span>
 <span class="sd">        val_percent: an int specifying the percentage of data to use for</span>
 <span class="sd">            validation.</span>
+<span class="sd">        upload: Whether or not to upload the dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">save_dir</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;images&quot;</span>
     <span class="n">save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -286,7 +292,17 @@
             <span class="p">)</span>
         <span class="n">create_detection_data</span><span class="o">.</span><span class="n">create_coco_metadata</span><span class="p">(</span>
             <span class="n">tmp_val</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;val_coco.json&quot;</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">upload</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp_dir</span><span class="p">:</span>
+            <span class="n">tmp_archive</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.tar.gz&quot;</span>
+
+            <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tmp_archive</span><span class="p">,</span> <span class="s2">&quot;w:gz&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+                <span class="n">tar</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">save_dir</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">arcname</span><span class="o">=</span><span class="n">save_dir</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="n">destination</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_GCS_DATASET_FOLDER</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">tmp_archive</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">asset_manager</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">tmp_archive</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -315,9 +331,18 @@
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Fraction of data to use for validation.&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--upload&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Upload the dataset to GCS.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
-    <span class="n">parse_labels</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">val_percent</span><span class="p">)</span>
+    <span class="n">parse_labels</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">image_dir</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(),</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">save_dir</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(),</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">csv_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(),</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">val_percent</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">upload</span><span class="p">,</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>

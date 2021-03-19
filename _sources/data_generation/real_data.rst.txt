@@ -54,7 +54,7 @@ Creating a Real Image Dataset
 
     3. Select "Object Detection"
 
-    4. A prompt will come up asking for a labels file. Inside of you ``save_dir``
+    4. A prompt will come up asking for a labels file. Inside of your ``save_dir``
        specified in the call to ``slice_images.py``, a file called ``labels.txt`` was
        generated. Click the "Load Labels from File" button and upload ``labels.txt``
        into the browser prompt.
@@ -62,10 +62,14 @@ Creating a Real Image Dataset
     5. Click "Create Labels List" then click "Start Project"
 
 6. Go through the tiles and label the targets. Make sure you assign the right class to
-   each target.
+   each target. You'll likely see the same target in multiple tiles. Try to approach
+   each tile like you haven't seen the target before, meaning don't use your memory to
+   assist in labeling a target that would otherwise be indistinguishable. This will hurt
+   the model. Label targets that are reasonably visible.
 
-7. Once you are done labeling, click the "Actions" button at the top of the window and
-   select "Export Annotations."
+7. Once you are done labeling, recheck your labels. It's very easy to get in the groove
+   and forget to change the class on a target. Then, click the "Actions" button at the
+   top of the window and select "Export Annotations."
 
 8. A prompt appears asking which format to export as. Click "Single CSV file" and
    "Export." This file will be downloaded to your machine.

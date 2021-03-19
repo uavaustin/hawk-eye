@@ -243,7 +243,7 @@ This will also make uploading the images to the browser-based labeling tool quic
 <li><p>The app will prompt you to upload your images. Drag the folder of images into
 the browser.</p></li>
 <li><p>Select “Object Detection”</p></li>
-<li><p>A prompt will come up asking for a labels file. Inside of you <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>
+<li><p>A prompt will come up asking for a labels file. Inside of your <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>
 specified in the call to <code class="docutils literal notranslate"><span class="pre">slice_images.py</span></code>, a file called <code class="docutils literal notranslate"><span class="pre">labels.txt</span></code> was
 generated. Click the “Load Labels from File” button and upload <code class="docutils literal notranslate"><span class="pre">labels.txt</span></code>
 into the browser prompt.</p></li>
@@ -251,9 +251,13 @@ into the browser prompt.</p></li>
 </ol>
 </li>
 <li><p>Go through the tiles and label the targets. Make sure you assign the right class to
-each target.</p></li>
-<li><p>Once you are done labeling, click the “Actions” button at the top of the window and
-select “Export Annotations.”</p></li>
+each target. You’ll likely see the same target in multiple tiles. Try to approach
+each tile like you haven’t seen the target before, meaning don’t use your memory to
+assist in labeling a target that would otherwise be indistinguishable. This will hurt
+the model. Label targets that are reasonably visible.</p></li>
+<li><p>Once you are done labeling, recheck your labels. It’s very easy to get in the groove
+and forget to change the class on a target. Then, click the “Actions” button at the
+top of the window and select “Export Annotations.”</p></li>
 <li><p>A prompt appears asking which format to export as. Click “Single CSV file” and
 “Export.” This file will be downloaded to your machine.</p></li>
 <li><p>Now process the labels with the following call:</p>
@@ -277,7 +281,7 @@ Please name the <code class="docutils literal notranslate"><span class="pre">sav
 <p>A script to parse the labels returned from Make Sense labeling jobs.</p>
 <dl class="function">
 <dt id="hawk_eye.data_generation.process_labels.parse_labels">
-<code class="sig-prename descclassname">hawk_eye.data_generation.process_labels.</code><code class="sig-name descname">parse_labels</code><span class="sig-paren">(</span><em class="sig-param">image_dir: pathlib.Path</em>, <em class="sig-param">save_dir: pathlib.Path</em>, <em class="sig-param">csv_path: pathlib.Path</em>, <em class="sig-param">val_percent: int</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/data_generation/process_labels.html#parse_labels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.process_labels.parse_labels" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">hawk_eye.data_generation.process_labels.</code><code class="sig-name descname">parse_labels</code><span class="sig-paren">(</span><em class="sig-param">image_dir: pathlib.Path</em>, <em class="sig-param">save_dir: pathlib.Path</em>, <em class="sig-param">csv_path: pathlib.Path</em>, <em class="sig-param">val_percent: int</em>, <em class="sig-param">upload: bool</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/hawk_eye/data_generation/process_labels.html#parse_labels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hawk_eye.data_generation.process_labels.parse_labels" title="Permalink to this definition">¶</a></dt>
 <dd><p>Entrypoint function for the script.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -287,6 +291,7 @@ Please name the <code class="docutils literal notranslate"><span class="pre">sav
 <li><p><strong>csv_path</strong> – path to the labels csv downloaded from Make Sense.</p></li>
 <li><p><strong>val_percent</strong> – an int specifying the percentage of data to use for
 validation.</p></li>
+<li><p><strong>upload</strong> – Whether or not to upload the dataset.</p></li>
 </ul>
 </dd>
 </dl>
