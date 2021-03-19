@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-""" Generalized object detection training script. This script will use as many gpus as
-PyTorch can find. If Nvidia's Apex is available, that will be used for mixed precision
-training to speed the process up. """
+"""Generalized object detection training script. This script will use as many gpus as
+PyTorch can find."""
 
 import argparse
 import pathlib

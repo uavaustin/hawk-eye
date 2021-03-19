@@ -6,10 +6,14 @@ import csv
 import pathlib
 import json
 import shutil
+import tarfile
 import tempfile
 
+from hawk_eye.core import asset_manager
 from hawk_eye.data_generation import generate_config
 from hawk_eye.data_generation import create_detection_data
+
+_GCS_DATASET_FOLDER = "real-target-datasets"
 
 
 def parse_labels(
@@ -17,6 +21,7 @@ def parse_labels(
     save_dir: pathlib.Path,
     csv_path: pathlib.Path,
     val_percent: int,
+    upload: bool,
 ) -> None:
     """Entrypoint function for the script.
 
@@ -26,6 +31,7 @@ def parse_labels(
         csv_path: path to the labels csv downloaded from Make Sense.
         val_percent: an int specifying the percentage of data to use for
             validation.
+        upload: Whether or not to upload the dataset.
     """
     save_dir = save_dir / "images"
     save_dir.mkdir(exist_ok=True, parents=True)
@@ -97,6 +103,16 @@ def parse_labels(
             tmp_val, save_dir.parent / "val_coco.json"
         )
 
+    if upload:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_archive = pathlib.Path(tmp_dir) / f"{save_dir.parent.name}.tar.gz"
+
+            with tarfile.open(tmp_archive, "w:gz") as tar:
+                tar.add(save_dir.parent, arcname=save_dir.parent.name)
+
+            destination = f"{_GCS_DATASET_FOLDER}/{tmp_archive.name}"
+            asset_manager.upload_file(tmp_archive, destination)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
@@ -124,6 +140,15 @@ if __name__ == "__main__":
         help="Fraction of data to use for validation.",
         default=20,
     )
+    parser.add_argument(
+        "--upload", action="store_true", help="Upload the dataset to GCS.",
+    )
     args = parser.parse_args()
 
-    parse_labels(args.image_dir, args.save_dir, args.csv_path, args.val_percent)
+    parse_labels(
+        args.image_dir.expanduser(),
+        args.save_dir.expanduser(),
+        args.csv_path.expanduser(),
+        args.val_percent,
+        args.upload,
+    )

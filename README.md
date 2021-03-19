@@ -9,7 +9,8 @@
 Specifically, the goal is to produce models that perform well in the [AUVSI SUAS](https://static1.squarespace.com/static/5d554e14aaa5e300011a4844/t/5fd3780f2662933f59dbedd5/1607694352554/auvsi_suas-2021-rules.pdf)
 competition.
 
-The output of this project is a python package that can be utilized by UAV Austin's
+We train our models with a fusion of real and synthetic data and package our inferencing
+pipeline as a python pip package. The output of this project is utilized by UAV Austin's
 [Orchestra](https://github.com/uavaustin/orchestra) team.
 
 
@@ -87,7 +88,7 @@ now, we mainly use it for python testing, but if PyTorch eventually supports bui
 itself as an external third party project, we might start using the C++ PyTorch API.
 
 For now, if you're interested,
-[`here`](https://docs.bazel.build/versions/master/user-manual.html)
+[here](https://docs.bazel.build/versions/master/user-manual.html)
 is some documentation.
 
 `hawk_eye` closely models the repository structure of Google's [`MediaPipe`](https://github.com/google/mediapipe).

@@ -6,8 +6,7 @@ is valuable so the model sees that not every image will have a target, as this i
 real life case. """
 
 import dataclasses
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 import multiprocessing
 import random
 import json
@@ -16,7 +15,10 @@ import pathlib
 from tqdm import tqdm
 import PIL
 from PIL import Image
-from PIL import ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import ImageDraw
+from PIL import ImageFilter
+from PIL import ImageFont
+from PIL import ImageOps
 
 from hawk_eye.data_generation import generate_config as config
 from hawk_eye.core import asset_manager
