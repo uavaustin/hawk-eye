@@ -1,4 +1,4 @@
-# hawk_eye
+# hawk-eye
 > Code to find targets in aerial imagery.
 
 ![Python3 CI](https://github.com/uavaustin/hawk-eye/workflows/Python3%20CI/badge.svg)
@@ -12,6 +12,11 @@ competition.
 We train our models with a fusion of real and synthetic data and package our inferencing
 pipeline as a python pip package. The output of this project is utilized by UAV Austin's
 [Orchestra](https://github.com/uavaustin/orchestra) team.
+
+
+## Overview
+
+![overview](https://user-images.githubusercontent.com/31543169/111933494-98973400-8a8d-11eb-930f-38fe56573c82.gif)
 
 
 ## Contents
