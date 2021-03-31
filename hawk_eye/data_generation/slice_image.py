@@ -32,13 +32,13 @@ def slice_image(
         width, height = image.size
 
         # Cropping logic repurposed from hawk_eye.inference.find_targets.tile_image()
-        for x in range(0, width, tile_size[0] - overlap):
+        for x in range(0, width - overlap, tile_size[0] - overlap):
 
             # Shift back to extract tiles on the image
             if x + tile_size[0] >= width and x != 0:
                 x = width - tile_size[0]
 
-            for y in range(0, height, tile_size[1] - overlap):
+            for y in range(0, height - overlap, tile_size[1] - overlap):
 
                 if y + tile_size[1] >= height and y != 0:
                     y = height - tile_size[1]
