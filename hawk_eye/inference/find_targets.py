@@ -294,6 +294,38 @@ def globalize_boxes(
     return final_targets
 
 
+def resolve_boxes(
+    results: List[postprocess.BoundingBox], img_size: int
+) -> List[inference_types.Target]:
+
+    """Removes targets that are within 5 pixels of the edge of the tile."""
+
+    img_size = torch.Tensor([img_size] * 4)
+
+    for coords, bboxes in results:
+        for box in bboxes:
+            relative_coords = box.box * img_size
+            if (
+                int(relative_coords[1]) - 5 <= 0
+                or int(relative_coords[3]) + 5 >= 512
+                or int(relative_coords[0]) - 5 <= 0
+                or int(relative_coords[2]) + 5 >= 512
+            ):
+                final_targets.remove(
+                    inference_types.Target(
+                        x=int(relative_coords[0]),
+                        y=int(relative_coords[1]),
+                        width=int(relative_coords[2] - relative_coords[0]),
+                        height=int(relative_coords[3] - relative_coords[1]),
+                        shape=inference_types.Shape[
+                            config.OD_CLASSES[box.class_id].upper().replace("-", "_")
+                        ],
+                    )
+                )
+
+    return final_targets
+
+
 def visualize_image(
     image_name: str,
     image: np.ndarray,
