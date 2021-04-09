@@ -266,7 +266,7 @@ def globalize_boxes(
 
     Args:
         results: A list of the detections for the tiles.
-        img_size: The size of the tile whihc is needed to unnormalize the detections.
+        img_size: The size of the tile which is needed to unnormalize the detections.
 
     Returns:
         A list of the globalized boxes
@@ -294,11 +294,16 @@ def globalize_boxes(
     return final_targets
 
 
-def resolve_boxes(
-    results: List[postprocess.BoundingBox], img_size: int
-) -> List[inference_types.Target]:
+def resolve_boxes(bbox: torch.Tensor, tile_size: int, exclusion_region: int) -> bool:
+    """Removes targets that are within 5 pixels of the edge of the tile.
 
-    """Removes targets that are within 5 pixels of the edge of the tile."""
+    Examples::
+
+        >>> resolve_boxes(torch.Tensor([0, 10, 60, 70]), 512, 5)
+        False
+        >>> resolve_boxes(torch.Tensor([10, 10, 60, 70]), 512, 5)
+        True
+    """
 
     img_size = torch.Tensor([img_size] * 4)
 
