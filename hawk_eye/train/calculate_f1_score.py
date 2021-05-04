@@ -17,7 +17,7 @@ from typing import List
 
 
 def calculate_f1_score(
-    true_positives, false_positives, false_negatives, beta: int
+    true_positives, false_positives, false_negatives, beta: float
 ) -> int:
 
     """ This function finds the F1 score for a model.
