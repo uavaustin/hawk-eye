@@ -43,11 +43,19 @@ def calculate_f1_score(
 
 def main(model_type: str, timestamp: str, datasets: List[str]):
 
-    if model_type == "":
-        # load that model type
+    if model_type == "classifier":
+        clf_model = classifier.Classifier(
+            timestamp=timestamp, half_precision=torch.cuda.is_available()
+        )
+        clf_model.eval()
         ...
-    elif model_type == "the other model type":
-        # load the other type
+    elif model_type == "detector":
+        det_model = detector.Detector(
+            timestamp=timestamp,
+            confidence=0.05,
+            half_precision=torch.cuda.is_available(),
+        )
+        det_model.eval()
         ...
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
