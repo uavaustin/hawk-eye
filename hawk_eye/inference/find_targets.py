@@ -151,7 +151,7 @@ def load_models(
     # TODO(alex): Pass in the confidence for the detector.
     det_model = detector.Detector(
         timestamp=det_timestamp,
-        confidence=0.2,
+        confidence=0.05,
         half_precision=torch.cuda.is_available(),
     )
     det_model.eval()
