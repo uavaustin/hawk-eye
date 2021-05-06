@@ -13,12 +13,14 @@ PYTHONPATH=. python3 hawk_eye/train/calculate_f1_score.py \
 """
 
 import argparse
+import torch
+
 from typing import List
+from hawk_eye.core import classifier
+from hawk_eye.core import detector
 
 
-def calculate_f1_score(
-    true_positives, false_positives, false_negatives, beta: float
-) -> int:
+def calculate_f1_score(precision, recall, beta: float) -> int:
 
     """ This function finds the F1 score for a model.
 
@@ -30,9 +32,6 @@ def calculate_f1_score(
         .666666
 
     """
-
-    precision = true_positives / (true_positives + false_positives)
-    recall = true_positives / (true_positives + false_negatives)
 
     f1_score = (1 + (beta ** 2)) * (
         (precision * recall) / (((beta ** 2) * precision) + recall)
@@ -48,7 +47,7 @@ def main(model_type: str, timestamp: str, datasets: List[str]):
             timestamp=timestamp, half_precision=torch.cuda.is_available()
         )
         clf_model.eval()
-        ...
+        print(clf_model)
     elif model_type == "detector":
         det_model = detector.Detector(
             timestamp=timestamp,
@@ -56,7 +55,7 @@ def main(model_type: str, timestamp: str, datasets: List[str]):
             half_precision=torch.cuda.is_available(),
         )
         det_model.eval()
-        ...
+        print(det_model)
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
