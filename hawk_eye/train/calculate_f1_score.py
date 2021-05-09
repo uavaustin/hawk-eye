@@ -26,10 +26,10 @@ def calculate_f1_score(precision, recall, beta: float) -> int:
 
     Examples::
 
-        >>> calculate_f1_score(5, 2, 1, 2)
-        .8064516
-        >>> calculate_f1_score(10, 5, 5, 2)
-        .666666
+        >>> calculate_f1_score(.8, .5, 2)
+        .54054054
+        >>> calculate_f1_score(.3, .4, 1)
+        .34285714
 
     """
 
@@ -40,15 +40,29 @@ def calculate_f1_score(precision, recall, beta: float) -> int:
     return f1_score
 
 
-def main(model_type: str, timestamp: str, datasets: List[str]):
+def load_model(entered_model: str):
 
+    if entered_model == "classifier":
+        model_type = "classifier"
+    elif entered_model == "detector":
+        model_type = "detector"
+    else:
+        raise ValueError(f"Unsupported model type: {entered_model}")
+
+    return model_type
+
+
+def load_classifier(model_type, timpestamp: str, datasets: List[str]):
     if model_type == "classifier":
         clf_model = classifier.Classifier(
             timestamp=timestamp, half_precision=torch.cuda.is_available()
         )
         clf_model.eval()
         print(clf_model)
-    elif model_type == "detector":
+
+
+def load_detector(model_type, timestamp: str, datasets: List[str]):
+    if model_type == "detector":
         det_model = detector.Detector(
             timestamp=timestamp,
             confidence=0.05,
@@ -56,8 +70,6 @@ def main(model_type: str, timestamp: str, datasets: List[str]):
         )
         det_model.eval()
         print(det_model)
-    else:
-        raise ValueError(f"Unsupported model type: {model_type}")
 
 
 if __name__ == "__main__":
