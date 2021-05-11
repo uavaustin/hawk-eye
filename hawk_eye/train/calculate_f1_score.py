@@ -40,36 +40,39 @@ def calculate_f1_score(precision, recall, beta: float) -> int:
     return f1_score
 
 
-def load_model(entered_model: str):
+def load_classifier(timestamp: str):
 
-    if entered_model == "classifier":
-        model_type = "classifier"
-    elif entered_model == "detector":
-        model_type = "detector"
+    clf_model = classifier.Classifier(
+        timestamp=timestamp, half_precision=torch.cuda.is_available()
+    )
+    clf_model.eval()
+    print(clf_model)
+    return clf_model
+
+
+def load_detector(timestamp: str):
+
+    det_model = detector.Detector(
+        timestamp=timestamp, confidence=0.05, half_precision=torch.cuda.is_available(),
+    )
+    det_model.eval()
+    print(det_model)
+    return det_model
+
+
+def load_model(model_type: str, timestamp: str):
+
+    if model_type == "classifier":
+        load_classifier(timestamp)
+    elif model_type == "detector":
+        load_detector(timestamp)
     else:
         raise ValueError(f"Unsupported model type: {entered_model}")
 
-    return model_type
 
+def main(model_type, timestamp: str, datasets: List[str]):
 
-def load_classifier(model_type, timpestamp: str, datasets: List[str]):
-    if model_type == "classifier":
-        clf_model = classifier.Classifier(
-            timestamp=timestamp, half_precision=torch.cuda.is_available()
-        )
-        clf_model.eval()
-        print(clf_model)
-
-
-def load_detector(model_type, timestamp: str, datasets: List[str]):
-    if model_type == "detector":
-        det_model = detector.Detector(
-            timestamp=timestamp,
-            confidence=0.05,
-            half_precision=torch.cuda.is_available(),
-        )
-        det_model.eval()
-        print(det_model)
+    load_model(model_type, timestamp)
 
 
 if __name__ == "__main__":
