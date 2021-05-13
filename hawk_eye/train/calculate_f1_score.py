@@ -46,7 +46,6 @@ def load_classifier(timestamp: str):
         timestamp=timestamp, half_precision=torch.cuda.is_available()
     )
     clf_model.eval()
-    print(clf_model)
     return clf_model
 
 
@@ -56,23 +55,24 @@ def load_detector(timestamp: str):
         timestamp=timestamp, confidence=0.05, half_precision=torch.cuda.is_available(),
     )
     det_model.eval()
-    print(det_model)
     return det_model
 
 
 def load_model(model_type: str, timestamp: str):
 
     if model_type == "classifier":
-        load_classifier(timestamp)
+        model = load_classifier(timestamp)
     elif model_type == "detector":
-        load_detector(timestamp)
+        model = load_detector(timestamp)
     else:
-        raise ValueError(f"Unsupported model type: {entered_model}")
+        raise ValueError(f"Unsupported model type: {model_type}")
+    return model
 
 
 def main(model_type, timestamp: str, datasets: List[str]):
 
-    load_model(model_type, timestamp)
+    model = load_model(model_type, timestamp)
+    print(model)
 
 
 if __name__ == "__main__":
