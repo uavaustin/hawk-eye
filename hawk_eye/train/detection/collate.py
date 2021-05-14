@@ -6,7 +6,7 @@ from typing import Tuple, List
 
 import torch
 
-from third_party.models import losses
+from third_party.detectron2 import losses
 
 
 class CollateVal:
@@ -17,16 +17,16 @@ class CollateVal:
         pass
 
     def __call__(self, data_batch: List[dict]) -> Tuple[torch.Tensor, torch.Tensor]:
-        images, image_ids = [], []
+        images, category_ids, boxes = [], [], []
 
         for item in data_batch:
-
+            boxes.append(torch.Tensor(item["bboxes"]))
             image_tensor = torch.Tensor(item["image"])
             images.append(image_tensor)
-            image_ids.append(torch.Tensor([item["image_ids"]]))
+            category_ids.append(torch.Tensor([item["category_ids"]]))
 
         # BHWC -> BCHW the images
-        return torch.stack(images).permute(0, 3, 1, 2), image_ids
+        return torch.stack(images).permute(0, 3, 1, 2), category_ids, boxes
 
 
 class Collate:

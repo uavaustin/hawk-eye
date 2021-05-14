@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Generalized object detection training script. This script will use as many gpus as
-PyTorch can find."""
+""" Generalized object detection training script. This script will use as many gpus as
+PyTorch can find. PyTorch's mixed precision training will automatially be used. """
 
 import argparse
 import pathlib
@@ -17,18 +17,22 @@ import os
 import yaml
 
 import torch
+from torch.utils import data
+from torch.nn import parallel
+from torch import distributed
 import numpy as np
 
 from hawk_eye.core import detector
 from hawk_eye.core import asset_manager
-from hawk_eye.train import datasets
-from hawk_eye.train import collate
+from hawk_eye.train.detection import dataset
+from hawk_eye.train.detection import collate
 from hawk_eye.train.train_utils import ema
 from hawk_eye.train.train_utils import logger
 from hawk_eye.train.train_utils import utils
 from hawk_eye.data_generation import generate_config
-from third_party.models import losses
 from third_party import coco_eval
+from third_party.detectron2 import losses
+from third_party.detectron2 import pascal_voc
 
 _LOG_INTERVAL = 10
 _IMG_WIDTH, _IMG_HEIGHT = generate_config.DETECTOR_SIZE
@@ -40,14 +44,12 @@ def detections_to_dict(
 ) -> List[dict]:
     """Used to turn raw bounding box detections into a dictionary which can be
     serialized for the pycocotools package.
-
     Args:
         bboxes: A list of bounding boxes to save.
         image_ids: The ids of the images which the boxes correspond to. We need these
             in order to match predictions to ground truth.
         image_size: The boxes are original normalized, so we need to project them to
             image coordinates.
-
     Returns:
         A list of box dictionaries in the COCO format.
     """
@@ -56,7 +58,7 @@ def detections_to_dict(
     for image_boxes, image_id in zip(bboxes, image_ids):
         for bbox in image_boxes:
             box = bbox.box
-            # XYXY -> XYWH
+            # XYXY -> XYWH and unnormalize
             box[2:] -= box[:2]
             box *= image_size
             detections.append(
@@ -80,7 +82,6 @@ def train(
     initial_timestamp: pathlib.Path = None,
 ) -> None:
     """Main training loop that will also call out to separate evaluation function.
-
     Args:
         local_rank: The process's rank. 0 if there is no distributed training.
         world_size: How many devices are participating in training.
@@ -94,6 +95,7 @@ def train(
     # to be set before loading the model.
     is_main = local_rank == 0
     use_cuda = torch.cuda.is_available()
+    mixed_preicison = use_cuda
     device = torch.device(f"cuda:{local_rank}" if use_cuda else "cpu")
     if use_cuda:
         torch.cuda.set_device(device)
@@ -125,11 +127,15 @@ def train(
         log.info(f"Model architecture: \n {model}")
 
     # TODO(alex) these paths should be in the generate config
+    data_dirs = [generate_config.DATA_DIR / "detector"]
+    data_dirs += [
+        generate_config.DATA_DIR / real for real in train_cfg.get("real-data-val", [])
+    ]
+
     train_batch_size = train_cfg.get("train_batch_size")
     train_loader, train_sampler = create_data_loader(
         train_cfg,
-        generate_config.DATA_DIR / "detector_train/images",
-        generate_config.DATA_DIR / "detector_train/train_coco.json",
+        data_dirs,
         model.anchors.all_anchors,
         train_batch_size,
         world_size,
@@ -137,10 +143,14 @@ def train(
         image_size=model_cfg.get("image_size", 512),
     )
     eval_batch_size = train_cfg.get("eval_batch_size")
+    # eval_dirs = [generate_config.DATA_DIR / "detector"]
+    eval_dirs = [
+        generate_config.DATA_DIR / data_dir
+        for data_dir in train_cfg.get("real-data-val", [])
+    ]
     eval_loader, _ = create_data_loader(
         train_cfg,
-        generate_config.DATA_DIR / "detector_val/images",
-        generate_config.DATA_DIR / "detector_val/val_coco.json",
+        eval_dirs,
         model.anchors.all_anchors,
         eval_batch_size,
         world_size,
@@ -151,8 +161,7 @@ def train(
     # Construct the optimizer and wrap with Apex if available.
     optimizer = utils.create_optimizer(train_cfg["optimizer"], model)
 
-    # Adjust the model for distributed training. If we are using apex, wrap the model
-    # with Apex's utilies, else PyTorch.
+    # Adjust the model for distributed training.
     if world_size > 1:
         model = torch.nn.parallel.DistributedDataParallel(
             model, device_ids=[local_rank], find_unused_parameters=True
@@ -185,7 +194,7 @@ def train(
         )
 
     scaler = torch.cuda.amp.GradScaler()
-
+    global_step = 0
     # Begin training. Loop over all the epochs and run through the training data, then
     # the evaluation data. Save the best weights for the various metrics we capture.
     for epoch in range(epochs):
@@ -197,15 +206,16 @@ def train(
             train_sampler.set_epoch(epoch)
 
         previous_loss = None
+
         for idx, (images, gt_regressions, gt_classes) in enumerate(train_loader):
 
-            optimizer.zero_grad()
+            optimizer.zero_grad(True)
 
             images = images.to(device, non_blocking=True)
             gt_regressions = gt_regressions.to(device, non_blocking=True)
             gt_classes = gt_classes.to(device, non_blocking=True)
 
-            with torch.cuda.amp.autocast():
+            with torch.cuda.amp.autocast(enabled=mixed_preicison):
                 # Forward pass through detector
                 cls_per_level, reg_per_level = model(images)
 
@@ -215,7 +225,7 @@ def train(
                     gt_anchors_deltas=gt_regressions,
                     cls_per_level=cls_per_level,
                     reg_per_level=reg_per_level,
-                    num_classes=model.module.num_classes,
+                    num_classes=model_cfg.get("num_classes"),
                 )
 
                 total_loss = cls_loss + reg_loss
@@ -229,7 +239,7 @@ def train(
             if previous_loss is None:
                 previous_loss = total_loss
 
-            if world_size > 1:
+            if mixed_preicison:
                 scaler.scale(total_loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
@@ -245,12 +255,17 @@ def train(
             lr = optimizer.param_groups[0]["lr"]
 
             if idx % _LOG_INTERVAL == 0 and is_main:
+                clf_loss = sum(clf_losses) / len(clf_losses)
+                det_loss = sum(reg_losses) / len(reg_losses)
                 log.info(
                     f"Epoch: {epoch} step {idx}, "
-                    f"clf loss {sum(clf_losses) / len(clf_losses):.5}, "
-                    f"reg loss {sum(reg_losses) / len(reg_losses):.5}, "
+                    f"clf loss {clf_loss:.5}, "
+                    f"reg loss {det_loss:.5}, "
                     f"lr {lr:.5}"
                 )
+                log.metric("clf_loss", clf_loss, global_step)
+                log.metric("reg_loss", det_loss, global_step)
+                log.metric("lr", lr, global_step)
 
                 if total_loss < previous_loss:
                     if isinstance(
@@ -260,8 +275,10 @@ def train(
                     else:
                         utils.save_model(model, save_dir / "min-loss.pt")
 
+            global_step += 1
+
         # Call evaluation function if past eval delay.
-        if epoch >= eval_start_epoch and is_main:
+        if epoch >= eval_start_epoch:
 
             if is_main:
                 log.info("Starting evaluation")
@@ -269,23 +286,23 @@ def train(
             model.eval()
             start = time.perf_counter()
             eval_results, improved_metics = eval(
-                model, eval_loader, eval_results, save_dir
+                model, eval_loader, is_main, eval_results, save_dir
             )
             model.train()
-            for metric in improved_metics:
-                utils.save_model(model, save_dir / f"{metric}.pt")
 
             # Call for EMA model.
             ema_eval_results, ema_improved_metrics = eval(
-                ema_model.ema_model, eval_loader, ema_eval_results, save_dir
+                ema_model.ema_model, eval_loader, is_main, ema_eval_results, save_dir
             )
-            for metric in ema_improved_metrics:
-                utils.save_model(model, save_dir / f"ema-{metric}.pt")
 
             if is_main:
                 log.info(f"Evaluation took {time.perf_counter() - start:.3f} seconds.")
                 log.info(f"Improved metrics: {improved_metics}")
                 log.info(f"Improved ema metrics: {improved_metics}")
+                for metric in ema_improved_metrics:
+                    utils.save_model(model, save_dir / f"ema-{metric}.pt")
+                for metric in improved_metics:
+                    utils.save_model(model, save_dir / f"{metric}.pt")
 
         if is_main:
             log.info(
@@ -299,100 +316,122 @@ def train(
 def eval(
     model: torch.nn.Module,
     eval_loader: torch.utils.data.DataLoader,
+    is_main: bool,
     previous_best: dict,
     save_dir: pathlib.Path = None,
 ) -> Tuple[dict, List[str]]:
     """ Evalulate the model against the evaulation set. Save the best weights if
     specified. Use the pycocotools package for metrics.
-
     Args:
         model: The model to evaluate.
         eval_loader: The eval dataset loader.
         previous_best: The current best eval metrics.
         save_dir: Where to save the model weights.
-
     Returns:
         The updated best metrics and a list of the metrics that improved.
     """
-    detections_dict: List[dict] = []
-    for images, image_ids in eval_loader:
+    detections = []
+    labels = []
+    for images_batch, category_ids_batch, boxes_batch in eval_loader:
+        # Send ground truth to BoundingBox
+        for boxes, categories in zip(boxes_batch, category_ids_batch):
+            image_boxes = []
+            for box, category in zip(boxes, categories.squeeze(0)):
+                image_boxes.append(
+                    pascal_voc.BoundingBox(box, 1.0, category.int().item())
+                )
+
+            labels.append(image_boxes)
+
         if torch.cuda.is_available():
-            images = images.cuda()
-        detections = model(images)
+            images_batch = images_batch.cuda()
 
-        if isinstance(model, torch.nn.parallel.distributed.DistributedDataParallel):
-            model = model.module
+        if isinstance(model, parallel.DistributedDataParallel):
+            detection_batch = model.module.get_boxes(images_batch)
+        else:
+            detection_batch = model.get_boxes(images_batch)
+        detections.extend(detection_batch)
 
-        detections_dict.extend(
-            detections_to_dict(detections, image_ids, model.image_size)
+    if distributed.is_initialized():
+        labels_list = [None] * distributed.get_world_size()
+        detections_list = [None] * distributed.get_world_size()
+        distributed.all_gather_object(detections_list, detections)
+        distributed.all_gather_object(labels_list, labels)
+
+    if is_main:
+
+        if distributed.is_initialized():
+            labels = []
+            for label_group in labels_list:
+                labels.extend(label_group)
+            detections = []
+            for detections_group in detections_list:
+                detections.extend(detections_group)
+
+        if isinstance(model, parallel.DistributedDataParallel):
+            num_classes = model.module.num_classes
+        else:
+            num_classes = model.num_classes
+
+        metrics = pascal_voc.compute_metrics(
+            detections, labels, class_ids=list(range(num_classes))
         )
-    results = {}
-    if detections_dict:
-
-        with tempfile.TemporaryDirectory() as d:
-            tmp_json = pathlib.Path(d) / "det.json"
-            tmp_json.write_text(json.dumps(detections_dict))
-            results = coco_eval.get_metrics(
-                generate_config.DATA_DIR / "detector_val/val_coco.json", tmp_json
-            )
 
         # If there are the first results, set the previous to the current.
-        previous_best = results if not previous_best else previous_best
+        previous_best = metrics if not previous_best else previous_best
 
-    improved = []
-    for (metric, old), new in zip(previous_best.items(), results.values()):
-        if new >= old:
-            improved.append(metric)
-            previous_best[metric] = new
+        improved = []
+        for (metric, old), new in zip(previous_best.items(), metrics.values()):
+            if new >= old:
+                improved.append(metric)
+                previous_best[metric] = new
 
-    return previous_best, improved
+        return previous_best, improved
+    else:
+        return None, None
 
 
 def create_data_loader(
     train_cfg: dict,
-    data_dir: pathlib.Path,
-    metadata_path: pathlib.Path,
+    data_dirs: List[pathlib.Path],
     anchors: torch.tensor,
     batch_size: int,
     world_size: int,
     val: bool,
     image_size: int,
-) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.Sampler]:
+) -> Tuple[data.DataLoader, data.Sampler]:
     """Simple function to create the dataloaders for training and evaluation.
-
     Args:
         training_cfg: The parameters related to the training regime.
-        data_dir: The directory where the images are located.
-        metadata_path: The path to the COCO metadata json.
+        data_dirs: The directories where the images are located.
         anchors: The tensor of anchors in the model.
         batch_size: The loader's batch size.
         world_size: World size is needed to determine if a distributed sampler is needed.
-        val: Wether or not this loader is for validation.
+        val: Whether or not this loader is for validation.
         image_size: Size of input images into the model. NOTE: we force square images.
-
     Returns:
         The dataloader and the loader's sampler. For _training_ we have to set the
         sampler's epoch to reshuffle.
     """
 
-    assert data_dir.is_dir(), data_dir
-
-    dataset = datasets.DetDataset(
-        data_dir,
-        metadata_path=metadata_path,
-        img_ext=generate_config.IMAGE_EXT,
+    json_name = "val_coco.json" if val else "train_coco.json"
+    img_dir = "val" if val else "train"
+    image_dirs = [data_dir / img_dir for data_dir in data_dirs]
+    dataset_ = dataset.DetDataset(
+        image_dirs,
+        metadata_paths=[data_dir / json_name for data_dir in data_dirs],
         img_width=image_size,
         img_height=image_size,
         validation=val,
     )
-
     # If using distributed training, use a DistributedSampler to load exclusive sets
     # of data per process.
+    sampler = None
     if world_size > 1:
         if not val:
-            sampler = torch.utils.data.DistributedSampler(dataset, shuffle=val)
+            sampler = data.DistributedSampler(dataset_, shuffle=val)
         else:
-            sampler = torch.utils.data.SequentialSampler(dataset)
+            sampler = data.SequentialSampler(dataset_)
 
     if val:
         collate_fn = collate.CollateVal()
@@ -401,14 +440,16 @@ def create_data_loader(
             num_classes=len(generate_config.OD_CLASSES), original_anchors=anchors
         )
 
-    loader = torch.utils.data.DataLoader(
-        dataset,
+    loader = data.DataLoader(
+        dataset_,
         batch_size=batch_size,
         pin_memory=True,
         sampler=sampler,
         collate_fn=collate_fn,
         num_workers=max(torch.multiprocessing.cpu_count() // world_size, 6),
+        drop_last=True if not val else False,
     )
+
     return loader, sampler
 
 
@@ -419,9 +460,7 @@ if __name__ == "__main__":
     torch.random.manual_seed(42)
     np.random.seed(42)
 
-    parser = argparse.ArgumentParser(
-        description="Trainer code for RetinaNet-based detection models."
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--config",
         required=True,

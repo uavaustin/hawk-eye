@@ -3,8 +3,11 @@
 images and the corresponding COCO metadata jsons. For most RetinaNet related training we
 can train on images with _and without_ targets. Training on images without any targets
 is valuable so the model sees that not every image will have a target, as this is the
-real life case. """
+real life case.
+We also apply a lot of augmentations during the creation of data. We prefer to do this
+during generation instead of training to prevent augmentation bottlenecks. """
 
+import copy
 import dataclasses
 from typing import List, Tuple
 import multiprocessing
@@ -12,6 +15,9 @@ import random
 import json
 import pathlib
 
+import albumentations as albu
+import numpy as np
+import cv2
 from tqdm import tqdm
 import PIL
 from PIL import Image
@@ -19,6 +25,7 @@ from PIL import ImageDraw
 from PIL import ImageFilter
 from PIL import ImageFont
 from PIL import ImageOps
+from tqdm import tqdm
 
 from hawk_eye.data_generation import generate_config as config
 from hawk_eye.core import asset_manager
@@ -36,14 +43,13 @@ ALPHAS = config.ALPHAS
 def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -> None:
     """Main function which prepares all the relevant information regardining data
     generation. Data will be generated using a multiprocessing pool for efficiency.
-
     Args:
         gen_type: The name of the data being generated.
         num_gen: The number of images to generate.
         offset: TODO(alex): Are we still using this?
     """
     # Make the proper folders for storing the data.
-    images_dir = pathlib.Path(gen_type) / "images"
+    images_dir = pathlib.Path(gen_type)
     images_dir.mkdir(exist_ok=True, parents=True)
 
     r_state = random.getstate()
@@ -52,9 +58,7 @@ def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -
     # All the random selection is generated ahead of time, that way
     # the process can be resumed without the shapes changing on each
     # run.
-
     base_shapes = {shape: get_base_shapes(shape) for shape in config.SHAPE_TYPES}
-
     numbers = list(range(offset, num_gen + offset))
 
     # Create a random list of the background files.
@@ -133,13 +137,13 @@ def generate_all_images(gen_type: pathlib.Path, num_gen: int, offset: int = 0) -
 
     with multiprocessing.Pool(None) as pool:
         processes = pool.imap_unordered(generate_single_example, data)
-
         for _ in tqdm(processes, total=num_gen):
             pass
 
     create_coco_metadata(
-        gen_type / "images",
-        gen_type / ("val_coco.json" if "val" in gen_type.name else "train_coco.json"),
+        gen_type,
+        gen_type.parent
+        / ("val_coco.json" if "val" in gen_type.name else "train_coco.json"),
     )
 
 
@@ -157,7 +161,7 @@ def generate_single_example(data) -> None:
         gen_type,
     ) = data
 
-    data_path = config.DATA_DIR / gen_type / "images"
+    data_path = config.DATA_DIR / gen_type
     labels_fn = data_path / f"ex_{number}.json"
     img_fn = data_path / f"ex_{number}{config.IMAGE_EXT}"
 
@@ -167,10 +171,20 @@ def generate_single_example(data) -> None:
         (crop_x, crop_y, crop_x + config.CROP_SIZE[0], crop_y + config.CROP_SIZE[1])
     )
 
-    if flip_bg:
-        background = ImageOps.flip(background)
-    if mirror_bg:
-        background = ImageOps.mirror(background)
+    # Create our augmentations for the background tile
+    augs = albu.Compose(
+        [
+            albu.RandomGamma(),
+            albu.RandomBrightnessContrast(),
+            albu.HueSaturationValue(30, 30, 30),
+            albu.GaussianBlur(),
+            albu.GaussNoise(),
+            albu.Transpose(),
+            albu.Flip(),
+            albu.ShiftScaleRotate(0.1, 0.1, 0.2),
+        ]
+    )
+    background = Image.fromarray(augs(image=np.array(background))["image"])
 
     if random.randint(0, 100) / 100 >= config.EMPTY_TILE_PROB:
         shape_imgs = [create_shape(*shape_param) for shape_param in shape_params]
@@ -210,12 +224,21 @@ def add_shapes(
 
         x = shape_param[-2]
         y = shape_param[-1]
-        shape_img = shape_imgs[i]
+        shape_img, target_mask = shape_imgs[i]
         x1, y1, x2, y2 = shape_img.getbbox()
-        bg_at_shape = background.crop((x1 + x, y1 + y, x2 + x, y2 + y))
-        bg_at_shape.paste(shape_img, (0, 0), shape_img)
-        bg_at_shape = bg_at_shape.filter(ImageFilter.MedianFilter(3))
-        background.paste(bg_at_shape, (x, y))
+        bg_at_shape = background.crop((x, y, x2 + x, y2 + y))
+
+        # Paste the target onto the background, then apply a blur to smooth
+        # out the target.
+        bg_at_shape.paste(shape_img, mask=shape_img)
+        bg_at_shape.filter(ImageFilter.MedianFilter(3))
+
+        bg_at_shape_arr = np.array(bg_at_shape)
+        bg_at_shape_arr *= target_mask
+
+        bg_at_shape = Image.fromarray(bg_at_shape_arr).convert("RGBA")
+        bg_at_shape = strip_image(bg_at_shape)
+        background.paste(bg_at_shape, (x, y, x2 + x, y2 + y), bg_at_shape)
 
         im_w, im_h = background.size
         x /= im_w
@@ -282,12 +305,11 @@ def create_shape(
     y,
 ) -> PIL.Image.Image:
     """Create a shape given all the input parameters"""
-
     image = get_base(base, target_rgb, size)
     image = strip_image(image)
 
     image = add_alphanumeric(image, shape, alpha, alpha_rgb, font_file)
-
+    image = add_augmentation(image)
     w, h = image.size
     ratio = min(size / w, size / h)
     image = image.resize((int(w * ratio), int(h * ratio)), 1)
@@ -295,36 +317,93 @@ def create_shape(
     image = rotate_shape(image, angle)
     image = strip_image(image)
 
-    return image
+    target_mask = np.array(image)
+    # Sum across the channel dimension. This will be 0 for the empty part of the
+    # target.
+    target_mask = np.sum(image, axis=-1, dtype=np.uint16)
+    target_mask[target_mask > 0.0] = 1.0
+
+    kernel = np.ones((8, 8), np.uint8)
+    target_mask = cv2.dilate(target_mask, kernel)
+
+    return image, target_mask[:, :, np.newaxis]
 
 
 def get_base(base, target_rgb, size):
     """Copy and recolor the base shape"""
     image = base.copy()
-    image = image.resize((256, 256), 1)
-    image = image.convert("RGBA")
-
     r, g, b = target_rgb
 
+    image = image.resize((256, 256)).convert("RGBA")
     for x in range(image.width):
         for y in range(image.height):
-
             pr, pg, pb, _ = image.getpixel((x, y))
-
-            if pr != 255 or pg != 255 or pb != 255:
+            if pr != 255 and pg != 255 and pb != 255:
                 image.putpixel((x, y), (r, g, b, 255))
 
     return image
+
+
+def add_augmentation(image: PIL.Image.Image) -> PIL.Image.Image:
+    """Add random augmentations to the target shape. This is needed to make
+    our model more robust against random changes in color, lighting, etc. """
+
+    # Extract a mask of the target. Some of our augmentations might add
+    # noise to region outside the target, so we want to remove this after to
+    # keep the target clean.
+    image_array = np.array(image.convert("RGB"))
+    target_mask = np.array(image_array > 0, dtype=np.uint8)
+    bkg_mask = np.ones_like(target_mask) - target_mask
+
+    # Create our augmentations
+    augs = albu.Compose(
+        [
+            albu.GaussNoise(p=1.0),
+            albu.RandomBrightnessContrast(),
+            albu.RandomGamma(),
+            albu.HueSaturationValue(),
+            albu.IAAAffine(),
+            albu.GaussianBlur((1, 7), p=1.0),
+        ]
+    )
+
+    width, height = image.size
+    min_crop_w, min_crop_h = int(0.1 * width), int(0.1 * height)
+
+    # To add even more variance to the data, we apply these augmentations to
+    # random crops within the target itself.
+    num_augs = random.randint(0, 10)
+    for _ in range(num_augs):
+        x0 = random.randint(0, width - min_crop_w)
+        y0 = random.randint(0, height - min_crop_h)
+        w = random.randint(max(width - 10, 0), width)
+        h = random.randint(max(height - 10, 0), height)
+        x1 = x0 + w
+        y1 = y0 + h
+        image_array[y0:y1, x0:x1] = augs(image=image_array[y0:y1, x0:x1])["image"]
+
+    image_array *= target_mask
+    # image_array[image_array == 255] = 254
+
+    # It's possible the augmenations brought the color down to complete black, so
+    # here we make sure to only set the background to black & transparent.
+    image_new = Image.fromarray(image_array).convert("RGBA")
+    for x in range(image_new.width):
+        for y in range(image_new.height):
+            if bkg_mask[y, x].all() == 1:
+                image_new.putpixel((x, y), (0, 0, 0, 0))
+
+    return image_new
 
 
 def strip_image(image: PIL.Image.Image) -> PIL.Image.Image:
     """Remove white and black edges"""
     for x in range(image.width):
         for y in range(image.height):
-
             r, g, b, _ = image.getpixel((x, y))
-
-            if r > 247 and g > 247 and b > 247:
+            if r == 255 and g == 255 and b == 255:
+                image.putpixel((x, y), (0, 0, 0, 0))
+            elif r == 0 and g == 0 and b == 0:
                 image.putpixel((x, y), (0, 0, 0, 0))
 
     image = image.crop(image.getbbox())
@@ -351,7 +430,7 @@ def add_alphanumeric(
         "pentagon": alpha_params((0.35, 0.65)),
         "quarter-circle": alpha_params((0.35, 0.65)),
         "rectangle": alpha_params((0.35, 0.7)),
-        "semicircle": alpha_params((0.35, 0.75)),
+        "semicircle": alpha_params((0.35, 0.5)),
         "square": alpha_params((0.30, 0.8)),
         "star": alpha_params((0.25, 0.55)),
         "trapezoid": alpha_params((0.25, 0.75)),
@@ -404,7 +483,10 @@ def rotate_shape(image, angle):
     return image.rotate(angle, expand=1)
 
 
-def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None:
+def create_coco_metadata(
+    data_dir: pathlib.Path, out_path: pathlib.Path, img_ext: str = config.IMAGE_EXT
+) -> None:
+    print(out_path)
     images = []
     annotations = []
     categories = []
@@ -412,11 +494,12 @@ def create_coco_metadata(data_dir: pathlib.Path, out_path: pathlib.Path) -> None
         categories.append({"supercategory": "none", "name": name, "id": idx})
 
     jsons = sorted(list(data_dir.glob("*.json")))
-    for label_file in jsons:
+    images_files = sorted(list(data_dir.glob(f"*{img_ext}")))
+    for label_file, image_file in zip(jsons, images_files):
         labels = json.loads(label_file.read_text())
         images.append(
             {
-                "file_name": label_file.with_suffix(f"{config.IMAGE_EXT}").name,
+                "file_name": image_file.name,
                 "width": config.DETECTOR_SIZE[0],
                 "height": config.DETECTOR_SIZE[1],
                 "id": labels["image_id"],
@@ -456,10 +539,10 @@ if __name__ == "__main__":
     # Pull the assets if not present locally.
     asset_manager.pull_all()
     generate_all_images(
-        config.DATA_DIR / "detector_train",
+        config.DATA_DIR / "detector/train",
         config.DET_TRAIN_IMAGES,
         config.DET_TRAIN_OFFSET,
     )
     generate_all_images(
-        config.DATA_DIR / "detector_val", config.DET_VAL_IMAGES, config.DET_VAL_OFFSET,
+        config.DATA_DIR / "detector/val", config.DET_VAL_IMAGES, config.DET_VAL_OFFSET,
     )

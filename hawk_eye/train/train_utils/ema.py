@@ -6,6 +6,7 @@ import copy
 from typing import Union
 
 import torch
+from torch.nn.parallel import distributed
 
 
 class Ema:
@@ -18,7 +19,8 @@ class Ema:
     def update(self, model: torch.nn.Module) -> None:
         """ Pass in the base model in order to update the ema model's parameters. """
 
-        model = model.module
+        if isinstance(model, distributed.DistributedDataParallel):
+            model = model.module
         # Loop over the state dictionary of the incoming model and update the ema model.
         model_state_dict = model.state_dict()
         for key, shadow_val in self.ema_model.state_dict().items():
