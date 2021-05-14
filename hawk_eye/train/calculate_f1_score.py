@@ -15,6 +15,8 @@ PYTHONPATH=. python3 hawk_eye/train/calculate_f1_score.py \
 import argparse
 import pathlib
 from typing import List
+from hawk_eye.core import classifier
+from hawk_eye.core import detector
 
 import numpy as np
 import torch
@@ -35,10 +37,10 @@ def calculate_f1_score(precision, recall, beta: float = 1.2) -> int:
 
     Examples::
 
-        >>> calculate_f1_score(5, 2, 1, 2)
-        .8064516
-        >>> calculate_f1_score(10, 5, 5, 2)
-        .666666
+        >>> calculate_f1_score(.8, .5, 2)
+        .54054054
+        >>> calculate_f1_score(.3, .4, 1)
+        .34285714
 
     """
     if recall == 0:
@@ -57,6 +59,13 @@ def load_model(model_type: str, timestamp: str):
         model = load_detector(timestamp)
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
+    return model
+
+
+def main(model_type, timestamp: str, datasets: List[str]):
+
+    model = load_model(model_type, timestamp)
+    print(model)
 
     return model
 
