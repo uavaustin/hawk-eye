@@ -35,6 +35,14 @@ def calculate_f1_score(precision, recall, beta: float = 1.2) -> int:
 
     """ This function finds the F1 score for a model.
 
+    Args:
+        precision: True Positives / (True Positives + False Positives) of a model
+        recall: True Positives / (True Positives + False Negatives) of a model
+        beta: A value such that recall is beta times more important as precision
+
+    Returns:
+        f1_score: A measure of a model's accuracy
+
     Examples::
 
         >>> calculate_f1_score(.8, .5, 2)
