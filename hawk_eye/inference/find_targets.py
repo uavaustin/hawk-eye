@@ -267,7 +267,8 @@ def globalize_boxes(
     Args:
         results: A list of the detections for the tiles.
         tile_size: The size of the tile which is needed to unnormalize the detections.
-        exclusion_region: The number of pixels from the edge of the tile in which a target will be thrown out.
+        exclusion_region: The number of pixels from the edge of the tile in which
+        a target will be thrown out.
 
     Returns:
         A list of the globalized boxes
