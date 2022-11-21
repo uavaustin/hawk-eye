@@ -115,7 +115,29 @@ def untar_and_move(filename: pathlib.Path, destination: pathlib.Path) -> None:
 
     print(f"Extracting to {destination}...", end="", flush=True)
     with tarfile.open(filename, "r") as tar:
-        tar.extractall(destination)
+        
+        import os
+        
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(tar, destination)
 
     # Remove hidden files that might have been left behind by
     # the untarring.
